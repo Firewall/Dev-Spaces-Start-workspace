@@ -1,7 +1,13 @@
 import { useState } from 'react'
-import { ChevronDown, Settings } from 'lucide-react'
-import { FormField } from './FormField'
-import { TextInput } from './TextInput'
+import {
+  ExpandableSection,
+  FormGroup,
+  Grid,
+  GridItem,
+  Popover,
+  TextInput,
+} from '@patternfly/react-core'
+import { HelpIcon } from '@patternfly/react-icons'
 
 interface EnvSettings {
   containerImage: string
@@ -15,6 +21,21 @@ interface EnvironmentSettingsProps {
   onChange: (val: EnvSettings) => void
 }
 
+function FieldHelp({ text }: { text: string }) {
+  return (
+    <Popover bodyContent={text}>
+      <button
+        type="button"
+        aria-label="More info"
+        onClick={(e) => e.preventDefault()}
+        className="pf-v6-c-form__group-label-help"
+      >
+        <HelpIcon />
+      </button>
+    </Popover>
+  )
+}
+
 export function EnvironmentSettings({ value, onChange }: EnvironmentSettingsProps) {
   const [expanded, setExpanded] = useState(false)
 
@@ -23,101 +44,67 @@ export function EnvironmentSettings({ value, onChange }: EnvironmentSettingsProp
   }
 
   return (
-    <div
-      style={{
-        border: '1px solid var(--border)',
-        borderRadius: 'var(--radius)',
-        overflow: 'hidden',
-      }}
+    <ExpandableSection
+      toggleText="Advanced Settings"
+      isExpanded={expanded}
+      onToggle={(_e, isExpanded) => setExpanded(isExpanded)}
     >
-      <button
-        type="button"
-        onClick={() => setExpanded(!expanded)}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          width: '100%',
-          padding: '12px 16px',
-          fontSize: 15,
-          fontWeight: 600,
-          border: 'none',
-          background: 'var(--surface)',
-          color: 'var(--text)',
-          cursor: 'pointer',
-          textAlign: 'left',
-          transition: 'background var(--transition)',
-        }}
+      <FormGroup
+        label="Path to Devfile"
+        fieldId="devfile-path"
+        labelHelp={<FieldHelp text="Specify a custom path to your devfile. Overrides the default search for devfile.yaml or .devfile.yaml in the repository root." />}
       >
-        <Settings size={16} color="var(--text-secondary)" />
-        <span style={{ flex: 1 }}>Advanced Settings</span>
-        <ChevronDown
-          size={16}
-          style={{
-            transform: expanded ? 'rotate(180deg)' : 'none',
-            transition: 'transform var(--transition)',
-            color: 'var(--text-muted)',
-          }}
+        <TextInput
+          id="devfile-path"
+          value={value.devfilePath}
+          onChange={(_e, val) => update({ devfilePath: val })}
+          placeholder="devfile.yaml"
         />
-      </button>
+      </FormGroup>
 
-      {expanded && (
-        <div style={{ padding: '20px 16px 0', borderTop: '1px solid var(--border)' }}>
-          <FormField
-            label="Path to Devfile"
-            tooltip="Specify a custom path to your devfile. Overrides the default search for devfile.yaml or .devfile.yaml in the repository root."
-            htmlFor="devfile-path"
+      <FormGroup
+        label="Container Image"
+        fieldId="container-image"
+        labelHelp={<FieldHelp text="Override the default Universal Developer Image. Specify a custom container image for your workspace runtime." />}
+      >
+        <TextInput
+          id="container-image"
+          value={value.containerImage}
+          onChange={(_e, val) => update({ containerImage: val })}
+          placeholder="quay.io/devspaces/udi:latest"
+        />
+      </FormGroup>
+
+      <Grid hasGutter>
+        <GridItem span={6}>
+          <FormGroup
+            label="Memory Limit"
+            fieldId="memory-limit"
+            labelHelp={<FieldHelp text="Set the maximum RAM allocation for this workspace. Use Kubernetes resource quantity formats, e.g. 4Gi, 512Mi." />}
           >
             <TextInput
-              id="devfile-path"
-              value={value.devfilePath}
-              onChange={(e) => update({ devfilePath: e.target.value })}
-              placeholder="devfile.yaml"
+              id="memory-limit"
+              value={value.memoryLimit}
+              onChange={(_e, val) => update({ memoryLimit: val })}
+              placeholder="4Gi"
             />
-          </FormField>
-
-          <FormField
-            label="Container Image"
-            tooltip="Override the default Universal Developer Image. Specify a custom container image for your workspace runtime."
-            htmlFor="container-image"
+          </FormGroup>
+        </GridItem>
+        <GridItem span={6}>
+          <FormGroup
+            label="CPU Limit"
+            fieldId="cpu-limit"
+            labelHelp={<FieldHelp text="Set the maximum CPU allocation. Use cores (e.g. 2) or millicores (e.g. 2000m)." />}
           >
             <TextInput
-              id="container-image"
-              value={value.containerImage}
-              onChange={(e) => update({ containerImage: e.target.value })}
-              placeholder="quay.io/devspaces/udi:latest"
+              id="cpu-limit"
+              value={value.cpuLimit}
+              onChange={(_e, val) => update({ cpuLimit: val })}
+              placeholder="2"
             />
-          </FormField>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            <FormField
-              label="Memory Limit"
-              tooltip="Set the maximum RAM allocation for this workspace. Use Kubernetes resource quantity formats, e.g. 4Gi, 512Mi."
-              htmlFor="memory-limit"
-            >
-              <TextInput
-                id="memory-limit"
-                value={value.memoryLimit}
-                onChange={(e) => update({ memoryLimit: e.target.value })}
-                placeholder="4Gi"
-              />
-            </FormField>
-
-            <FormField
-              label="CPU Limit"
-              tooltip="Set the maximum CPU allocation. Use cores (e.g. 2) or millicores (e.g. 2000m)."
-              htmlFor="cpu-limit"
-            >
-              <TextInput
-                id="cpu-limit"
-                value={value.cpuLimit}
-                onChange={(e) => update({ cpuLimit: e.target.value })}
-                placeholder="2"
-              />
-            </FormField>
-          </div>
-        </div>
-      )}
-    </div>
+          </FormGroup>
+        </GridItem>
+      </Grid>
+    </ExpandableSection>
   )
 }

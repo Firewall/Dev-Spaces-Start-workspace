@@ -1,12 +1,34 @@
 import { useState, useCallback } from 'react'
-import { Loader2 } from 'lucide-react'
-import { FormField } from './FormField'
-import { TextInput } from './TextInput'
+import {
+  Alert,
+  Button,
+  Form,
+  FormGroup,
+  Popover,
+  Switch,
+  TextInput,
+} from '@patternfly/react-core'
+import { HelpIcon } from '@patternfly/react-icons'
 import { BranchDropdown } from './BranchDropdown'
 import { EditorDropdown } from './EditorDropdown'
 import { EnvironmentComponentsSection } from './EnvironmentComponentsSection'
 import { AIToolsSection } from './AIToolsSection'
 import { EnvironmentSettings } from './EnvironmentSettings'
+
+function FieldHelp({ text }: { text: string }) {
+  return (
+    <Popover bodyContent={text}>
+      <button
+        type="button"
+        aria-label="More info"
+        onClick={(e) => e.preventDefault()}
+        className="pf-v6-c-form__group-label-help"
+      >
+        <HelpIcon />
+      </button>
+    </Popover>
+  )
+}
 
 const EXISTING_WORKSPACES = [
   'https://github.com/acme/web-app',
@@ -98,58 +120,41 @@ export function CreateWorkspace() {
           Configure and launch a new cloud development environment.
         </p>
 
-        <form onSubmit={handleSubmit}>
-          <div
-            style={{
-              background: 'var(--surface)',
-              borderRadius: 'var(--radius-lg)',
-              padding: '24px 0',
-              marginBottom: 24,
-            }}
-          >
-            {/* Workspace Name */}
-            <FormField
+        <Form onSubmit={handleSubmit}>
+            <FormGroup
               label="Workspace Name"
-              tooltip="A human-readable name for your workspace. This will be used to identify it in the dashboard and CLI."
-              htmlFor="workspace-name"
+              fieldId="workspace-name"
+              labelHelp={<FieldHelp text="A human-readable name for your workspace. This will be used to identify it in the dashboard and CLI." />}
             >
               <TextInput
                 id="workspace-name"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(_e, val) => setName(val)}
                 placeholder="my-project"
               />
-            </FormField>
+            </FormGroup>
 
-            {/* Git Repository URL + Branch */}
-            <FormField
+            <FormGroup
               label="Git Repository URL"
-              tooltip="Enter the HTTPS or SSH URL of your Git repository. Leave blank to provision an empty workspace using the default Universal Developer Image."
-              htmlFor="repo-url"
+              fieldId="repo-url"
+              labelHelp={<FieldHelp text="Enter the HTTPS or SSH URL of your Git repository. Leave blank to provision an empty workspace using the default Universal Developer Image." />}
             >
               <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', flexWrap: 'wrap' }}>
                 <div style={{ flex: 1, minWidth: 240 }}>
                   <TextInput
                     id="repo-url"
                     value={repoUrl}
-                    onChange={(e) => setRepoUrl(e.target.value)}
+                    onChange={(_e, val) => setRepoUrl(val)}
                     placeholder="https://github.com/org/repo"
                   />
                   {isDuplicate && (
-                    <div
-                      style={{
-                        marginTop: 8,
-                        padding: '8px 12px',
-                        fontSize: 14,
-                        background: 'var(--warning-bg)',
-                        border: '1px solid var(--warning-border)',
-                        borderRadius: 6,
-                        color: '#92400e',
-                        lineHeight: 1.4,
-                      }}
-                    >
-                      A workspace using this repository already exists. You can still create a new one.
-                    </div>
+                    <Alert
+                      variant="warning"
+                      isInline
+                      isPlain
+                      title="A workspace using this repository already exists. You can still create a new one."
+                      style={{ marginTop: 8 }}
+                    />
                   )}
                 </div>
                 <div>
@@ -160,127 +165,57 @@ export function CreateWorkspace() {
                   />
                 </div>
               </div>
-            </FormField>
+            </FormGroup>
 
-            {/* Select an Editor */}
-            <FormField
+            <FormGroup
               label="Select an Editor"
-              tooltip="Choose the IDE that will be launched in your workspace. The default editor is Visual Studio Code - Open Source (Web). Select 'Custom Editor' for advanced configuration."
+              labelHelp={<FieldHelp text="Choose the IDE that will be launched in your workspace. The default editor is Visual Studio Code - Open Source (Web). Select 'Custom Editor' for advanced configuration." />}
             >
               <EditorDropdown value={editor} onChange={setEditor} />
-            </FormField>
+            </FormGroup>
 
-            <FormField
+            <FormGroup
               label="Select Environment Components"
-              tooltip="Choose language runtimes and stacks to layer into your workspace image. You can pick multiple components."
+              labelHelp={<FieldHelp text="Choose language runtimes and stacks to layer into your workspace image. You can pick multiple components." />}
             >
               <EnvironmentComponentsSection
                 selected={environmentComponents}
                 onChange={setEnvironmentComponents}
               />
-            </FormField>
+            </FormGroup>
 
-            {/* AI Tools */}
-            <FormField
+            <FormGroup
               label="Add AI Tools"
-              tooltip="Select AI-powered coding assistants to install in your workspace. Tools marked with a checkmark are already authenticated with your account."
+              labelHelp={<FieldHelp text="Select AI-powered coding assistants to install in your workspace. Tools marked with a checkmark are already authenticated with your account." />}
             >
               <AIToolsSection selected={aiTools} onChange={setAiTools} />
-            </FormField>
+            </FormGroup>
 
-            {/* Temp Storage */}
-            <FormField
+            <FormGroup
               label="Temp Storage"
-              tooltip="Enable ephemeral storage for temporary files. Data in temp storage does not persist across workspace restarts."
+              labelHelp={<FieldHelp text="Enable ephemeral storage for temporary files. Data in temp storage does not persist across workspace restarts." />}
             >
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <button
-                  type="button"
-                  onClick={() => setTempStorage(!tempStorage)}
-                  style={{
-                    position: 'relative',
-                    width: 44,
-                    height: 24,
-                    borderRadius: 12,
-                    border: 'none',
-                    background: tempStorage ? 'var(--accent)' : '#d1d5db',
-                    cursor: 'pointer',
-                    transition: 'background var(--transition)',
-                    flexShrink: 0,
-                  }}
-                >
-                  <span
-                    style={{
-                      position: 'absolute',
-                      top: 2,
-                      left: tempStorage ? 22 : 2,
-                      width: 20,
-                      height: 20,
-                      borderRadius: '50%',
-                      background: '#fff',
-                      boxShadow: '0 1px 3px rgba(0,0,0,.2)',
-                      transition: 'left var(--transition)',
-                    }}
-                  />
-                </button>
-              </div>
-            </FormField>
+              <Switch
+                id="temp-storage"
+                isChecked={tempStorage}
+                onChange={(_e, checked) => setTempStorage(checked)}
+                aria-label="Temp storage"
+              />
+            </FormGroup>
 
-            {/* Advanced Settings */}
-            <div style={{ marginTop: 8 }}>
-              <EnvironmentSettings value={envSettings} onChange={setEnvSettings} />
-            </div>
-          </div>
+            <EnvironmentSettings value={envSettings} onChange={setEnvSettings} />
 
-          {/* Submit */}
-          <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-            <button
-              type="submit"
-              disabled={submitting}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 10,
-                width: 'auto',
-                padding: '11px 22px',
-                minHeight: 42,
-                fontSize: 15,
-                fontWeight: 600,
-                letterSpacing: '-0.02em',
-                border: 'none',
-                borderRadius: 9999,
-                background: submitting ? 'var(--accent-hover)' : 'var(--accent)',
-                color: '#fff',
-                cursor: submitting ? 'not-allowed' : 'pointer',
-                transition: 'background var(--transition)',
-              }}
-              onMouseEnter={(e) => {
-                if (!submitting) e.currentTarget.style.background = 'var(--accent-hover)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = submitting ? 'var(--accent-hover)' : 'var(--accent)'
-              }}
-            >
-              {submitting ? (
-                <>
-                  <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
-                  Creating Workspace…
-                </>
-              ) : (
-                'Create Workspace'
-              )}
-            </button>
-          </div>
-        </form>
+          <Button
+            type="submit"
+            variant="primary"
+            isLoading={submitting}
+            isDisabled={submitting}
+            spinnerAriaValueText="Creating"
+          >
+            {submitting ? 'Creating Workspace…' : 'Create Workspace'}
+          </Button>
+        </Form>
       </main>
-
-      <style>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   )
 }

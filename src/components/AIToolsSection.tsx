@@ -1,6 +1,17 @@
-import { useState, useRef } from 'react'
-import { Plus, Check, X, Sparkles } from 'lucide-react'
-import { useClickOutside } from '../hooks/useClickOutside'
+import { useState } from 'react'
+import {
+  MenuToggle,
+  Select,
+  SelectList,
+  SelectOption,
+  Label,
+  LabelGroup,
+} from '@patternfly/react-core'
+import {
+  CheckIcon,
+  PlusCircleIcon,
+  StarIcon,
+} from '@patternfly/react-icons'
 import { BrandIcon, hasBrandIcon } from './BrandIcons'
 
 interface AITool {
@@ -25,9 +36,7 @@ interface AIToolsSectionProps {
 }
 
 export function AIToolsSection({ selected, onChange }: AIToolsSectionProps) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-  useClickOutside(ref, () => setOpen(false))
+  const [isOpen, setIsOpen] = useState(false)
 
   function toggle(id: string) {
     onChange(
@@ -42,157 +51,64 @@ export function AIToolsSection({ selected, onChange }: AIToolsSectionProps) {
   const selectedTools = AVAILABLE_TOOLS.filter((t) => selected.includes(t.id))
 
   return (
-    <div ref={ref} style={{ position: 'relative' }}>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-        {selectedTools.map((tool) => (
-          <span
-            key={tool.id}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              height: 30,
-              padding: '0 10px',
-              fontSize: 14,
-              background: 'var(--accent-light)',
-              color: 'var(--accent)',
-              borderRadius: 6,
-              fontWeight: 500,
-            }}
-          >
-            {hasBrandIcon(tool.id) ? <BrandIcon id={tool.id} size={14} /> : <Sparkles size={12} />}
-            {tool.name}
-            <button
-              type="button"
-              onClick={() => remove(tool.id)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                border: 'none',
-                background: 'transparent',
-                color: 'var(--accent)',
-                cursor: 'pointer',
-                padding: 0,
-                marginLeft: 2,
-              }}
+    <div>
+      {selectedTools.length > 0 && (
+        <LabelGroup style={{ marginBottom: 8 }}>
+          {selectedTools.map((tool) => (
+            <Label
+              key={tool.id}
+              onClose={() => remove(tool.id)}
+              icon={hasBrandIcon(tool.id) ? <BrandIcon id={tool.id} size={14} /> : <StarIcon />}
             >
-              <X size={13} />
-            </button>
-          </span>
-        ))}
+              {tool.name}
+            </Label>
+          ))}
+        </LabelGroup>
+      )}
 
-        <button
-          type="button"
-          onClick={() => setOpen(!open)}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 32,
-            height: 32,
-            border: '1px dashed var(--border)',
-            borderRadius: 'var(--radius)',
-            background: 'transparent',
-            color: 'var(--text-muted)',
-            cursor: 'pointer',
-            transition: 'all var(--transition)',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = 'var(--accent)'
-            e.currentTarget.style.color = 'var(--accent)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = 'var(--border)'
-            e.currentTarget.style.color = 'var(--text-muted)'
-          }}
-        >
-          <Plus size={16} />
-        </button>
-      </div>
-
-      {open && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 'calc(100% + 8px)',
-            left: 0,
-            width: 340,
-            background: 'var(--surface)',
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius)',
-            boxShadow: 'var(--shadow-lg)',
-            zIndex: 50,
-            padding: '4px 0',
-          }}
-        >
-          <div style={{ padding: '8px 12px', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Available AI Tools
-          </div>
+      <Select
+        isOpen={isOpen}
+        onOpenChange={setIsOpen}
+        onSelect={(_e, val) => toggle(val as string)}
+        toggle={(toggleRef) => (
+          <MenuToggle
+            ref={toggleRef}
+            onClick={() => setIsOpen((o) => !o)}
+            isExpanded={isOpen}
+            variant="secondary"
+            icon={<PlusCircleIcon />}
+          >
+            Add Tools
+          </MenuToggle>
+        )}
+      >
+        <SelectList>
           {AVAILABLE_TOOLS.map((tool) => {
             const isSelected = selected.includes(tool.id)
             return (
-              <button
-                type="button"
+              <SelectOption
                 key={tool.id}
-                onClick={() => toggle(tool.id)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  width: '100%',
-                  padding: '10px 12px',
-                  fontSize: 14,
-                  border: 'none',
-                  background: isSelected ? 'var(--accent-light)' : 'transparent',
-                  color: 'var(--text)',
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  transition: 'background var(--transition)',
-                }}
-                onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = '#f5f5f5' }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = isSelected ? 'var(--accent-light)' : 'transparent' }}
+                value={tool.id}
+                isSelected={isSelected}
+                hasCheckbox
+                description={
+                  <>
+                    {tool.description}
+                    {tool.authenticated && (
+                      <span style={{ marginLeft: 8, color: 'var(--pf-v6-global--success-color--100, green)' }}>
+                        <CheckIcon /> Authenticated
+                      </span>
+                    )}
+                  </>
+                }
+                icon={hasBrandIcon(tool.id) ? <BrandIcon id={tool.id} size={20} /> : <StarIcon />}
               >
-                <span
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: 20,
-                    height: 20,
-                    borderRadius: 4,
-                    border: isSelected ? 'none' : '1px solid var(--border)',
-                    background: isSelected ? 'var(--accent)' : 'transparent',
-                    flexShrink: 0,
-                  }}
-                >
-                  {isSelected && <Check size={13} color="#fff" />}
-                </span>
-                {hasBrandIcon(tool.id) && <BrandIcon id={tool.id} size={20} />}
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 500 }}>{tool.name}</div>
-                  <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 1 }}>{tool.description}</div>
-                </div>
-                {tool.authenticated && (
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 3,
-                      fontSize: 12,
-                      color: 'var(--success)',
-                      fontWeight: 500,
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Check size={12} />
-                    Authenticated
-                  </span>
-                )}
-              </button>
+                {tool.name}
+              </SelectOption>
             )
           })}
-        </div>
-      )}
+        </SelectList>
+      </Select>
     </div>
   )
 }

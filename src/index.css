@@ -1,13 +1,4 @@
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
 :root {
-  --font-sidebar: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --bg: #ffffff;
   --surface: #ffffff;
   --border: #e2e2e2;
@@ -33,70 +24,11 @@
   --transition: 150ms ease;
 }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-.app-sidebar,
-.app-sidebar button {
-  font-family: var(--font-sidebar);
-  font-optical-sizing: auto;
-}
-
 #root {
   min-height: 100vh;
-}
-
-input, select, textarea, button {
-  font-family: inherit;
-  font-size: inherit;
-}
-
-button {
-  cursor: pointer;
 }
 
 .header-grid-launcher:focus-visible {
   outline: 2px solid var(--border-focus);
   outline-offset: 2px;
-}
-
-.editor-dropdown-trigger:focus-visible {
-  outline: 2px solid var(--border-focus);
-  outline-offset: 2px;
-}
-
-.editor-dropdown-trigger[data-open='true'] {
-  border-color: var(--border-focus);
-  box-shadow: 0 0 0 1px var(--border-focus);
-}
-
-.editor-dropdown-panel {
-  padding: 4px;
-  animation: editor-dropdown-in 120ms ease-out;
-}
-
-@keyframes editor-dropdown-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.editor-dropdown-option {
-  border-radius: calc(var(--radius) - 2px);
-}
-
-.editor-dropdown-option:focus-visible {
-  outline: 2px solid var(--border-focus);
-  outline-offset: -2px;
 }

@@ -1,27 +1,18 @@
-import { useState, type CSSProperties } from 'react'
-import { X } from 'lucide-react'
-import { TextInput } from './TextInput'
+import { useState } from 'react'
+import {
+  Button,
+  FormGroup,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  TextArea,
+  TextInput,
+} from '@patternfly/react-core'
 
 interface CustomEditorModalProps {
   onClose: () => void
   onSave: (config: { name: string; definition: string; image: string }) => void
-}
-
-const textareaStyle: CSSProperties = {
-  width: '100%',
-  minHeight: 88,
-  padding: '10px 12px',
-  fontSize: 15,
-  lineHeight: 1.45,
-  border: '1px solid var(--border)',
-  borderRadius: 'var(--radius)',
-  background: 'var(--surface)',
-  color: 'var(--text)',
-  outline: 'none',
-  resize: 'vertical',
-  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-  transition: 'border-color var(--transition), box-shadow var(--transition)',
-  boxSizing: 'border-box',
 }
 
 export function CustomEditorModal({ onClose, onSave }: CustomEditorModalProps) {
@@ -30,104 +21,51 @@ export function CustomEditorModal({ onClose, onSave }: CustomEditorModalProps) {
   const [image, setImage] = useState('')
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,.45)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-      }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+    <Modal
+      isOpen
+      onClose={onClose}
+      variant="medium"
+      aria-label="Custom Editor Configuration"
     >
-      <div
-        style={{
-          background: 'var(--surface)',
-          borderRadius: 'var(--radius-lg)',
-          boxShadow: 'var(--shadow-lg)',
-          width: '100%',
-          maxWidth: 480,
-          padding: 24,
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <h3 style={{ fontSize: 17, fontWeight: 600 }}>Custom Editor Configuration</h3>
-          <button
-            type="button"
-            onClick={onClose}
-            style={{ border: 'none', background: 'transparent', padding: 4, borderRadius: 4, color: 'var(--text-muted)', cursor: 'pointer' }}
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        <div style={{ marginBottom: 16 }}>
-          <label style={{ display: 'block', fontSize: 14, fontWeight: 500, marginBottom: 4 }}>Editor Name</label>
-          <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="My Custom IDE" />
-        </div>
-
-        <div style={{ marginBottom: 16 }}>
-          <label style={{ display: 'block', fontSize: 14, fontWeight: 500, marginBottom: 4 }}>Editor Definition</label>
-          <textarea
-            value={definition}
-            onChange={(e) => setDefinition(e.target.value)}
-            placeholder="YAML or JSON editor component definition"
-            style={textareaStyle}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = 'var(--border-focus)'
-              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(37,99,235,.12)'
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = 'var(--border)'
-              e.currentTarget.style.boxShadow = 'none'
-            }}
+      <ModalHeader title="Custom Editor Configuration" />
+      <ModalBody>
+        <FormGroup label="Editor Name" fieldId="editor-name">
+          <TextInput
+            id="editor-name"
+            value={name}
+            onChange={(_e, val) => setName(val)}
+            placeholder="My Custom IDE"
           />
-        </div>
+        </FormGroup>
 
-        <div style={{ marginBottom: 24 }}>
-          <label style={{ display: 'block', fontSize: 14, fontWeight: 500, marginBottom: 4 }}>Container Image</label>
-          <TextInput value={image} onChange={(e) => setImage(e.target.value)} placeholder="registry.example.com/editor:latest" />
-        </div>
+        <FormGroup label="Editor Definition" fieldId="editor-definition">
+          <TextArea
+            id="editor-definition"
+            value={definition}
+            onChange={(_e, val) => setDefinition(val)}
+            placeholder="YAML or JSON editor component definition"
+            rows={4}
+            resizeOrientation="vertical"
+          />
+        </FormGroup>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-          <button
-            type="button"
-            onClick={onClose}
-            style={{
-              height: 36,
-              padding: '0 16px',
-              fontSize: 14,
-              fontWeight: 500,
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius)',
-              background: 'var(--surface)',
-              color: 'var(--text)',
-              cursor: 'pointer',
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={() => onSave({ name, definition, image })}
-            style={{
-              height: 36,
-              padding: '0 16px',
-              fontSize: 14,
-              fontWeight: 500,
-              border: 'none',
-              borderRadius: 'var(--radius)',
-              background: 'var(--accent)',
-              color: '#fff',
-              cursor: 'pointer',
-            }}
-          >
-            Save Configuration
-          </button>
-        </div>
-      </div>
-    </div>
+        <FormGroup label="Container Image" fieldId="editor-image">
+          <TextInput
+            id="editor-image"
+            value={image}
+            onChange={(_e, val) => setImage(val)}
+            placeholder="registry.example.com/editor:latest"
+          />
+        </FormGroup>
+      </ModalBody>
+      <ModalFooter>
+        <Button variant="primary" onClick={() => onSave({ name, definition, image })}>
+          Save Configuration
+        </Button>
+        <Button variant="link" onClick={onClose}>
+          Cancel
+        </Button>
+      </ModalFooter>
+    </Modal>
   )
 }

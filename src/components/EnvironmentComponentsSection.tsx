@@ -1,10 +1,16 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
-import { Plus, X, Check, Box, FileCode, Copy } from 'lucide-react'
-import { useClickOutside } from '../hooks/useClickOutside'
+import { useState, useEffect, useMemo } from 'react'
+import { TextInput } from '@patternfly/react-core'
+import {
+  CheckIcon,
+  CopyIcon,
+  CubeIcon,
+  FileCodeIcon,
+  PlusCircleIcon,
+  TimesIcon,
+} from '@patternfly/react-icons'
 import { DependencyBrandIcon } from './DependencyBrandIcon'
 import { getDependencyBrandIcon } from './dependencySimpleIcons'
 import { getDevfileSnippetForComponent } from './envComponentDevfileSnippets'
-import { TextInput } from './TextInput'
 
 function newSnippetRowId(): string {
   return `snip-${Math.random().toString(36).slice(2, 11)}`
@@ -109,7 +115,7 @@ interface EnvironmentComponentsSectionProps {
 function ComponentIcon({ brand, size }: { brand: string; size: number }) {
   const icon = getDependencyBrandIcon(brand)
   if (icon) return <DependencyBrandIcon icon={icon} size={size} />
-  return <Box size={size} style={{ color: 'var(--text-muted)', flexShrink: 0 }} aria-hidden />
+  return <CubeIcon style={{ fontSize: size, color: 'var(--text-muted)', flexShrink: 0 }} aria-hidden />
 }
 
 export function EnvironmentComponentsSection({ selected, onChange }: EnvironmentComponentsSectionProps) {
@@ -125,8 +131,6 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
   const [snippetMountSources, setSnippetMountSources] = useState(true)
   const [snippetSourceMapping, setSnippetSourceMapping] = useState('')
   const [copyDone, setCopyDone] = useState(false)
-  const rootRef = useRef<HTMLDivElement>(null)
-  useClickOutside(rootRef, () => setOpen(false))
 
   const mergedSnippet = useMemo(() => {
     if (!yamlPreview) return ''
@@ -194,7 +198,7 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
   const selectedItems = AVAILABLE_COMPONENTS.filter((c) => selected.includes(c.id))
 
   return (
-    <div ref={rootRef} style={{ position: 'relative' }}>
+    <div style={{ position: 'relative' }}>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
         {selectedItems.map((c) => (
           <span
@@ -229,7 +233,7 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
               }}
               aria-label={`Remove ${c.name}`}
             >
-              <X size={13} />
+              <TimesIcon />
             </button>
           </span>
         ))}
@@ -261,7 +265,7 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
             e.currentTarget.style.color = 'var(--text-muted)'
           }}
         >
-          <Plus size={16} />
+          <PlusCircleIcon />
         </button>
       </div>
 
@@ -346,7 +350,7 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
                         }}
                         aria-hidden
                       >
-                        <Check size={12} strokeWidth={3} />
+                        <CheckIcon />
                       </span>
                     )}
                     <button
@@ -422,7 +426,7 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
                         e.currentTarget.style.background = 'var(--surface)'
                       }}
                     >
-                      <FileCode size={15} aria-hidden />
+                      <FileCodeIcon />
                     </button>
                   </div>
                 )
@@ -522,7 +526,7 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
                       cursor: 'pointer',
                     }}
                   >
-                    <Copy size={14} aria-hidden />
+                    <CopyIcon />
                     {copyDone ? 'Copied' : 'Copy'}
                   </button>
                   <button
@@ -542,7 +546,7 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
                       cursor: 'pointer',
                     }}
                   >
-                    <X size={18} />
+                    <TimesIcon />
                   </button>
                 </div>
               </div>
@@ -588,9 +592,9 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
                           aria-label="Variable name"
                           placeholder="NAME"
                           value={row.name}
-                          onChange={(e) =>
+                          onChange={(_e, val) =>
                             setSnippetEnvRows((rows) =>
-                              rows.map((r) => (r.id === row.id ? { ...r, name: e.target.value } : r)),
+                              rows.map((r) => (r.id === row.id ? { ...r, name: val } : r)),
                             )
                           }
                           style={{ flex: 1, height: 34, fontSize: 13, minWidth: 0 }}
@@ -599,9 +603,9 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
                           aria-label="Value"
                           placeholder="value"
                           value={row.value}
-                          onChange={(e) =>
+                          onChange={(_e, val) =>
                             setSnippetEnvRows((rows) =>
-                              rows.map((r) => (r.id === row.id ? { ...r, value: e.target.value } : r)),
+                              rows.map((r) => (r.id === row.id ? { ...r, value: val } : r)),
                             )
                           }
                           style={{ flex: 1.2, height: 34, fontSize: 13, minWidth: 0 }}
@@ -630,7 +634,7 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
                             cursor: 'pointer',
                           }}
                         >
-                          <X size={16} aria-hidden />
+                          <TimesIcon />
                         </button>
                       </div>
                     ))}
@@ -655,7 +659,7 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
                       cursor: 'pointer',
                     }}
                   >
-                    <Plus size={14} aria-hidden />
+                    <PlusCircleIcon />
                     Add variable
                   </button>
 
@@ -671,9 +675,9 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
                           aria-label="Endpoint name"
                           placeholder="http-3000"
                           value={row.name}
-                          onChange={(e) =>
+                          onChange={(_e, val) =>
                             setSnippetPortRows((rows) =>
-                              rows.map((r) => (r.id === row.id ? { ...r, name: e.target.value } : r)),
+                              rows.map((r) => (r.id === row.id ? { ...r, name: val } : r)),
                             )
                           }
                           style={{ flex: 1, height: 34, fontSize: 13, minWidth: 0 }}
@@ -727,7 +731,7 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
                             cursor: 'pointer',
                           }}
                         >
-                          <X size={16} aria-hidden />
+                          <TimesIcon />
                         </button>
                       </div>
                     ))}
@@ -752,7 +756,7 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
                       cursor: 'pointer',
                     }}
                   >
-                    <Plus size={14} aria-hidden />
+                    <PlusCircleIcon />
                     Add port
                   </button>
 
@@ -771,9 +775,9 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
                           aria-label="Volume component name"
                           placeholder="projects"
                           value={row.volumeName}
-                          onChange={(e) =>
+                          onChange={(_e, val) =>
                             setSnippetVolumeRows((rows) =>
-                              rows.map((r) => (r.id === row.id ? { ...r, volumeName: e.target.value } : r)),
+                              rows.map((r) => (r.id === row.id ? { ...r, volumeName: val } : r)),
                             )
                           }
                           style={{ flex: 1, height: 34, fontSize: 13, minWidth: 0 }}
@@ -782,9 +786,9 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
                           aria-label="Mount path"
                           placeholder="/where/to/mount"
                           value={row.path}
-                          onChange={(e) =>
+                          onChange={(_e, val) =>
                             setSnippetVolumeRows((rows) =>
-                              rows.map((r) => (r.id === row.id ? { ...r, path: e.target.value } : r)),
+                              rows.map((r) => (r.id === row.id ? { ...r, path: val } : r)),
                             )
                           }
                           style={{ flex: 1.2, height: 34, fontSize: 13, minWidth: 0 }}
@@ -813,7 +817,7 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
                             cursor: 'pointer',
                           }}
                         >
-                          <X size={16} aria-hidden />
+                          <TimesIcon />
                         </button>
                       </div>
                     ))}
@@ -841,7 +845,7 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
                       cursor: 'pointer',
                     }}
                   >
-                    <Plus size={14} aria-hidden />
+                    <PlusCircleIcon />
                     Add volume mount
                   </button>
 
@@ -867,7 +871,7 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
                         id="snippet-mem-limit"
                         placeholder="2Gi"
                         value={snippetMemoryLimit}
-                        onChange={(e) => setSnippetMemoryLimit(e.target.value)}
+                        onChange={(_e, val) => setSnippetMemoryLimit(val)}
                         style={{ height: 34, fontSize: 13 }}
                       />
                     </div>
@@ -882,7 +886,7 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
                         id="snippet-mem-req"
                         placeholder="512Mi"
                         value={snippetMemoryRequest}
-                        onChange={(e) => setSnippetMemoryRequest(e.target.value)}
+                        onChange={(_e, val) => setSnippetMemoryRequest(val)}
                         style={{ height: 34, fontSize: 13 }}
                       />
                     </div>
@@ -897,7 +901,7 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
                         id="snippet-cpu-limit"
                         placeholder="2"
                         value={snippetCpuLimit}
-                        onChange={(e) => setSnippetCpuLimit(e.target.value)}
+                        onChange={(_e, val) => setSnippetCpuLimit(val)}
                         style={{ height: 34, fontSize: 13 }}
                       />
                     </div>
@@ -912,7 +916,7 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
                         id="snippet-cpu-req"
                         placeholder="500m"
                         value={snippetCpuRequest}
-                        onChange={(e) => setSnippetCpuRequest(e.target.value)}
+                        onChange={(_e, val) => setSnippetCpuRequest(val)}
                         style={{ height: 34, fontSize: 13 }}
                       />
                     </div>
@@ -947,7 +951,7 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
                       id="snippet-src-map"
                       placeholder="/projects"
                       value={snippetSourceMapping}
-                      onChange={(e) => setSnippetSourceMapping(e.target.value)}
+                      onChange={(_e, val) => setSnippetSourceMapping(val)}
                       style={{ height: 34, fontSize: 13 }}
                     />
                   </div>
