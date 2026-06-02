@@ -1,5 +1,23 @@
-import { useState, useEffect, useMemo } from 'react'
-import { TextInput } from '@patternfly/react-core'
+import { useState, useMemo } from 'react'
+import {
+  Button,
+  Card,
+  CardBody,
+  Checkbox,
+  CodeBlock,
+  CodeBlockCode,
+  FormGroup,
+  Gallery,
+  Grid,
+  GridItem,
+  Label,
+  LabelGroup,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  TextInput,
+} from '@patternfly/react-core'
 import {
   CheckIcon,
   CopyIcon,
@@ -38,7 +56,6 @@ interface EnvComponent {
   id: string
   name: string
   subtitle?: string
-  /** Key into `DEPENDENCY_BRANDS` (simple-icons) */
   brand: string
 }
 
@@ -115,7 +132,7 @@ interface EnvironmentComponentsSectionProps {
 function ComponentIcon({ brand, size }: { brand: string; size: number }) {
   const icon = getDependencyBrandIcon(brand)
   if (icon) return <DependencyBrandIcon icon={icon} size={size} />
-  return <CubeIcon style={{ fontSize: size, color: 'var(--text-muted)', flexShrink: 0 }} aria-hidden />
+  return <CubeIcon style={{ fontSize: size }} aria-hidden />
 }
 
 export function EnvironmentComponentsSection({ selected, onChange }: EnvironmentComponentsSectionProps) {
@@ -159,809 +176,365 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
       sourceMapping: snippetSourceMapping.trim() || undefined,
     })
   }, [
-    yamlPreview,
-    snippetEnvRows,
-    snippetPortRows,
-    snippetVolumeRows,
-    snippetMemoryLimit,
-    snippetMemoryRequest,
-    snippetCpuLimit,
-    snippetCpuRequest,
-    snippetMountSources,
-    snippetSourceMapping,
+    yamlPreview, snippetEnvRows, snippetPortRows, snippetVolumeRows,
+    snippetMemoryLimit, snippetMemoryRequest, snippetCpuLimit, snippetCpuRequest,
+    snippetMountSources, snippetSourceMapping,
   ])
 
-  useEffect(() => {
-    if (!open) return
-    function onKey(e: KeyboardEvent) {
-      if (e.key !== 'Escape') return
-      if (yamlPreview) {
-        setYamlPreview(null)
-        return
-      }
-      setOpen(false)
-    }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [open, yamlPreview])
-
   function toggle(id: string) {
-    onChange(
-      selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id],
-    )
+    onChange(selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id])
   }
 
   function remove(id: string) {
     onChange(selected.filter((s) => s !== id))
   }
 
+  function openYamlPreview(c: EnvComponent) {
+    setCopyDone(false)
+    setSnippetEnvRows([{ id: newSnippetRowId(), name: '', value: '' }])
+    setSnippetPortRows([{ id: newSnippetRowId(), name: '', port: '' }])
+    setSnippetVolumeRows([{ id: newSnippetRowId(), volumeName: '', path: '' }])
+    setSnippetMemoryLimit('')
+    setSnippetMemoryRequest('')
+    setSnippetCpuLimit('')
+    setSnippetCpuRequest('')
+    setSnippetMountSources(true)
+    setSnippetSourceMapping('')
+    setYamlPreview(c)
+  }
+
+  function handleCopy() {
+    void navigator.clipboard.writeText(mergedSnippet).then(() => {
+      setCopyDone(true)
+      window.setTimeout(() => setCopyDone(false), 2000)
+    })
+  }
+
   const selectedItems = AVAILABLE_COMPONENTS.filter((c) => selected.includes(c.id))
 
   return (
-    <div style={{ position: 'relative' }}>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-        {selectedItems.map((c) => (
-          <span
-            key={c.id}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              height: 30,
-              padding: '0 10px',
-              fontSize: 14,
-              background: 'var(--accent-light)',
-              color: 'var(--accent)',
-              borderRadius: 6,
-              fontWeight: 500,
-            }}
-          >
-            <ComponentIcon brand={c.brand} size={14} />
-            {c.name}
-            <button
-              type="button"
-              onClick={() => remove(c.id)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                border: 'none',
-                background: 'transparent',
-                color: 'var(--accent)',
-                cursor: 'pointer',
-                padding: 0,
-                marginLeft: 2,
-              }}
-              aria-label={`Remove ${c.name}`}
+    <div>
+      {selectedItems.length > 0 && (
+        <LabelGroup style={{ marginBottom: 8 }}>
+          {selectedItems.map((c) => (
+            <Label
+              key={c.id}
+              onClose={() => remove(c.id)}
+              icon={<ComponentIcon brand={c.brand} size={14} />}
             >
-              <TimesIcon />
-            </button>
-          </span>
-        ))}
+              {c.name}
+            </Label>
+          ))}
+        </LabelGroup>
+      )}
 
-        <button
-          type="button"
-          onClick={() => setOpen(!open)}
-          aria-expanded={open}
-          aria-haspopup="dialog"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 32,
-            height: 32,
-            border: '1px dashed var(--border)',
-            borderRadius: 'var(--radius)',
-            background: 'transparent',
-            color: 'var(--text-muted)',
-            cursor: 'pointer',
-            transition: 'all var(--transition)',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = 'var(--accent)'
-            e.currentTarget.style.color = 'var(--accent)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = 'var(--border)'
-            e.currentTarget.style.color = 'var(--text-muted)'
-          }}
-        >
-          <PlusCircleIcon />
-        </button>
-      </div>
+      <Button variant="secondary" icon={<PlusCircleIcon />} onClick={() => setOpen(true)}>
+        Add Components
+      </Button>
 
-      {open && (
-        <>
-        <div
-          role="presentation"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 100,
-            background: 'rgba(0, 0, 0, 0.45)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 16,
-          }}
-          onClick={() => setOpen(false)}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="env-components-dialog-title"
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              width: 'min(920px, 100%)',
-              maxHeight: 'min(88vh, 900px)',
-              overflow: 'auto',
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-lg)',
-              boxShadow: 'var(--shadow-lg)',
-              padding: 24,
-            }}
-          >
-            <h2
-              id="env-components-dialog-title"
-              style={{ fontSize: 16, fontWeight: 600, marginBottom: 4, color: 'var(--text)' }}
-            >
-              Environment components
-            </h2>
-            <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 16 }}>
-              Select runtimes and language stacks to include in your workspace image.
-            </p>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(172px, 1fr))',
-                gap: 12,
-              }}
-            >
-              {AVAILABLE_COMPONENTS.map((c) => {
-                const isSelected = selected.includes(c.id)
-                return (
-                  <div
-                    key={c.id}
-                    style={{
-                      position: 'relative',
-                      borderRadius: 'var(--radius)',
-                      border: isSelected ? '2px solid var(--accent)' : '1px solid var(--border)',
-                      background: isSelected ? 'var(--accent-light)' : 'var(--surface-muted)',
-                      minHeight: 88,
-                      transition: 'border-color var(--transition), background var(--transition)',
-                    }}
-                  >
+      {/* Component Selector Modal */}
+      <Modal
+        isOpen={open}
+        onClose={() => setOpen(false)}
+        variant="large"
+        aria-label="Environment components"
+      >
+        <ModalHeader
+          title="Environment components"
+          description="Select runtimes and language stacks to include in your workspace image."
+        />
+        <ModalBody>
+          <Gallery hasGutter minWidths={{ default: '172px' }}>
+            {AVAILABLE_COMPONENTS.map((c) => {
+              const isSelected = selected.includes(c.id)
+              return (
+                <Card
+                  key={c.id}
+                  isSelectable
+                  isSelected={isSelected}
+                  onClick={() => toggle(c.id)}
+                  style={{ position: 'relative', minHeight: 88 }}
+                >
+                  <CardBody>
                     {isSelected && (
                       <span
                         style={{
                           position: 'absolute',
                           top: 8,
                           right: 8,
-                          zIndex: 1,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           width: 20,
                           height: 20,
                           borderRadius: '50%',
-                          background: 'var(--accent)',
+                          background: 'var(--pf-v6-global--primary-color--100, #0066cc)',
                           color: '#fff',
-                          pointerEvents: 'none',
                         }}
                         aria-hidden
                       >
                         <CheckIcon />
                       </span>
                     )}
-                    <button
-                      type="button"
-                      onClick={() => toggle(c.id)}
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'flex-start',
-                        gap: 8,
-                        width: '100%',
-                        minHeight: 88,
-                        boxSizing: 'border-box',
-                        padding: '12px 14px',
-                        paddingBottom: 36,
-                        paddingRight: isSelected ? 30 : 14,
-                        textAlign: 'left',
-                        border: 'none',
-                        background: 'transparent',
-                        color: 'var(--text)',
-                        cursor: 'pointer',
-                        borderRadius: 'var(--radius)',
-                      }}
-                    >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       <ComponentIcon brand={c.brand} size={24} />
-                      <span style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.25 }}>{c.name}</span>
+                      <strong style={{ fontSize: 14 }}>{c.name}</strong>
                       {c.subtitle && (
-                        <span style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: -4 }}>{c.subtitle}</span>
+                        <span style={{ fontSize: 12, color: 'var(--pf-v6-global--Color--200, #6a6e73)' }}>
+                          {c.subtitle}
+                        </span>
                       )}
-                    </button>
-                    <button
-                      type="button"
-                      aria-label={`View example devfile YAML for ${c.name}`}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setCopyDone(false)
-                        setSnippetEnvRows([{ id: newSnippetRowId(), name: '', value: '' }])
-                        setSnippetPortRows([{ id: newSnippetRowId(), name: '', port: '' }])
-                        setSnippetVolumeRows([{ id: newSnippetRowId(), volumeName: '', path: '' }])
-                        setSnippetMemoryLimit('')
-                        setSnippetMemoryRequest('')
-                        setSnippetCpuLimit('')
-                        setSnippetCpuRequest('')
-                        setSnippetMountSources(true)
-                        setSnippetSourceMapping('')
-                        setYamlPreview(c)
-                      }}
-                      style={{
-                        position: 'absolute',
-                        bottom: 8,
-                        right: 8,
-                        zIndex: 2,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: 30,
-                        height: 30,
-                        borderRadius: 6,
-                        border: '1px solid var(--border)',
-                        background: 'var(--surface)',
-                        color: 'var(--text-muted)',
-                        cursor: 'pointer',
-                        transition: 'color var(--transition), border-color var(--transition), background var(--transition)',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.borderColor = 'var(--accent)'
-                        e.currentTarget.style.color = 'var(--accent)'
-                        e.currentTarget.style.background = 'var(--accent-light)'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.borderColor = 'var(--border)'
-                        e.currentTarget.style.color = 'var(--text-muted)'
-                        e.currentTarget.style.background = 'var(--surface)'
-                      }}
-                    >
-                      <FileCodeIcon />
-                    </button>
-                  </div>
-                )
-              })}
-            </div>
-            <div style={{ marginTop: 18, display: 'flex', justifyContent: 'flex-end' }}>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                style={{
-                  padding: '8px 16px',
-                  fontSize: 14,
-                  fontWeight: 600,
-                  border: 'none',
-                  borderRadius: 9999,
-                  background: 'var(--accent)',
-                  color: '#fff',
-                  cursor: 'pointer',
-                }}
-              >
-                Done
-              </button>
-            </div>
-          </div>
-        </div>
+                    </div>
+                  </CardBody>
+                  <Button
+                    variant="plain"
+                    aria-label={`View devfile YAML for ${c.name}`}
+                    icon={<FileCodeIcon />}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      openYamlPreview(c)
+                    }}
+                    style={{ position: 'absolute', bottom: 4, right: 4 }}
+                  />
+                </Card>
+              )
+            })}
+          </Gallery>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="primary" onClick={() => setOpen(false)}>
+            Done
+          </Button>
+        </ModalFooter>
+      </Modal>
 
-        {yamlPreview && (
-          <div
-            role="presentation"
-            style={{
-              position: 'fixed',
-              inset: 0,
-              zIndex: 110,
-              background: 'rgba(0, 0, 0, 0.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 16,
-            }}
-            onClick={() => setYamlPreview(null)}
+      {/* YAML Preview Modal */}
+      <Modal
+        isOpen={!!yamlPreview}
+        onClose={() => setYamlPreview(null)}
+        variant="medium"
+        aria-label={`Devfile snippet — ${yamlPreview?.name ?? ''}`}
+      >
+        <ModalHeader title={`Devfile snippet — ${yamlPreview?.name ?? ''}`} />
+        <ModalBody>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+            <p>
+              Example <code>components</code> entry you can merge into your devfile. Image tags are
+              illustrative; adjust for your registry and version policy.
+            </p>
+            <Button variant="secondary" icon={<CopyIcon />} onClick={handleCopy} style={{ flexShrink: 0, marginLeft: 16 }}>
+              {copyDone ? 'Copied' : 'Copy'}
+            </Button>
+          </div>
+
+          <CodeBlock>
+            <CodeBlockCode>{mergedSnippet}</CodeBlockCode>
+          </CodeBlock>
+
+          {/* Environment variables */}
+          <h4 style={{ marginTop: 24, marginBottom: 8 }}>Environment variables</h4>
+          {snippetEnvRows.map((row) => (
+            <div key={row.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <TextInput
+                aria-label="Variable name"
+                placeholder="NAME"
+                value={row.name}
+                onChange={(_e, val) =>
+                  setSnippetEnvRows((rows) => rows.map((r) => (r.id === row.id ? { ...r, name: val } : r)))
+                }
+                style={{ flex: 1 }}
+              />
+              <TextInput
+                aria-label="Value"
+                placeholder="value"
+                value={row.value}
+                onChange={(_e, val) =>
+                  setSnippetEnvRows((rows) => rows.map((r) => (r.id === row.id ? { ...r, value: val } : r)))
+                }
+                style={{ flex: 1 }}
+              />
+              <Button
+                variant="plain"
+                aria-label="Remove variable row"
+                icon={<TimesIcon />}
+                onClick={() =>
+                  setSnippetEnvRows((rows) =>
+                    rows.length <= 1
+                      ? [{ id: newSnippetRowId(), name: '', value: '' }]
+                      : rows.filter((r) => r.id !== row.id),
+                  )
+                }
+              />
+            </div>
+          ))}
+          <Button
+            variant="link"
+            icon={<PlusCircleIcon />}
+            onClick={() => setSnippetEnvRows((rows) => [...rows, { id: newSnippetRowId(), name: '', value: '' }])}
           >
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="env-component-yaml-title"
-              onClick={(e) => e.stopPropagation()}
-              style={{
-                width: 'min(560px, 100%)',
-                maxHeight: 'min(72vh, 640px)',
-                display: 'flex',
-                flexDirection: 'column',
-                background: 'var(--surface)',
-                border: '1px solid var(--border)',
-                borderRadius: 'var(--radius-lg)',
-                boxShadow: 'var(--shadow-lg)',
-                overflow: 'hidden',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 12,
-                  padding: '14px 16px',
-                  borderBottom: '1px solid var(--border)',
-                  flexShrink: 0,
-                  flexGrow: 0,
-                }}
-              >
-                <h3
-                  id="env-component-yaml-title"
-                  style={{ fontSize: 15, fontWeight: 600, margin: 0, color: 'var(--text)' }}
-                >
-                  Devfile snippet — {yamlPreview.name}
-                </h3>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void navigator.clipboard.writeText(mergedSnippet).then(() => {
-                        setCopyDone(true)
-                        window.setTimeout(() => setCopyDone(false), 2000)
-                      })
-                    }}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      padding: '6px 12px',
-                      fontSize: 13,
-                      fontWeight: 500,
-                      border: '1px solid var(--border)',
-                      borderRadius: 6,
-                      background: 'var(--surface-muted)',
-                      color: 'var(--text)',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <CopyIcon />
-                    {copyDone ? 'Copied' : 'Copy'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setYamlPreview(null)}
-                    aria-label="Close"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: 34,
-                      height: 34,
-                      border: 'none',
-                      borderRadius: 6,
-                      background: 'transparent',
-                      color: 'var(--text-muted)',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <TimesIcon />
-                  </button>
-                </div>
-              </div>
-              <div
-                style={{
-                  flex: 1,
-                  minHeight: 0,
-                  overflow: 'auto',
-                  display: 'flex',
-                  flexDirection: 'column',
-                }}
-              >
-                <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '10px 16px 0', lineHeight: 1.45 }}>
-                  Example <code style={{ fontSize: 12 }}>components</code> entry you can merge into your devfile. Image tags are
-                  illustrative; adjust for your registry and version policy.
-                </p>
-                <pre
-                  style={{
-                    margin: '12px 16px 0',
-                    padding: 14,
-                    fontSize: 12,
-                    lineHeight: 1.5,
-                    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-                    background: 'var(--surface-muted)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 'var(--radius)',
-                    overflow: 'auto',
-                    flexShrink: 0,
-                    color: 'var(--text)',
-                  }}
-                >
-                  <code>{mergedSnippet}</code>
-                </pre>
+            Add variable
+          </Button>
 
-                <div style={{ padding: '16px 16px 18px', borderTop: '1px solid var(--border)', flexShrink: 0 }}>
-                  <p style={{ fontSize: 12, fontWeight: 600, margin: '0 0 8px', color: 'var(--text)' }}>
-                    Environment variables
-                  </p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {snippetEnvRows.map((row) => (
-                      <div key={row.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <TextInput
-                          aria-label="Variable name"
-                          placeholder="NAME"
-                          value={row.name}
-                          onChange={(_e, val) =>
-                            setSnippetEnvRows((rows) =>
-                              rows.map((r) => (r.id === row.id ? { ...r, name: val } : r)),
-                            )
-                          }
-                          style={{ flex: 1, height: 34, fontSize: 13, minWidth: 0 }}
-                        />
-                        <TextInput
-                          aria-label="Value"
-                          placeholder="value"
-                          value={row.value}
-                          onChange={(_e, val) =>
-                            setSnippetEnvRows((rows) =>
-                              rows.map((r) => (r.id === row.id ? { ...r, value: val } : r)),
-                            )
-                          }
-                          style={{ flex: 1.2, height: 34, fontSize: 13, minWidth: 0 }}
-                        />
-                        <button
-                          type="button"
-                          aria-label="Remove variable row"
-                          onClick={() =>
-                            setSnippetEnvRows((rows) =>
-                              rows.length <= 1
-                                ? [{ id: newSnippetRowId(), name: '', value: '' }]
-                                : rows.filter((r) => r.id !== row.id),
-                            )
-                          }
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: 34,
-                            height: 34,
-                            flexShrink: 0,
-                            border: '1px solid var(--border)',
-                            borderRadius: 6,
-                            background: 'var(--surface-muted)',
-                            color: 'var(--text-muted)',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          <TimesIcon />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSnippetEnvRows((rows) => [...rows, { id: newSnippetRowId(), name: '', value: '' }])
-                    }
-                    style={{
-                      marginTop: 8,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      padding: '6px 10px',
-                      fontSize: 13,
-                      fontWeight: 500,
-                      border: '1px dashed var(--border)',
-                      borderRadius: 6,
-                      background: 'transparent',
-                      color: 'var(--text-secondary)',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <PlusCircleIcon />
-                    Add variable
-                  </button>
-
-                  <p style={{ fontSize: 12, fontWeight: 600, margin: '18px 0 8px', color: 'var(--text)' }}>Ports</p>
-                  <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 8px', lineHeight: 1.45 }}>
-                    Adds <code style={{ fontSize: 11 }}>endpoints</code> with <code style={{ fontSize: 11 }}>exposure: public</code>
-                    (typical for apps you open in the browser). Change exposure in your devfile if you need internal-only routes.
-                  </p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {snippetPortRows.map((row) => (
-                      <div key={row.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <TextInput
-                          aria-label="Endpoint name"
-                          placeholder="http-3000"
-                          value={row.name}
-                          onChange={(_e, val) =>
-                            setSnippetPortRows((rows) =>
-                              rows.map((r) => (r.id === row.id ? { ...r, name: val } : r)),
-                            )
-                          }
-                          style={{ flex: 1, height: 34, fontSize: 13, minWidth: 0 }}
-                        />
-                        <input
-                          type="number"
-                          aria-label="Target port"
-                          placeholder="3000"
-                          min={1}
-                          max={65535}
-                          value={row.port}
-                          onChange={(e) =>
-                            setSnippetPortRows((rows) =>
-                              rows.map((r) => (r.id === row.id ? { ...r, port: e.target.value } : r)),
-                            )
-                          }
-                          style={{
-                            width: 96,
-                            flexShrink: 0,
-                            height: 34,
-                            padding: '0 10px',
-                            fontSize: 13,
-                            border: '1px solid var(--border)',
-                            borderRadius: 'var(--radius)',
-                            background: 'var(--surface)',
-                            color: 'var(--text)',
-                            boxSizing: 'border-box',
-                          }}
-                        />
-                        <button
-                          type="button"
-                          aria-label="Remove port row"
-                          onClick={() =>
-                            setSnippetPortRows((rows) =>
-                              rows.length <= 1
-                                ? [{ id: newSnippetRowId(), name: '', port: '' }]
-                                : rows.filter((r) => r.id !== row.id),
-                            )
-                          }
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: 34,
-                            height: 34,
-                            flexShrink: 0,
-                            border: '1px solid var(--border)',
-                            borderRadius: 6,
-                            background: 'var(--surface-muted)',
-                            color: 'var(--text-muted)',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          <TimesIcon />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSnippetPortRows((rows) => [...rows, { id: newSnippetRowId(), name: '', port: '' }])
-                    }
-                    style={{
-                      marginTop: 8,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      padding: '6px 10px',
-                      fontSize: 13,
-                      fontWeight: 500,
-                      border: '1px dashed var(--border)',
-                      borderRadius: 6,
-                      background: 'transparent',
-                      color: 'var(--text-secondary)',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <PlusCircleIcon />
-                    Add port
-                  </button>
-
-                  <p style={{ fontSize: 12, fontWeight: 600, margin: '18px 0 8px', color: 'var(--text)' }}>
-                    Volume mounts
-                  </p>
-                  <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 8px', lineHeight: 1.45 }}>
-                    <code style={{ fontSize: 11 }}>name</code> must match a <code style={{ fontSize: 11 }}>volume</code>{' '}
-                    component in your devfile (for example <code style={{ fontSize: 11 }}>projects</code> for the
-                    workspace sources).
-                  </p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {snippetVolumeRows.map((row) => (
-                      <div key={row.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <TextInput
-                          aria-label="Volume component name"
-                          placeholder="projects"
-                          value={row.volumeName}
-                          onChange={(_e, val) =>
-                            setSnippetVolumeRows((rows) =>
-                              rows.map((r) => (r.id === row.id ? { ...r, volumeName: val } : r)),
-                            )
-                          }
-                          style={{ flex: 1, height: 34, fontSize: 13, minWidth: 0 }}
-                        />
-                        <TextInput
-                          aria-label="Mount path"
-                          placeholder="/where/to/mount"
-                          value={row.path}
-                          onChange={(_e, val) =>
-                            setSnippetVolumeRows((rows) =>
-                              rows.map((r) => (r.id === row.id ? { ...r, path: val } : r)),
-                            )
-                          }
-                          style={{ flex: 1.2, height: 34, fontSize: 13, minWidth: 0 }}
-                        />
-                        <button
-                          type="button"
-                          aria-label="Remove volume mount row"
-                          onClick={() =>
-                            setSnippetVolumeRows((rows) =>
-                              rows.length <= 1
-                                ? [{ id: newSnippetRowId(), volumeName: '', path: '' }]
-                                : rows.filter((r) => r.id !== row.id),
-                            )
-                          }
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: 34,
-                            height: 34,
-                            flexShrink: 0,
-                            border: '1px solid var(--border)',
-                            borderRadius: 6,
-                            background: 'var(--surface-muted)',
-                            color: 'var(--text-muted)',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          <TimesIcon />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSnippetVolumeRows((rows) => [
-                        ...rows,
-                        { id: newSnippetRowId(), volumeName: '', path: '' },
-                      ])
-                    }
-                    style={{
-                      marginTop: 8,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      padding: '6px 10px',
-                      fontSize: 13,
-                      fontWeight: 500,
-                      border: '1px dashed var(--border)',
-                      borderRadius: 6,
-                      background: 'transparent',
-                      color: 'var(--text-secondary)',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <PlusCircleIcon />
-                    Add volume mount
-                  </button>
-
-                  <p style={{ fontSize: 12, fontWeight: 600, margin: '18px 0 8px', color: 'var(--text)' }}>
-                    Resources and sources
-                  </p>
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '1fr 1fr',
-                      gap: 10,
-                      marginBottom: 12,
-                    }}
-                  >
-                    <div>
-                      <label
-                        htmlFor="snippet-mem-limit"
-                        style={{ display: 'block', fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}
-                      >
-                        memoryLimit
-                      </label>
-                      <TextInput
-                        id="snippet-mem-limit"
-                        placeholder="2Gi"
-                        value={snippetMemoryLimit}
-                        onChange={(_e, val) => setSnippetMemoryLimit(val)}
-                        style={{ height: 34, fontSize: 13 }}
-                      />
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="snippet-mem-req"
-                        style={{ display: 'block', fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}
-                      >
-                        memoryRequest
-                      </label>
-                      <TextInput
-                        id="snippet-mem-req"
-                        placeholder="512Mi"
-                        value={snippetMemoryRequest}
-                        onChange={(_e, val) => setSnippetMemoryRequest(val)}
-                        style={{ height: 34, fontSize: 13 }}
-                      />
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="snippet-cpu-limit"
-                        style={{ display: 'block', fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}
-                      >
-                        cpuLimit
-                      </label>
-                      <TextInput
-                        id="snippet-cpu-limit"
-                        placeholder="2"
-                        value={snippetCpuLimit}
-                        onChange={(_e, val) => setSnippetCpuLimit(val)}
-                        style={{ height: 34, fontSize: 13 }}
-                      />
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="snippet-cpu-req"
-                        style={{ display: 'block', fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}
-                      >
-                        cpuRequest
-                      </label>
-                      <TextInput
-                        id="snippet-cpu-req"
-                        placeholder="500m"
-                        value={snippetCpuRequest}
-                        onChange={(_e, val) => setSnippetCpuRequest(val)}
-                        style={{ height: 34, fontSize: 13 }}
-                      />
-                    </div>
-                  </div>
-                  <label
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      fontSize: 13,
-                      color: 'var(--text)',
-                      cursor: 'pointer',
-                      marginBottom: 10,
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={snippetMountSources}
-                      onChange={(e) => setSnippetMountSources(e.target.checked)}
-                      style={{ width: 16, height: 16, accentColor: 'var(--accent)', cursor: 'pointer' }}
-                    />
-                    Mount project sources (uncheck for <code style={{ fontSize: 11 }}>mountSources: false</code>)
-                  </label>
-                  <div>
-                    <label
-                      htmlFor="snippet-src-map"
-                      style={{ display: 'block', fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}
-                    >
-                      sourceMapping
-                    </label>
-                    <TextInput
-                      id="snippet-src-map"
-                      placeholder="/projects"
-                      value={snippetSourceMapping}
-                      onChange={(_e, val) => setSnippetSourceMapping(val)}
-                      style={{ height: 34, fontSize: 13 }}
-                    />
-                  </div>
-                </div>
-              </div>
+          {/* Ports */}
+          <h4 style={{ marginTop: 24, marginBottom: 8 }}>Ports</h4>
+          <p style={{ fontSize: 13, marginBottom: 8 }}>
+            Adds <code>endpoints</code> with <code>exposure: public</code> (typical for browser apps).
+          </p>
+          {snippetPortRows.map((row) => (
+            <div key={row.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <TextInput
+                aria-label="Endpoint name"
+                placeholder="http-3000"
+                value={row.name}
+                onChange={(_e, val) =>
+                  setSnippetPortRows((rows) => rows.map((r) => (r.id === row.id ? { ...r, name: val } : r)))
+                }
+                style={{ flex: 1 }}
+              />
+              <TextInput
+                type="number"
+                aria-label="Target port"
+                placeholder="3000"
+                value={row.port}
+                onChange={(_e, val) =>
+                  setSnippetPortRows((rows) => rows.map((r) => (r.id === row.id ? { ...r, port: val } : r)))
+                }
+                style={{ width: 96, flexShrink: 0 }}
+              />
+              <Button
+                variant="plain"
+                aria-label="Remove port row"
+                icon={<TimesIcon />}
+                onClick={() =>
+                  setSnippetPortRows((rows) =>
+                    rows.length <= 1
+                      ? [{ id: newSnippetRowId(), name: '', port: '' }]
+                      : rows.filter((r) => r.id !== row.id),
+                  )
+                }
+              />
             </div>
-          </div>
-        )}
-        </>
-      )}
+          ))}
+          <Button
+            variant="link"
+            icon={<PlusCircleIcon />}
+            onClick={() => setSnippetPortRows((rows) => [...rows, { id: newSnippetRowId(), name: '', port: '' }])}
+          >
+            Add port
+          </Button>
+
+          {/* Volume mounts */}
+          <h4 style={{ marginTop: 24, marginBottom: 8 }}>Volume mounts</h4>
+          <p style={{ fontSize: 13, marginBottom: 8 }}>
+            <code>name</code> must match a <code>volume</code> component in your devfile.
+          </p>
+          {snippetVolumeRows.map((row) => (
+            <div key={row.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <TextInput
+                aria-label="Volume name"
+                placeholder="projects"
+                value={row.volumeName}
+                onChange={(_e, val) =>
+                  setSnippetVolumeRows((rows) => rows.map((r) => (r.id === row.id ? { ...r, volumeName: val } : r)))
+                }
+                style={{ flex: 1 }}
+              />
+              <TextInput
+                aria-label="Mount path"
+                placeholder="/where/to/mount"
+                value={row.path}
+                onChange={(_e, val) =>
+                  setSnippetVolumeRows((rows) => rows.map((r) => (r.id === row.id ? { ...r, path: val } : r)))
+                }
+                style={{ flex: 1 }}
+              />
+              <Button
+                variant="plain"
+                aria-label="Remove volume mount row"
+                icon={<TimesIcon />}
+                onClick={() =>
+                  setSnippetVolumeRows((rows) =>
+                    rows.length <= 1
+                      ? [{ id: newSnippetRowId(), volumeName: '', path: '' }]
+                      : rows.filter((r) => r.id !== row.id),
+                  )
+                }
+              />
+            </div>
+          ))}
+          <Button
+            variant="link"
+            icon={<PlusCircleIcon />}
+            onClick={() =>
+              setSnippetVolumeRows((rows) => [...rows, { id: newSnippetRowId(), volumeName: '', path: '' }])
+            }
+          >
+            Add volume mount
+          </Button>
+
+          {/* Resources */}
+          <h4 style={{ marginTop: 24, marginBottom: 8 }}>Resources and sources</h4>
+          <Grid hasGutter>
+            <GridItem span={6}>
+              <FormGroup label="memoryLimit" fieldId="snippet-mem-limit">
+                <TextInput
+                  id="snippet-mem-limit"
+                  placeholder="2Gi"
+                  value={snippetMemoryLimit}
+                  onChange={(_e, val) => setSnippetMemoryLimit(val)}
+                />
+              </FormGroup>
+            </GridItem>
+            <GridItem span={6}>
+              <FormGroup label="memoryRequest" fieldId="snippet-mem-req">
+                <TextInput
+                  id="snippet-mem-req"
+                  placeholder="512Mi"
+                  value={snippetMemoryRequest}
+                  onChange={(_e, val) => setSnippetMemoryRequest(val)}
+                />
+              </FormGroup>
+            </GridItem>
+            <GridItem span={6}>
+              <FormGroup label="cpuLimit" fieldId="snippet-cpu-limit">
+                <TextInput
+                  id="snippet-cpu-limit"
+                  placeholder="2"
+                  value={snippetCpuLimit}
+                  onChange={(_e, val) => setSnippetCpuLimit(val)}
+                />
+              </FormGroup>
+            </GridItem>
+            <GridItem span={6}>
+              <FormGroup label="cpuRequest" fieldId="snippet-cpu-req">
+                <TextInput
+                  id="snippet-cpu-req"
+                  placeholder="500m"
+                  value={snippetCpuRequest}
+                  onChange={(_e, val) => setSnippetCpuRequest(val)}
+                />
+              </FormGroup>
+            </GridItem>
+          </Grid>
+
+          <Checkbox
+            id="snippet-mount-sources"
+            label={<>Mount project sources (uncheck for <code>mountSources: false</code>)</>}
+            isChecked={snippetMountSources}
+            onChange={(_e, checked) => setSnippetMountSources(checked)}
+            style={{ marginTop: 12, marginBottom: 12 }}
+          />
+
+          <FormGroup label="sourceMapping" fieldId="snippet-src-map">
+            <TextInput
+              id="snippet-src-map"
+              placeholder="/projects"
+              value={snippetSourceMapping}
+              onChange={(_e, val) => setSnippetSourceMapping(val)}
+            />
+          </FormGroup>
+        </ModalBody>
+      </Modal>
     </div>
   )
 }
