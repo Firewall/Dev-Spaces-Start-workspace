@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import {
   ExpandableSection,
+  Form,
   FormGroup,
   Grid,
   GridItem,
@@ -49,6 +50,7 @@ export function EnvironmentSettings({ value, onChange }: EnvironmentSettingsProp
       isExpanded={expanded}
       onToggle={(_e, isExpanded) => setExpanded(isExpanded)}
     >
+      <Form>
       <FormGroup
         label="Path to Devfile"
         fieldId="devfile-path"
@@ -105,6 +107,7 @@ export function EnvironmentSettings({ value, onChange }: EnvironmentSettingsProp
           </FormGroup>
         </GridItem>
       </Grid>
+      </Form>
     </ExpandableSection>
   )
 }
