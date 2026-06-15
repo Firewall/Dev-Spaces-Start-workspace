@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Button,
   Dropdown,
@@ -16,6 +16,7 @@ import {
   PageSection,
   PageSidebar,
   PageSidebarBody,
+  Switch,
 } from '@patternfly/react-core'
 import {
   ArchiveIcon,
@@ -36,11 +37,28 @@ const NAV_ITEMS: { label: string; id: string; icon: ComponentType }[] = [
   { label: 'Backups', id: 'backups', icon: ArchiveIcon },
 ]
 
+const THEME_STORAGE_KEY = 'dev-spaces-theme'
+const DARK_THEME_CLASS = 'pf-v6-theme-dark'
+
 export default function App() {
   const [signedIn, setSignedIn] = useState(true)
   const [username] = useState('jane.doe')
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [activeNavItem, setActiveNavItem] = useState('workspaces')
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY)
+    if (savedTheme) {
+      return savedTheme === 'dark'
+    }
+
+    return document.documentElement.classList.contains(DARK_THEME_CLASS)
+  })
+
+  useEffect(() => {
+    document.documentElement.classList.toggle(DARK_THEME_CLASS, isDarkMode)
+    window.localStorage.setItem(THEME_STORAGE_KEY, isDarkMode ? 'dark' : 'light')
+  }, [isDarkMode])
+
   const masthead = (
     <Masthead>
       <MastheadMain>
@@ -53,38 +71,46 @@ export default function App() {
         </MastheadBrand>
       </MastheadMain>
       <MastheadContent>
-        <Dropdown
-          isOpen={profileMenuOpen}
-          onSelect={() => setProfileMenuOpen(false)}
-          onOpenChange={setProfileMenuOpen}
-          popperProps={{ position: 'right' }}
-          toggle={(toggleRef) => (
-            <MenuToggle
-              ref={toggleRef}
-              onClick={() => setProfileMenuOpen((o) => !o)}
-              isExpanded={profileMenuOpen}
-              icon={<UserIcon />}
-            >
-              {username}
-            </MenuToggle>
-          )}
-        >
-          <DropdownList>
-            <DropdownItem key="settings" icon={<CogIcon />}>
-              Settings
-            </DropdownItem>
-            <DropdownItem key="about" icon={<InfoCircleIcon />}>
-              About
-            </DropdownItem>
-            <DropdownItem
-              key="logout"
-              icon={<SignOutAltIcon />}
-              onClick={() => setSignedIn(false)}
-            >
-              Log out
-            </DropdownItem>
-          </DropdownList>
-        </Dropdown>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <Switch
+            id="theme-toggle"
+            label="Dark mode"
+            isChecked={isDarkMode}
+            onChange={(_event, checked) => setIsDarkMode(checked)}
+          />
+          <Dropdown
+            isOpen={profileMenuOpen}
+            onSelect={() => setProfileMenuOpen(false)}
+            onOpenChange={setProfileMenuOpen}
+            popperProps={{ position: 'right' }}
+            toggle={(toggleRef) => (
+              <MenuToggle
+                ref={toggleRef}
+                onClick={() => setProfileMenuOpen((o) => !o)}
+                isExpanded={profileMenuOpen}
+                icon={<UserIcon />}
+              >
+                {username}
+              </MenuToggle>
+            )}
+          >
+            <DropdownList>
+              <DropdownItem key="settings" icon={<CogIcon />}>
+                Settings
+              </DropdownItem>
+              <DropdownItem key="about" icon={<InfoCircleIcon />}>
+                About
+              </DropdownItem>
+              <DropdownItem
+                key="logout"
+                icon={<SignOutAltIcon />}
+                onClick={() => setSignedIn(false)}
+              >
+                Log out
+              </DropdownItem>
+            </DropdownList>
+          </Dropdown>
+        </div>
       </MastheadContent>
     </Masthead>
   )
