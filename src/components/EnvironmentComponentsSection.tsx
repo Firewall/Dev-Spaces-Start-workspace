@@ -10,8 +10,6 @@ import {
   Gallery,
   Grid,
   GridItem,
-  Label,
-  LabelGroup,
   Modal,
   ModalBody,
   ModalFooter,
@@ -58,6 +56,12 @@ interface EnvComponent {
   subtitle?: string
   brand: string
 }
+
+type EnvComponentCategory =
+  | 'Languages & runtimes'
+  | 'Databases & messaging'
+  | 'Infrastructure & ops'
+  | 'Build & tooling'
 
 const AVAILABLE_COMPONENTS: EnvComponent[] = [
   { id: 'java-11', name: 'Java 11', subtitle: 'LTS', brand: 'java' },
@@ -124,9 +128,51 @@ const AVAILABLE_COMPONENTS: EnvComponent[] = [
   { id: 'bash-5', name: 'Bash 5', brand: 'bash' },
 ]
 
+const COMPONENT_CATEGORY_ORDER: EnvComponentCategory[] = [
+  'Languages & runtimes',
+  'Databases & messaging',
+  'Infrastructure & ops',
+  'Build & tooling',
+]
+
+const COMPONENT_CATEGORY_DESCRIPTIONS: Record<EnvComponentCategory, string> = {
+  'Languages & runtimes': 'Language stacks, frameworks, and SDKs for application development.',
+  'Databases & messaging': 'Data stores, queues, and event streaming services.',
+  'Infrastructure & ops': 'Platform services and infrastructure tooling for runtime operations.',
+  'Build & tooling': 'Compilers, package tooling, and command-line build utilities.',
+}
+
 interface EnvironmentComponentsSectionProps {
   selected: string[]
   onChange: (ids: string[]) => void
+}
+
+function getComponentCategory(component: EnvComponent): EnvComponentCategory {
+  switch (component.brand) {
+    case 'postgres':
+    case 'redis':
+    case 'mongo':
+    case 'mysql':
+    case 'mariadb':
+    case 'sqlite':
+    case 'rabbitmq':
+    case 'kafka':
+      return 'Databases & messaging'
+    case 'docker':
+    case 'kubernetes':
+    case 'nginx':
+    case 'terraform':
+      return 'Infrastructure & ops'
+    case 'gnu':
+    case 'llvm':
+    case 'cmake':
+    case 'gradle':
+    case 'maven':
+    case 'bash':
+      return 'Build & tooling'
+    default:
+      return 'Languages & runtimes'
+  }
 }
 
 function ComponentIcon({ brand, size }: { brand: string; size: number }) {
@@ -137,6 +183,8 @@ function ComponentIcon({ brand, size }: { brand: string; size: number }) {
 
 export function EnvironmentComponentsSection({ selected, onChange }: EnvironmentComponentsSectionProps) {
   const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
+  const [activeCategory, setActiveCategory] = useState<'All' | EnvComponentCategory>('All')
   const [yamlPreview, setYamlPreview] = useState<EnvComponent | null>(null)
   const [snippetEnvRows, setSnippetEnvRows] = useState<SnippetEnvRow[]>([])
   const [snippetPortRows, setSnippetPortRows] = useState<SnippetPortRow[]>([])
@@ -189,6 +237,12 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
     onChange(selected.filter((s) => s !== id))
   }
 
+  function closePicker() {
+    setOpen(false)
+    setSearch('')
+    setActiveCategory('All')
+  }
+
   function openYamlPreview(c: EnvComponent) {
     setCopyDone(false)
     setSnippetEnvRows([{ id: newSnippetRowId(), name: '', value: '' }])
@@ -211,21 +265,62 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
   }
 
   const selectedItems = AVAILABLE_COMPONENTS.filter((c) => selected.includes(c.id))
+  const normalizedSearch = search.trim().toLowerCase()
+  const visibleSections = useMemo(() => {
+    return COMPONENT_CATEGORY_ORDER
+      .map((category) => ({
+        category,
+        items: AVAILABLE_COMPONENTS.filter((component) => {
+          const matchesCategory = activeCategory === 'All' || category === activeCategory
+          const matchesSearch =
+            normalizedSearch === '' ||
+            [component.name, component.subtitle ?? '', component.brand]
+              .some((value) => value.toLowerCase().includes(normalizedSearch))
+          return matchesCategory && matchesSearch && getComponentCategory(component) === category
+        }),
+      }))
+      .filter((section) => section.items.length > 0)
+  }, [activeCategory, normalizedSearch])
+  const visibleComponentCount = visibleSections.reduce((total, section) => total + section.items.length, 0)
+  const hasActiveFilters = normalizedSearch !== '' || activeCategory !== 'All'
 
   return (
     <div>
       {selectedItems.length > 0 && (
-        <LabelGroup style={{ marginBottom: 8 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
           {selectedItems.map((c) => (
-            <Label
+            <div
               key={c.id}
-              onClose={() => remove(c.id)}
-              icon={<ComponentIcon brand={c.brand} size={14} />}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '6px 10px',
+                border: '1px solid var(--pf-v6-global--BorderColor--100, #d2d2d2)',
+                borderRadius: 9999,
+                background: 'var(--pf-v6-global--BackgroundColor--100, #fff)',
+              }}
             >
-              {c.name}
-            </Label>
+              <ComponentIcon brand={c.brand} size={14} />
+              <span style={{ fontSize: 13, fontWeight: 500 }}>{c.name}</span>
+              <Button
+                variant="link"
+                icon={<FileCodeIcon />}
+                onClick={() => openYamlPreview(c)}
+                style={{ padding: 0, fontSize: 12 }}
+              >
+                Edit
+              </Button>
+              <Button
+                variant="plain"
+                aria-label={`Remove ${c.name}`}
+                icon={<TimesIcon />}
+                onClick={() => remove(c.id)}
+                style={{ padding: 0 }}
+              />
+            </div>
           ))}
-        </LabelGroup>
+        </div>
       )}
 
       <Button variant="secondary" icon={<PlusCircleIcon />} onClick={() => setOpen(true)}>
@@ -235,7 +330,7 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
       {/* Component Selector Modal */}
       <Modal
         isOpen={open}
-        onClose={() => setOpen(false)}
+        onClose={closePicker}
         variant="large"
         aria-label="Environment components"
       >
@@ -244,67 +339,261 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
           description="Select runtimes and language stacks to include in your workspace image."
         />
         <ModalBody>
-          <Gallery hasGutter minWidths={{ default: '172px' }}>
-            {AVAILABLE_COMPONENTS.map((c) => {
-              const isSelected = selected.includes(c.id)
-              return (
-                <Card
-                  key={c.id}
-                  isSelectable
-                  isSelected={isSelected}
-                  onClick={() => toggle(c.id)}
-                  style={{ position: 'relative', minHeight: 88 }}
-                >
-                  <CardBody>
-                    {isSelected && (
-                      <span
-                        style={{
-                          position: 'absolute',
-                          top: 8,
-                          right: 8,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: 20,
-                          height: 20,
-                          borderRadius: '50%',
-                          background: 'var(--pf-v6-global--primary-color--100, #0066cc)',
-                          color: '#fff',
-                        }}
-                        aria-hidden
-                      >
-                        <CheckIcon />
-                      </span>
-                    )}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      <ComponentIcon brand={c.brand} size={24} />
-                      <strong style={{ fontSize: 14 }}>{c.name}</strong>
-                      {c.subtitle && (
-                        <span style={{ fontSize: 12, color: 'var(--pf-v6-global--Color--200, #6a6e73)' }}>
-                          {c.subtitle}
-                        </span>
-                      )}
-                    </div>
-                  </CardBody>
-                  <Button
-                    variant="plain"
-                    aria-label={`View devfile YAML for ${c.name}`}
-                    icon={<FileCodeIcon />}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      openYamlPreview(c)
-                    }}
-                    style={{ position: 'absolute', bottom: 4, right: 4 }}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+                paddingBottom: 16,
+                borderBottom: '1px solid var(--pf-v6-global--BorderColor--100, #d2d2d2)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 12,
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <div style={{ flex: '1 1 280px' }}>
+                  <TextInput
+                    value={search}
+                    onChange={(_e, val) => setSearch(val)}
+                    aria-label="Search environment components"
+                    placeholder="Search components, versions, or brands"
                   />
-                </Card>
-              )
-            })}
-          </Gallery>
+                </div>
+                <span style={{ fontSize: 12, color: 'var(--pf-v6-global--Color--200, #6a6e73)' }}>
+                  {visibleComponentCount} shown
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                <Button
+                  variant={activeCategory === 'All' ? 'primary' : 'secondary'}
+                  onClick={() => setActiveCategory('All')}
+                >
+                  All
+                </Button>
+                {COMPONENT_CATEGORY_ORDER.map((category) => (
+                  <Button
+                    key={category}
+                    variant={activeCategory === category ? 'primary' : 'secondary'}
+                    onClick={() => setActiveCategory(category)}
+                  >
+                    {category}
+                  </Button>
+                ))}
+              </div>
+
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 12,
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <span style={{ fontSize: 13, color: 'var(--pf-v6-global--Color--200, #6a6e73)' }}>
+                  {selectedItems.length === 0
+                    ? 'No components selected yet.'
+                    : `${selectedItems.length} component${selectedItems.length === 1 ? '' : 's'} selected.`}
+                </span>
+                {hasActiveFilters && (
+                  <Button
+                    variant="link"
+                    onClick={() => {
+                      setSearch('')
+                      setActiveCategory('All')
+                    }}
+                    style={{ padding: 0 }}
+                  >
+                    Reset filters
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {visibleSections.length === 0 ? (
+              <div
+                style={{
+                  padding: '24px 0',
+                  textAlign: 'center',
+                  color: 'var(--pf-v6-global--Color--200, #6a6e73)',
+                }}
+              >
+                No components match your current search and filter combination.
+              </div>
+            ) : (
+              visibleSections.map((section) => (
+                <div
+                  key={section.category}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 16,
+                    padding: 16,
+                    border: '1px solid var(--pf-v6-global--BorderColor--100, #d2d2d2)',
+                    borderRadius: 12,
+                    background: 'var(--pf-v6-global--BackgroundColor--200, #f5f5f5)',
+                  }}
+                >
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: 16 }}>
+                      {section.category} ({section.items.length})
+                    </h3>
+                    <p
+                      style={{
+                        margin: '4px 0 0',
+                        fontSize: 13,
+                        color: 'var(--pf-v6-global--Color--200, #6a6e73)',
+                      }}
+                    >
+                      {COMPONENT_CATEGORY_DESCRIPTIONS[section.category]}
+                    </p>
+                  </div>
+
+                  <Gallery hasGutter minWidths={{ default: '220px' }}>
+                    {section.items.map((c) => {
+                      const isSelected = selected.includes(c.id)
+                      return (
+                        <Card
+                          key={c.id}
+                          isSelectable
+                          isSelected={isSelected}
+                          onClick={() => toggle(c.id)}
+                          style={{
+                            borderRadius: 12,
+                            border: isSelected
+                              ? '1px solid var(--pf-v6-global--primary-color--100, #0066cc)'
+                              : '1px solid var(--pf-v6-global--BorderColor--100, #d2d2d2)',
+                            boxShadow: isSelected
+                              ? '0 0 0 1px color-mix(in srgb, var(--pf-v6-global--primary-color--100, #0066cc) 20%, transparent)'
+                              : '0 1px 2px rgba(3, 3, 3, 0.08)',
+                            background: 'var(--pf-v6-global--BackgroundColor--100, #fff)',
+                          }}
+                        >
+                          <CardBody style={{ padding: '12px 14px' }}>
+                            <div
+                              style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 8,
+                              }}
+                            >
+                              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                                <div
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: 32,
+                                    height: 32,
+                                    borderRadius: 8,
+                                    background: 'var(--pf-v6-global--BackgroundColor--200, #f5f5f5)',
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  <ComponentIcon brand={c.brand} size={20} />
+                                </div>
+                                <div style={{ minWidth: 0, flex: 1 }}>
+                                  <div style={{ fontWeight: 600, fontSize: 14, lineHeight: 1.2 }}>{c.name}</div>
+                                  {c.subtitle && (
+                                    <div
+                                      style={{
+                                        marginTop: 1,
+                                        fontSize: 12,
+                                        lineHeight: 1.2,
+                                        color: 'var(--pf-v6-global--Color--200, #6a6e73)',
+                                      }}
+                                    >
+                                      {c.subtitle}
+                                    </div>
+                                  )}
+                                </div>
+                                <div
+                                  style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'flex-end',
+                                    gap: 4,
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  <Button
+                                    variant="link"
+                                    icon={<FileCodeIcon />}
+                                    aria-label={`View devfile YAML for ${c.name}`}
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      openYamlPreview(c)
+                                    }}
+                                    style={{ padding: 0, minHeight: 'auto' }}
+                                  >
+                                    View YAML
+                                  </Button>
+                                  <span
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: 6,
+                                      fontSize: 12,
+                                      color: isSelected
+                                        ? 'var(--pf-v6-global--primary-color--100, #0066cc)'
+                                        : 'var(--pf-v6-global--Color--200, #6a6e73)',
+                                    }}
+                                  >
+                                    {isSelected ? (
+                                      <>
+                                        <CheckIcon />
+                                        Selected
+                                      </>
+                                    ) : (
+                                      'Click to add'
+                                    )}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </CardBody>
+                        </Card>
+                      )
+                    })}
+                  </Gallery>
+                </div>
+              ))
+            )}
+          </div>
         </ModalBody>
         <ModalFooter>
-          <Button variant="primary" onClick={() => setOpen(false)}>
-            Done
-          </Button>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+              width: '100%',
+              flexWrap: 'wrap',
+            }}
+          >
+            <span style={{ fontSize: 13, color: 'var(--pf-v6-global--Color--200, #6a6e73)' }}>
+              {selectedItems.length === 0
+                ? 'Select one or more components to include in the workspace image.'
+                : `${selectedItems.length} component${selectedItems.length === 1 ? '' : 's'} selected.`}
+            </span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <Button variant="link" onClick={() => onChange([])} isDisabled={selectedItems.length === 0}>
+                Clear all
+              </Button>
+              <Button variant="primary" onClick={closePicker}>
+                Done
+              </Button>
+            </div>
+          </div>
         </ModalFooter>
       </Modal>
 
