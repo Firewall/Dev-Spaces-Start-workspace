@@ -7,6 +7,8 @@ import {
   FlexItem,
   Form,
   FormGroup,
+  HelperText,
+  HelperTextItem,
   PageSection,
   Popover,
   Split,
@@ -20,6 +22,7 @@ import {
 import {
   ArrowRightIcon,
   CheckCircleIcon,
+  CodeBranchIcon,
   CubeIcon,
   HelpIcon,
 } from '@patternfly/react-icons'
@@ -42,6 +45,8 @@ function FieldHelp({ text }: { text: string }) {
     </Popover>
   )
 }
+
+type CreationMode = 'repo' | 'template'
 
 interface Template {
   id: string
@@ -144,6 +149,7 @@ function nameFromTemplate(templateId: string): string {
 }
 
 export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspacePhase1Props) {
+  const [mode, setMode] = useState<CreationMode>('repo')
   const [name, setName] = useState('')
   const [repoUrl, setRepoUrl] = useState('')
   const [branch, setBranch] = useState('main')
@@ -160,7 +166,24 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
     )
 
   const hasRepoInput = repoUrl.trim() !== ''
-  const canSubmit = hasRepoInput || selectedTemplate !== null
+  const canSubmit =
+    mode === 'repo' ? hasRepoInput : selectedTemplate !== null
+
+  const handleModeChange = useCallback((newMode: CreationMode) => {
+    setMode(newMode)
+    if (newMode === 'repo') {
+      setSelectedTemplate(null)
+      if (!nameManuallyEdited.current) {
+        setName(repoUrl.trim() ? nameFromRepoUrl(repoUrl) : '')
+      }
+    } else {
+      setRepoUrl('')
+      setBranch('main')
+      if (!nameManuallyEdited.current) {
+        setName(selectedTemplate ? nameFromTemplate(selectedTemplate) : '')
+      }
+    }
+  }, [repoUrl, selectedTemplate])
 
   const handleNameChange = useCallback((_e: unknown, val: string) => {
     setName(val)
@@ -175,18 +198,12 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
       }
       return next
     })
-    setRepoUrl('')
   }, [])
 
   const handleRepoChange = useCallback((_e: unknown, val: string) => {
     setRepoUrl(val)
-    if (val.trim() !== '') {
-      setSelectedTemplate(null)
-      if (!nameManuallyEdited.current) {
-        setName(nameFromRepoUrl(val))
-      }
-    } else if (!nameManuallyEdited.current) {
-      setName('')
+    if (!nameManuallyEdited.current) {
+      setName(val.trim() ? nameFromRepoUrl(val) : '')
     }
   }, [])
 
@@ -236,6 +253,158 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
         </Content>
 
         <Form onSubmit={handleSubmit} style={{ marginTop: 24 }}>
+          <ToggleGroup aria-label="Creation mode">
+            <ToggleGroupItem
+              icon={<CodeBranchIcon />}
+              text="Import from Git"
+              buttonId="mode-repo"
+              isSelected={mode === 'repo'}
+              onChange={() => handleModeChange('repo')}
+            />
+            <ToggleGroupItem
+              icon={<CubeIcon />}
+              text="Start from Template"
+              buttonId="mode-template"
+              isSelected={mode === 'template'}
+              onChange={() => handleModeChange('template')}
+            />
+          </ToggleGroup>
+
+          {mode === 'repo' && (
+            <>
+              <FormGroup
+                label="Git Repository"
+                isRequired
+                fieldId="repo-url"
+                labelHelp={
+                  <FieldHelp text="Enter the HTTPS or SSH URL of your Git repository. The workspace will be configured from the devfile in this repository." />
+                }
+              >
+                <Split hasGutter>
+                  <SplitItem isFilled>
+                    <TextInput
+                      id="repo-url"
+                      value={repoUrl}
+                      onChange={handleRepoChange}
+                      placeholder="https://github.com/org/repo"
+                      aria-label="Git Repository URL"
+                    />
+                    {isDuplicate && (
+                      <Alert
+                        variant="warning"
+                        isInline
+                        isPlain
+                        title="A workspace using this repository already exists. You can still create a new one."
+                        style={{ marginTop: 8 }}
+                      />
+                    )}
+                  </SplitItem>
+                  <SplitItem>
+                    <BranchDropdown
+                      value={branch}
+                      onChange={setBranch}
+                      disabled={!hasRepoInput}
+                    />
+                  </SplitItem>
+                </Split>
+                <HelperText>
+                  <HelperTextItem>
+                    The workspace will be configured using the devfile found in
+                    this repository.
+                  </HelperTextItem>
+                </HelperText>
+              </FormGroup>
+            </>
+          )}
+
+          {mode === 'template' && (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+                gap: 10,
+                marginTop: 4,
+              }}
+            >
+              {TEMPLATES.map((tpl) => {
+                const icon = getDependencyBrandIcon(tpl.icon)
+                const isSelected = selectedTemplate === tpl.id
+                return (
+                  <button
+                    key={tpl.id}
+                    type="button"
+                    onClick={() => handleTemplateClick(tpl.id)}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 6,
+                      padding: '14px 12px',
+                      border: isSelected
+                        ? '3px solid var(--pf-t--global--color--brand--default)'
+                        : '1px solid var(--pf-t--global--border--color--default)',
+                      borderRadius: 8,
+                      background: 'var(--pf-t--global--background--color--primary--default)',
+                      cursor: 'pointer',
+                      textAlign: 'center',
+                      transition: 'all 0.15s ease',
+                      outline: 'none',
+                      position: 'relative',
+                      height: 130,
+                    }}
+                  >
+                    <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+                      {icon ? (
+                        <DependencyBrandIcon icon={icon} size={24} />
+                      ) : (
+                        <CubeIcon
+                          style={{
+                            width: 24,
+                            height: 24,
+                            opacity: 0.5,
+                          }}
+                        />
+                      )}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 'var(--pf-t--global--font--size--sm)',
+                        fontWeight: 600,
+                        color: 'var(--pf-t--global--text--color--regular)',
+                        lineHeight: 1.3,
+                      }}
+                    >
+                      {tpl.name}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 'var(--pf-t--global--font--size--xs)',
+                        color: 'var(--pf-t--global--text--color--subtle)',
+                        lineHeight: 1.3,
+                      }}
+                    >
+                      {tpl.description}
+                    </span>
+                    {isSelected && (
+                      <CheckCircleIcon
+                        style={{
+                          position: 'absolute',
+                          top: -7,
+                          right: -7,
+                          color: 'var(--pf-t--global--color--brand--default)',
+                          fontSize: 18,
+                          background: 'var(--pf-t--global--background--color--primary--default)',
+                          borderRadius: '50%',
+                        }}
+                      />
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
           <FormGroup
             label="Workspace Name"
             fieldId="workspace-name"
@@ -252,42 +421,6 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
           </FormGroup>
 
           <FormGroup
-            label="Git Repository"
-            fieldId="repo-url"
-            labelHelp={
-              <FieldHelp text="Enter the HTTPS or SSH URL of your Git repository. The workspace will clone this repo on start." />
-            }
-          >
-            <Split hasGutter>
-              <SplitItem isFilled>
-                <TextInput
-                  id="repo-url"
-                  value={repoUrl}
-                  onChange={handleRepoChange}
-                  placeholder="https://github.com/org/repo"
-                  aria-label="Git Repository URL"
-                />
-                {isDuplicate && (
-                  <Alert
-                    variant="warning"
-                    isInline
-                    isPlain
-                    title="A workspace using this repository already exists. You can still create a new one."
-                    style={{ marginTop: 8 }}
-                  />
-                )}
-              </SplitItem>
-              <SplitItem>
-                <BranchDropdown
-                  value={branch}
-                  onChange={setBranch}
-                  disabled={!hasRepoInput}
-                />
-              </SplitItem>
-            </Split>
-          </FormGroup>
-
-          <FormGroup
             label="Select an Editor"
             labelHelp={
               <FieldHelp text="Choose the IDE that will be launched in your workspace." />
@@ -295,124 +428,6 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
           >
             <EditorDropdown value={editor} onChange={setEditor} />
           </FormGroup>
-
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              margin: '8px 0',
-            }}
-          >
-            <div
-              style={{
-                flex: 1,
-                height: 1,
-                backgroundColor: 'var(--pf-t--global--border--color--default)',
-              }}
-            />
-            <span
-              style={{
-                fontSize: 'var(--pf-t--global--font--size--sm)',
-                color: 'var(--pf-t--global--text--color--subtle)',
-                fontWeight: 500,
-              }}
-            >
-              or start from a template
-            </span>
-            <div
-              style={{
-                flex: 1,
-                height: 1,
-                backgroundColor: 'var(--pf-t--global--border--color--default)',
-              }}
-            />
-          </div>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
-              gap: 10,
-            }}
-          >
-            {TEMPLATES.map((tpl) => {
-              const icon = getDependencyBrandIcon(tpl.icon)
-              const isSelected = selectedTemplate === tpl.id
-              return (
-                <button
-                  key={tpl.id}
-                  type="button"
-                  onClick={() => handleTemplateClick(tpl.id)}
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 6,
-                    padding: '14px 12px',
-                    border: isSelected
-                      ? '3px solid var(--pf-t--global--color--brand--default)'
-                      : '1px solid var(--pf-t--global--border--color--default)',
-                    borderRadius: 8,
-                    background: 'var(--pf-t--global--background--color--primary--default)',
-                    cursor: 'pointer',
-                    textAlign: 'center',
-                    transition: 'all 0.15s ease',
-                    outline: 'none',
-                    position: 'relative',
-                    height: 130,
-                  }}
-                >
-                  <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-                    {icon ? (
-                      <DependencyBrandIcon icon={icon} size={24} />
-                    ) : (
-                      <CubeIcon
-                        style={{
-                          width: 24,
-                          height: 24,
-                          opacity: 0.5,
-                        }}
-                      />
-                    )}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: 'var(--pf-t--global--font--size--sm)',
-                      fontWeight: 600,
-                      color: 'var(--pf-t--global--text--color--regular)',
-                      lineHeight: 1.3,
-                    }}
-                  >
-                    {tpl.name}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: 'var(--pf-t--global--font--size--xs)',
-                      color: 'var(--pf-t--global--text--color--subtle)',
-                      lineHeight: 1.3,
-                    }}
-                  >
-                    {tpl.description}
-                  </span>
-                  {isSelected && (
-                    <CheckCircleIcon
-                      style={{
-                        position: 'absolute',
-                        top: -7,
-                        right: -7,
-                        color: 'var(--pf-t--global--color--brand--default)',
-                        fontSize: 18,
-                        background: 'var(--pf-t--global--background--color--primary--default)',
-                        borderRadius: '50%',
-                      }}
-                    />
-                  )}
-                </button>
-              )
-            })}
-          </div>
 
           <FormGroup
             label="Temp Storage"
