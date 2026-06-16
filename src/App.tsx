@@ -29,6 +29,10 @@ import {
 } from '@patternfly/react-icons'
 import type { ComponentType } from 'react'
 import { CreateWorkspace } from './components/CreateWorkspace'
+import { CreateWorkspacePhase1 } from './components/CreateWorkspacePhase1'
+
+type Phase = 'phase1' | 'phase2'
+const PHASE_STORAGE_KEY = 'dev-spaces-phase'
 
 const NAV_ITEMS: { label: string; id: string; icon: ComponentType }[] = [
   { label: 'Workspaces', id: 'workspaces', icon: ThLargeIcon },
@@ -45,6 +49,15 @@ export default function App() {
   const [username] = useState('jane.doe')
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [activeNavItem, setActiveNavItem] = useState('workspaces')
+  const [phase, setPhase] = useState<Phase>(() => {
+    const saved = window.localStorage.getItem(PHASE_STORAGE_KEY)
+    return saved === 'phase1' || saved === 'phase2' ? saved : 'phase1'
+  })
+
+  useEffect(() => {
+    window.localStorage.setItem(PHASE_STORAGE_KEY, phase)
+  }, [phase])
+
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY)
     if (savedTheme) {
@@ -142,9 +155,11 @@ export default function App() {
   return (
     <Page masthead={masthead} sidebar={sidebar}>
       {signedIn ? (
-        <PageSection>
-          <CreateWorkspace />
-        </PageSection>
+        phase === 'phase1' ? (
+          <CreateWorkspacePhase1 phase={phase} onPhaseChange={setPhase} />
+        ) : (
+          <CreateWorkspace phase={phase} onPhaseChange={setPhase} />
+        )
       ) : (
         <PageSection
           style={{

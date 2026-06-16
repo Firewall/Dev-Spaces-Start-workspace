@@ -14,8 +14,10 @@ import {
   Switch,
   TextInput,
   Title,
+  ToggleGroup,
+  ToggleGroupItem,
 } from '@patternfly/react-core'
-import { HelpIcon, ThIcon } from '@patternfly/react-icons'
+import { HelpIcon } from '@patternfly/react-icons'
 import { BranchDropdown } from './BranchDropdown'
 import { EditorDropdown } from './EditorDropdown'
 import { EnvironmentComponentsSection } from './EnvironmentComponentsSection'
@@ -43,7 +45,12 @@ const EXISTING_WORKSPACES = [
   'https://github.com/acme/infra',
 ]
 
-export function CreateWorkspace() {
+interface CreateWorkspaceProps {
+  phase: string
+  onPhaseChange: (phase: 'phase1' | 'phase2') => void
+}
+
+export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) {
   const [name, setName] = useState('')
   const [repoUrl, setRepoUrl] = useState('')
   const [branch, setBranch] = useState('main')
@@ -77,7 +84,20 @@ export function CreateWorkspace() {
             <Title headingLevel="h2">Workspaces</Title>
           </FlexItem>
           <FlexItem align={{ default: 'alignRight' }}>
-            <Button variant="plain" icon={<ThIcon />} aria-label="Open app grid" />
+            <ToggleGroup aria-label="Prototype phase">
+              <ToggleGroupItem
+                text="Phase 1"
+                buttonId="phase1"
+                isSelected={phase === 'phase1'}
+                onChange={() => onPhaseChange('phase1')}
+              />
+              <ToggleGroupItem
+                text="Phase 2"
+                buttonId="phase2"
+                isSelected={phase === 'phase2'}
+                onChange={() => onPhaseChange('phase2')}
+              />
+            </ToggleGroup>
           </FlexItem>
         </Flex>
       </PageSection>
