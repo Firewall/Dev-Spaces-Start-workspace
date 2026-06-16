@@ -2,14 +2,11 @@ import { useState, useCallback, useRef } from 'react'
 import {
   Alert,
   Button,
-  Card,
-  CardBody,
   Content,
   Flex,
   FlexItem,
   Form,
   FormGroup,
-  Gallery,
   PageSection,
   Popover,
   Split,
@@ -332,67 +329,90 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
             />
           </div>
 
-          <Gallery hasGutter minWidths={{ default: '180px' }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+              gap: 10,
+            }}
+          >
             {TEMPLATES.map((tpl) => {
               const icon = getDependencyBrandIcon(tpl.icon)
               const isSelected = selectedTemplate === tpl.id
               return (
-                <Card
+                <button
                   key={tpl.id}
-                  isSelectable
-                  isSelected={isSelected}
+                  type="button"
                   onClick={() => handleTemplateClick(tpl.id)}
-                  style={{ cursor: 'pointer', position: 'relative' }}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    padding: '14px 12px',
+                    border: isSelected
+                      ? '3px solid var(--pf-t--global--color--brand--default)'
+                      : '1px solid var(--pf-t--global--border--color--default)',
+                    borderRadius: 8,
+                    background: 'var(--pf-t--global--background--color--primary--default)',
+                    cursor: 'pointer',
+                    textAlign: 'center',
+                    transition: 'all 0.15s ease',
+                    outline: 'none',
+                    position: 'relative',
+                    height: 130,
+                  }}
                 >
+                  <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+                    {icon ? (
+                      <DependencyBrandIcon icon={icon} size={24} />
+                    ) : (
+                      <CubeIcon
+                        style={{
+                          width: 24,
+                          height: 24,
+                          opacity: 0.5,
+                        }}
+                      />
+                    )}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 'var(--pf-t--global--font--size--sm)',
+                      fontWeight: 600,
+                      color: 'var(--pf-t--global--text--color--regular)',
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {tpl.name}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 'var(--pf-t--global--font--size--xs)',
+                      color: 'var(--pf-t--global--text--color--subtle)',
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {tpl.description}
+                  </span>
                   {isSelected && (
                     <CheckCircleIcon
                       style={{
                         position: 'absolute',
-                        top: 8,
-                        right: 8,
-                        color: 'var(--pf-t--global--color--status--success--default)',
+                        top: -7,
+                        right: -7,
+                        color: 'var(--pf-t--global--color--brand--default)',
                         fontSize: 18,
+                        background: 'var(--pf-t--global--background--color--primary--default)',
+                        borderRadius: '50%',
                       }}
                     />
                   )}
-                  <CardBody>
-                    <Flex
-                      direction={{ default: 'column' }}
-                      alignItems={{ default: 'alignItemsCenter' }}
-                      gap={{ default: 'gapSm' }}
-                    >
-                      <FlexItem>
-                        {icon ? (
-                          <DependencyBrandIcon icon={icon} size={32} />
-                        ) : (
-                          <CubeIcon
-                            style={{ width: 32, height: 32, opacity: 0.5 }}
-                          />
-                        )}
-                      </FlexItem>
-                      <FlexItem>
-                        <strong>{tpl.name}</strong>
-                      </FlexItem>
-                      <FlexItem>
-                        <span
-                          style={{
-                            fontSize:
-                              'var(--pf-t--global--font--size--sm)',
-                            color:
-                              'var(--pf-t--global--text--color--subtle)',
-                            textAlign: 'center',
-                            display: 'block',
-                          }}
-                        >
-                          {tpl.description}
-                        </span>
-                      </FlexItem>
-                    </Flex>
-                  </CardBody>
-                </Card>
+                </button>
               )
             })}
-          </Gallery>
+          </div>
 
           <FormGroup
             label="Temp Storage"
