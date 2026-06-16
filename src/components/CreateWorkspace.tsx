@@ -65,7 +65,7 @@ function FieldHelp({ text }: { text: string }) {
   )
 }
 
-type CreationMode = 'repo' | 'template'
+type CreationMode = 'repo' | 'template' | null
 
 interface Template {
   id: string
@@ -151,7 +151,7 @@ function TemplateIcon({ icon, size }: { icon: string; size: number }) {
 }
 
 export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) {
-  const [mode, setMode] = useState<CreationMode>('repo')
+  const [mode, setMode] = useState<CreationMode>(null)
   const [name, setName] = useState('')
   const [repoUrl, setRepoUrl] = useState('')
   const [branch, setBranch] = useState('main')
@@ -212,9 +212,9 @@ export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) 
 
   const hasRepoInput = repoUrl.trim() !== ''
   const canSubmit =
-    mode === 'repo' ? hasRepoInput : selectedTemplate !== null
+    mode === 'repo' ? hasRepoInput : mode === 'template' ? selectedTemplate !== null : false
 
-  const handleModeChange = useCallback((newMode: CreationMode) => {
+  const handleModeChange = useCallback((newMode: 'repo' | 'template') => {
     setMode(newMode)
     if (newMode === 'repo') {
       setSelectedTemplate(null)
@@ -314,6 +314,20 @@ export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) 
               onChange={() => handleModeChange('template')}
             />
           </ToggleGroup>
+
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 24,
+              opacity: mode !== null ? 1 : 0,
+              maxHeight: mode !== null ? 2000 : 0,
+              transform: mode !== null ? 'translateY(0)' : 'translateY(8px)',
+              transition: 'opacity 0.3s ease, transform 0.3s ease',
+              pointerEvents: mode !== null ? 'auto' : 'none',
+              overflow: mode !== null ? 'visible' : 'hidden',
+            }}
+          >
 
           {mode === 'repo' && (
             <FormGroup
@@ -723,6 +737,8 @@ export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) 
             >
               {submitting ? 'Creating Workspace…' : 'Create Workspace'}
             </Button>
+          </div>
+
           </div>
         </Form>
       </PageSection>
