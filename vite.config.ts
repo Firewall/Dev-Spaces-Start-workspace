@@ -5,4 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   base: '/Dev-Spaces-Start-workspace/',
   plugins: [react()],
+  server: {
+    host: '0.0.0.0',
+  },
 })
