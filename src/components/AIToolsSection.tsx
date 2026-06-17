@@ -12,7 +12,8 @@ import {
   PlusCircleIcon,
   StarIcon,
 } from '@patternfly/react-icons'
-import { BrandIcon, hasBrandIcon } from './BrandIcons'
+import { BrandIcon } from './BrandIcons'
+import { hasBrandIcon } from './brandIconData'
 
 interface AITool {
   id: string

@@ -8,7 +8,8 @@ import {
 } from '@patternfly/react-core'
 import { CogIcon, DesktopIcon } from '@patternfly/react-icons'
 import { CustomEditorModal } from './CustomEditorModal'
-import { BrandIcon, hasBrandIcon } from './BrandIcons'
+import { BrandIcon } from './BrandIcons'
+import { hasBrandIcon } from './brandIconData'
 
 const JETBRAINS_IDS = new Set(['intellij', 'goland', 'pycharm', 'webstorm'])
 
