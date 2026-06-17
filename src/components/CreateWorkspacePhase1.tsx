@@ -404,7 +404,7 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
                       {gitRemotes.map((remote, index) => (
                         <Split hasGutter key={index} style={{ alignItems: 'flex-end' }}>
                           <SplitItem>
-                            <FormGroup label="Remote Name" isRequired fieldId={`remote-name-${index}`}>
+                            <FormGroup label="Remote Name" fieldId={`remote-name-${index}`}>
                               <TextInput
                                 id={`remote-name-${index}`}
                                 value={remote.name}
@@ -415,7 +415,7 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
                             </FormGroup>
                           </SplitItem>
                           <SplitItem isFilled>
-                            <FormGroup label="Remote URL" isRequired fieldId={`remote-url-${index}`}>
+                            <FormGroup label="Remote URL" fieldId={`remote-url-${index}`}>
                               <TextInput
                                 id={`remote-url-${index}`}
                                 value={remote.url}
