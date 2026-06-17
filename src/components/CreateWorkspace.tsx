@@ -854,7 +854,7 @@ export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) 
                 </FormGroup>
 
                 <FormGroup
-                  label={`Memory Limit${envSettings.memoryLimit ? '' : ' (default)'}`}
+                  label={`Memory Limit (${envSettings.memoryLimit ? `${envSettings.memoryLimit}Gi` : 'default'})`}
                   fieldId="memory-limit"
                 >
                   <NumberInput
@@ -884,7 +884,7 @@ export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) 
                 </FormGroup>
 
                 <FormGroup
-                  label={`CPU Limit${envSettings.cpuLimit ? '' : ' (default)'}`}
+                  label={`CPU Limit (${envSettings.cpuLimit ? `${envSettings.cpuLimit} cores` : 'default'})`}
                   fieldId="cpu-limit"
                 >
                   <NumberInput
