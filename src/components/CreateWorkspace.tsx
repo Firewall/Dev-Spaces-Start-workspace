@@ -51,7 +51,7 @@ import { BranchDropdown } from './BranchDropdown'
 import { EditorDropdown } from './EditorDropdown'
 import { EnvironmentComponentsSection } from './EnvironmentComponentsSection'
 import { AIToolsSection } from './AIToolsSection'
-import { EnvironmentSettings } from './EnvironmentSettings'
+
 
 function FieldHelp({ text }: { text: string }) {
   return (
@@ -355,118 +355,47 @@ export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) 
           >
 
           {mode === 'repo' && (
-            <>
-              <FormGroup
-                label="Git repo URL"
-                isRequired
-                fieldId="repo-url"
-                labelHelp={
-                  <FieldHelp text="Enter the HTTPS or SSH URL of your Git repository. The workspace will be configured from the devfile in this repository." />
-                }
-              >
-                <Split hasGutter>
-                  <SplitItem isFilled>
-                    <TextInput
-                      id="repo-url"
-                      value={repoUrl}
-                      onChange={handleRepoChange}
-                      placeholder="https://github.com/org/repo"
-                      aria-label="Git Repository URL"
-                    />
-                  </SplitItem>
-                  <SplitItem>
-                    <BranchDropdown
-                      value={branch}
-                      onChange={setBranch}
-                      disabled={!hasRepoInput}
-                    />
-                  </SplitItem>
-                </Split>
-                {isDuplicate && (
-                  <Alert
-                    variant="warning"
-                    isInline
-                    isPlain
-                    title="A workspace using this repository already exists. You can still create a new one."
-                    style={{ marginTop: 8 }}
+            <FormGroup
+              label="Git repo URL"
+              isRequired
+              fieldId="repo-url"
+              labelHelp={
+                <FieldHelp text="Enter the HTTPS or SSH URL of your Git repository. The workspace will be configured from the devfile in this repository." />
+              }
+            >
+              <Split hasGutter>
+                <SplitItem isFilled>
+                  <TextInput
+                    id="repo-url"
+                    value={repoUrl}
+                    onChange={handleRepoChange}
+                    placeholder="https://github.com/org/repo"
+                    aria-label="Git Repository URL"
                   />
-                )}
-                <HelperText>
-                  <HelperTextItem>
-                    Import from a Git repository to launch a Cloud Development Environment.
-                  </HelperTextItem>
-                </HelperText>
-              </FormGroup>
-
-              <ExpandableSection
-                toggleText="Git Repo Options"
-                isExpanded={gitRepoOptionsOpen}
-                onToggle={(_e, isExpanded) => setGitRepoOptionsOpen(isExpanded)}
-              >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                  <FormGroup label="Additional Git Remotes" fieldId="git-remotes">
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                      {gitRemotes.map((remote, index) => (
-                        <Split hasGutter key={index} style={{ alignItems: 'flex-end' }}>
-                          <SplitItem>
-                            <FormGroup label="Remote Name" fieldId={`remote-name-${index}`}>
-                              <TextInput
-                                id={`remote-name-${index}`}
-                                value={remote.name}
-                                onChange={(_e, val) => updateGitRemote(index, 'name', val)}
-                                placeholder="origin"
-                                aria-label="Remote Name"
-                              />
-                            </FormGroup>
-                          </SplitItem>
-                          <SplitItem isFilled>
-                            <FormGroup label="Remote URL" fieldId={`remote-url-${index}`}>
-                              <TextInput
-                                id={`remote-url-${index}`}
-                                value={remote.url}
-                                onChange={(_e, val) => updateGitRemote(index, 'url', val)}
-                                placeholder="HTTP or SSH URL"
-                                aria-label="Remote URL"
-                              />
-                            </FormGroup>
-                          </SplitItem>
-                          <SplitItem>
-                            <Button
-                              variant="plain"
-                              aria-label="Remove remote"
-                              onClick={() => removeGitRemote(index)}
-                              icon={<MinusIcon />}
-                            />
-                          </SplitItem>
-                        </Split>
-                      ))}
-                      <div>
-                        <Button
-                          variant="link"
-                          icon={<PlusCircleIcon />}
-                          onClick={addGitRemote}
-                        >
-                          Add Remote
-                        </Button>
-                      </div>
-                    </div>
-                  </FormGroup>
-
-                  <FormGroup
-                    label="Path to Devfile"
-                    fieldId="devfile-path"
-                    labelHelp={<FieldHelp text="Specify a custom path to your devfile relative to the repository root." />}
-                  >
-                    <TextInput
-                      id="devfile-path"
-                      value={envSettings.devfilePath}
-                      onChange={(_e, val) => setEnvSettings((prev) => ({ ...prev, devfilePath: val }))}
-                      placeholder="Enter the relative path to the Devfile in the Git Repository"
-                    />
-                  </FormGroup>
-                </div>
-              </ExpandableSection>
-            </>
+                </SplitItem>
+                <SplitItem>
+                  <BranchDropdown
+                    value={branch}
+                    onChange={setBranch}
+                    disabled={!hasRepoInput}
+                  />
+                </SplitItem>
+              </Split>
+              {isDuplicate && (
+                <Alert
+                  variant="warning"
+                  isInline
+                  isPlain
+                  title="A workspace using this repository already exists. You can still create a new one."
+                  style={{ marginTop: 8 }}
+                />
+              )}
+              <HelperText>
+                <HelperTextItem>
+                  Import from a Git repository to launch a Cloud Development Environment.
+                </HelperTextItem>
+              </HelperText>
+            </FormGroup>
           )}
 
           {mode === 'template' && (
@@ -763,6 +692,77 @@ export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) 
             </div>
           )}
 
+          {mode === 'repo' && (
+            <ExpandableSection
+              toggleText="Git Repo Options"
+              isExpanded={gitRepoOptionsOpen}
+              onToggle={(_e, isExpanded) => setGitRepoOptionsOpen(isExpanded)}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                <FormGroup label="Additional Git Remotes" fieldId="git-remotes">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {gitRemotes.map((remote, index) => (
+                      <Split hasGutter key={index} style={{ alignItems: 'flex-end' }}>
+                        <SplitItem>
+                          <FormGroup label="Remote Name" fieldId={`remote-name-${index}`}>
+                            <TextInput
+                              id={`remote-name-${index}`}
+                              value={remote.name}
+                              onChange={(_e, val) => updateGitRemote(index, 'name', val)}
+                              placeholder="origin"
+                              aria-label="Remote Name"
+                            />
+                          </FormGroup>
+                        </SplitItem>
+                        <SplitItem isFilled>
+                          <FormGroup label="Remote URL" fieldId={`remote-url-${index}`}>
+                            <TextInput
+                              id={`remote-url-${index}`}
+                              value={remote.url}
+                              onChange={(_e, val) => updateGitRemote(index, 'url', val)}
+                              placeholder="HTTP or SSH URL"
+                              aria-label="Remote URL"
+                            />
+                          </FormGroup>
+                        </SplitItem>
+                        <SplitItem>
+                          <Button
+                            variant="plain"
+                            aria-label="Remove remote"
+                            onClick={() => removeGitRemote(index)}
+                            icon={<MinusIcon />}
+                          />
+                        </SplitItem>
+                      </Split>
+                    ))}
+                    <div>
+                      <Button
+                        variant="link"
+                        icon={<PlusCircleIcon />}
+                        onClick={addGitRemote}
+                      >
+                        Add Remote
+                      </Button>
+                    </div>
+                  </div>
+                </FormGroup>
+
+                <FormGroup
+                  label="Path to Devfile"
+                  fieldId="devfile-path"
+                  labelHelp={<FieldHelp text="Specify a custom path to your devfile relative to the repository root." />}
+                >
+                  <TextInput
+                    id="devfile-path"
+                    value={envSettings.devfilePath}
+                    onChange={(_e, val) => setEnvSettings((prev) => ({ ...prev, devfilePath: val }))}
+                    placeholder="Enter the relative path to the Devfile in the Git Repository"
+                  />
+                </FormGroup>
+              </div>
+            </ExpandableSection>
+          )}
+
           <FormGroup
             label="Workspace Name"
             fieldId="workspace-name"
@@ -778,142 +778,197 @@ export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) 
             />
           </FormGroup>
 
-          <FormGroup
-            label="Select an Editor"
-            labelHelp={
-              <FieldHelp text="Choose the IDE that will be launched in your workspace. The default editor is Visual Studio Code - Open Source (Web). Select 'Custom Editor' for advanced configuration." />
-            }
-          >
-            <EditorDropdown value={editor} onChange={setEditor} />
-          </FormGroup>
-
-          <FormGroup
-            label="Select Environment Components"
-            labelHelp={<FieldHelp text="Choose language runtimes and stacks to layer into your workspace image. You can pick multiple components." />}
-          >
-            <EnvironmentComponentsSection
-              selected={environmentComponents}
-              onChange={setEnvironmentComponents}
-            />
-          </FormGroup>
-
-          <FormGroup
-            label="Add AI Tools"
-            labelHelp={<FieldHelp text="Select AI-powered coding assistants to install in your workspace. Tools marked with a checkmark are already authenticated with your account." />}
-          >
-            <AIToolsSection selected={aiTools} onChange={setAiTools} />
-          </FormGroup>
-
-          {mode === 'template' && (
+          {mode === 'repo' && (
             <>
               <FormGroup
-                label="Temp Storage"
+                label="Select an Editor"
                 labelHelp={
-                  <FieldHelp text="Enable ephemeral storage for temporary files. Data in temp storage does not persist across workspace restarts." />
+                  <FieldHelp text="Choose the IDE that will be launched in your workspace. The default editor is Visual Studio Code - Open Source (Web). Select 'Custom Editor' for advanced configuration." />
                 }
               >
-                <Switch
-                  id="temp-storage-template"
-                  isChecked={tempStorage}
-                  onChange={(_e, checked) => setTempStorage(checked)}
-                  aria-label="Temp storage"
+                <EditorDropdown value={editor} onChange={setEditor} />
+              </FormGroup>
+
+              <FormGroup
+                label="Select Environment Components"
+                labelHelp={<FieldHelp text="Choose language runtimes and stacks to layer into your workspace image. You can pick multiple components." />}
+              >
+                <EnvironmentComponentsSection
+                  selected={environmentComponents}
+                  onChange={setEnvironmentComponents}
                 />
               </FormGroup>
 
-              <EnvironmentSettings value={envSettings} onChange={setEnvSettings} />
+              <FormGroup
+                label="Add AI Tools"
+                labelHelp={<FieldHelp text="Select AI-powered coding assistants to install in your workspace. Tools marked with a checkmark are already authenticated with your account." />}
+              >
+                <AIToolsSection selected={aiTools} onChange={setAiTools} />
+              </FormGroup>
+
+              <ExpandableSection
+                toggleText="Advanced Options"
+                isExpanded={advancedOptionsOpen}
+                onToggle={(_e, isExpanded) => setAdvancedOptionsOpen(isExpanded)}
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                  <FormGroup
+                    label="Container Image"
+                    fieldId="container-image"
+                    labelHelp={<FieldHelp text="Override the default Universal Developer Image with a custom container image." />}
+                  >
+                    <TextInput
+                      id="container-image"
+                      value={envSettings.containerImage}
+                      onChange={(_e, val) => setEnvSettings((prev) => ({ ...prev, containerImage: val }))}
+                      placeholder="Enter the container image"
+                    />
+                  </FormGroup>
+
+                  <FormGroup label="Temporary Storage" fieldId="temp-storage">
+                    <Switch
+                      id="temp-storage"
+                      isChecked={tempStorage}
+                      onChange={(_e, checked) => setTempStorage(checked)}
+                      aria-label="Temporary storage"
+                    />
+                  </FormGroup>
+
+                  <FormGroup
+                    label={`Memory Limit (${envSettings.memoryLimit ? `${envSettings.memoryLimit}Gi` : 'default'})`}
+                    fieldId="memory-limit"
+                  >
+                    <NumberInput
+                      id="memory-limit"
+                      value={envSettings.memoryLimit ? Number(envSettings.memoryLimit) : undefined}
+                      onMinus={() =>
+                        setEnvSettings((prev) => ({
+                          ...prev,
+                          memoryLimit: String(Math.max(0, (Number(prev.memoryLimit) || 0) - 1)),
+                        }))
+                      }
+                      onPlus={() =>
+                        setEnvSettings((prev) => ({
+                          ...prev,
+                          memoryLimit: String((Number(prev.memoryLimit) || 0) + 1),
+                        }))
+                      }
+                      onChange={(event: React.FormEvent<HTMLInputElement>) => {
+                        const val = (event.target as HTMLInputElement).value
+                        setEnvSettings((prev) => ({ ...prev, memoryLimit: val }))
+                      }}
+                      inputAriaLabel="Memory limit"
+                      minusBtnAriaLabel="Decrease memory"
+                      plusBtnAriaLabel="Increase memory"
+                      min={0}
+                    />
+                  </FormGroup>
+
+                  <FormGroup
+                    label={`CPU Limit (${envSettings.cpuLimit ? `${envSettings.cpuLimit} cores` : 'default'})`}
+                    fieldId="cpu-limit"
+                  >
+                    <NumberInput
+                      id="cpu-limit"
+                      value={envSettings.cpuLimit ? Number(envSettings.cpuLimit) : undefined}
+                      onMinus={() =>
+                        setEnvSettings((prev) => ({
+                          ...prev,
+                          cpuLimit: String(Math.max(0, (Number(prev.cpuLimit) || 0) - 1)),
+                        }))
+                      }
+                      onPlus={() =>
+                        setEnvSettings((prev) => ({
+                          ...prev,
+                          cpuLimit: String((Number(prev.cpuLimit) || 0) + 1),
+                        }))
+                      }
+                      onChange={(event: React.FormEvent<HTMLInputElement>) => {
+                        const val = (event.target as HTMLInputElement).value
+                        setEnvSettings((prev) => ({ ...prev, cpuLimit: val }))
+                      }}
+                      inputAriaLabel="CPU limit"
+                      minusBtnAriaLabel="Decrease CPU"
+                      plusBtnAriaLabel="Increase CPU"
+                      min={0}
+                    />
+                  </FormGroup>
+                </div>
+              </ExpandableSection>
             </>
           )}
 
-          {mode === 'repo' && (
-            <ExpandableSection
-              toggleText="Advanced Options"
-              isExpanded={advancedOptionsOpen}
-              onToggle={(_e, isExpanded) => setAdvancedOptionsOpen(isExpanded)}
-            >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                <FormGroup
-                  label="Container Image"
-                  fieldId="container-image"
-                  labelHelp={<FieldHelp text="Override the default Universal Developer Image with a custom container image." />}
-                >
-                  <TextInput
-                    id="container-image"
-                    value={envSettings.containerImage}
-                    onChange={(_e, val) => setEnvSettings((prev) => ({ ...prev, containerImage: val }))}
-                    placeholder="Enter the container image"
-                  />
-                </FormGroup>
+          {mode === 'template' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+              <FormGroup label="Temporary Storage" fieldId="temp-storage">
+                <Switch
+                  id="temp-storage"
+                  isChecked={tempStorage}
+                  onChange={(_e, checked) => setTempStorage(checked)}
+                  aria-label="Temporary storage"
+                />
+              </FormGroup>
 
-                <FormGroup label="Temporary Storage" fieldId="temp-storage">
-                  <Switch
-                    id="temp-storage"
-                    isChecked={tempStorage}
-                    onChange={(_e, checked) => setTempStorage(checked)}
-                    aria-label="Temporary storage"
-                  />
-                </FormGroup>
+              <FormGroup
+                label={`Memory Limit (${envSettings.memoryLimit ? `${envSettings.memoryLimit}Gi` : 'default'})`}
+                fieldId="memory-limit"
+              >
+                <NumberInput
+                  id="memory-limit"
+                  value={envSettings.memoryLimit ? Number(envSettings.memoryLimit) : undefined}
+                  onMinus={() =>
+                    setEnvSettings((prev) => ({
+                      ...prev,
+                      memoryLimit: String(Math.max(0, (Number(prev.memoryLimit) || 0) - 1)),
+                    }))
+                  }
+                  onPlus={() =>
+                    setEnvSettings((prev) => ({
+                      ...prev,
+                      memoryLimit: String((Number(prev.memoryLimit) || 0) + 1),
+                    }))
+                  }
+                  onChange={(event: React.FormEvent<HTMLInputElement>) => {
+                    const val = (event.target as HTMLInputElement).value
+                    setEnvSettings((prev) => ({ ...prev, memoryLimit: val }))
+                  }}
+                  inputAriaLabel="Memory limit"
+                  minusBtnAriaLabel="Decrease memory"
+                  plusBtnAriaLabel="Increase memory"
+                  min={0}
+                />
+              </FormGroup>
 
-                <FormGroup
-                  label={`Memory Limit (${envSettings.memoryLimit ? `${envSettings.memoryLimit}Gi` : 'default'})`}
-                  fieldId="memory-limit"
-                >
-                  <NumberInput
-                    id="memory-limit"
-                    value={envSettings.memoryLimit ? Number(envSettings.memoryLimit) : undefined}
-                    onMinus={() =>
-                      setEnvSettings((prev) => ({
-                        ...prev,
-                        memoryLimit: String(Math.max(0, (Number(prev.memoryLimit) || 0) - 1)),
-                      }))
-                    }
-                    onPlus={() =>
-                      setEnvSettings((prev) => ({
-                        ...prev,
-                        memoryLimit: String((Number(prev.memoryLimit) || 0) + 1),
-                      }))
-                    }
-                    onChange={(event: React.FormEvent<HTMLInputElement>) => {
-                      const val = (event.target as HTMLInputElement).value
-                      setEnvSettings((prev) => ({ ...prev, memoryLimit: val }))
-                    }}
-                    inputAriaLabel="Memory limit"
-                    minusBtnAriaLabel="Decrease memory"
-                    plusBtnAriaLabel="Increase memory"
-                    min={0}
-                  />
-                </FormGroup>
-
-                <FormGroup
-                  label={`CPU Limit (${envSettings.cpuLimit ? `${envSettings.cpuLimit} cores` : 'default'})`}
-                  fieldId="cpu-limit"
-                >
-                  <NumberInput
-                    id="cpu-limit"
-                    value={envSettings.cpuLimit ? Number(envSettings.cpuLimit) : undefined}
-                    onMinus={() =>
-                      setEnvSettings((prev) => ({
-                        ...prev,
-                        cpuLimit: String(Math.max(0, (Number(prev.cpuLimit) || 0) - 1)),
-                      }))
-                    }
-                    onPlus={() =>
-                      setEnvSettings((prev) => ({
-                        ...prev,
-                        cpuLimit: String((Number(prev.cpuLimit) || 0) + 1),
-                      }))
-                    }
-                    onChange={(event: React.FormEvent<HTMLInputElement>) => {
-                      const val = (event.target as HTMLInputElement).value
-                      setEnvSettings((prev) => ({ ...prev, cpuLimit: val }))
-                    }}
-                    inputAriaLabel="CPU limit"
-                    minusBtnAriaLabel="Decrease CPU"
-                    plusBtnAriaLabel="Increase CPU"
-                    min={0}
-                  />
-                </FormGroup>
-              </div>
-            </ExpandableSection>
+              <FormGroup
+                label={`CPU Limit (${envSettings.cpuLimit ? `${envSettings.cpuLimit} cores` : 'default'})`}
+                fieldId="cpu-limit"
+              >
+                <NumberInput
+                  id="cpu-limit"
+                  value={envSettings.cpuLimit ? Number(envSettings.cpuLimit) : undefined}
+                  onMinus={() =>
+                    setEnvSettings((prev) => ({
+                      ...prev,
+                      cpuLimit: String(Math.max(0, (Number(prev.cpuLimit) || 0) - 1)),
+                    }))
+                  }
+                  onPlus={() =>
+                    setEnvSettings((prev) => ({
+                      ...prev,
+                      cpuLimit: String((Number(prev.cpuLimit) || 0) + 1),
+                    }))
+                  }
+                  onChange={(event: React.FormEvent<HTMLInputElement>) => {
+                    const val = (event.target as HTMLInputElement).value
+                    setEnvSettings((prev) => ({ ...prev, cpuLimit: val }))
+                  }}
+                  inputAriaLabel="CPU limit"
+                  minusBtnAriaLabel="Decrease CPU"
+                  plusBtnAriaLabel="Increase CPU"
+                  min={0}
+                />
+              </FormGroup>
+            </div>
           )}
 
           <div style={{ marginTop: 24 }}>
