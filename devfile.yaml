@@ -1,0 +1,57 @@
+schemaVersion: 2.2.2
+metadata:
+  name: dev-spaces-start-workspace
+  version: 0.0.1
+  language: TypeScript
+  projectType: React
+  provider: Red Hat
+attributes:
+  controller.devfile.io/storage-type: per-user
+components:
+  - name: tools
+    container:
+      image: quay.io/devfile/universal-developer-image:ubi10-latest
+      memoryLimit: 4Gi
+      memoryRequest: 512Mi
+      cpuLimit: '2'
+      cpuRequest: 250m
+      mountSources: true
+      endpoints:
+        - name: vite-dev
+          targetPort: 5173
+          exposure: public
+          protocol: https
+commands:
+  - id: install
+    exec:
+      label: Install dependencies
+      component: tools
+      workingDir: ${PROJECT_SOURCE}
+      commandLine: npm install
+      group:
+        kind: build
+  - id: dev
+    exec:
+      label: Start dev server
+      component: tools
+      workingDir: ${PROJECT_SOURCE}
+      commandLine: npm run dev -- --host 0.0.0.0
+      group:
+        kind: run
+        isDefault: true
+  - id: build
+    exec:
+      label: Build for production
+      component: tools
+      workingDir: ${PROJECT_SOURCE}
+      commandLine: npm run build
+      group:
+        kind: build
+  - id: lint
+    exec:
+      label: Run ESLint
+      component: tools
+      workingDir: ${PROJECT_SOURCE}
+      commandLine: npm run lint
+      group:
+        kind: test
