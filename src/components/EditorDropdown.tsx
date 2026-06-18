@@ -11,15 +11,22 @@ import { CustomEditorModal } from './CustomEditorModal'
 import { BrandIcon } from './BrandIcons'
 import { hasBrandIcon } from './brandIconData'
 
-const JETBRAINS_IDS = new Set(['intellij', 'goland', 'pycharm', 'webstorm'])
+const JETBRAINS_IDS = new Set(['intellij', 'goland', 'pycharm', 'webstorm', 'clion', 'phpstorm', 'rider', 'rubymine', 'toolbox'])
 
 const EDITORS = [
   { id: 'vscode-oss', label: 'Visual Studio Code - Open Source (Web)', isDefault: true },
   { id: 'vscode', label: 'Visual Studio Code - Desktop (SSH)' },
-  { id: 'intellij', label: 'IntelliJ IDEA Ultimate' },
+  { id: 'kiro', label: 'Kiro (SSH)', isTechPreview: true },
+  { id: 'clion', label: 'CLion' },
   { id: 'goland', label: 'GoLand' },
+  { id: 'intellij', label: 'IntelliJ IDEA Ultimate' },
+  { id: 'phpstorm', label: 'PhpStorm' },
   { id: 'pycharm', label: 'PyCharm Professional' },
+  { id: 'rider', label: 'Rider' },
+  { id: 'rubymine', label: 'RubyMine' },
+  { id: 'terminal', label: 'Web Terminal' },
   { id: 'webstorm', label: 'WebStorm' },
+  { id: 'toolbox', label: 'JetBrains Toolbox App', isTechPreview: true },
   { id: 'custom', label: 'Custom Editor', isCustom: true as const },
 ]
 
@@ -56,6 +63,21 @@ function getLicenseText(id: string) {
         Provided by Microsoft under{' '}
         <a
           href="https://code.visualstudio.com/License"
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(ev) => ev.stopPropagation()}
+        >
+          License
+        </a>
+      </>
+    )
+  }
+  if (id === 'kiro') {
+    return (
+      <>
+        Provided by Amazon under{' '}
+        <a
+          href="https://kiro.dev/terms"
           target="_blank"
           rel="noopener noreferrer"
           onClick={(ev) => ev.stopPropagation()}
@@ -105,6 +127,11 @@ export function EditorDropdown({ value, onChange }: EditorDropdownProps) {
                 default
               </Label>
             )}
+            {selected?.isTechPreview && (
+              <Label isCompact color="orange" style={{ marginLeft: 8 }}>
+                Tech Preview
+              </Label>
+            )}
           </MenuToggle>
         )}
       >
@@ -123,6 +150,11 @@ export function EditorDropdown({ value, onChange }: EditorDropdownProps) {
                 {e.isDefault && (
                   <Label isCompact style={{ marginLeft: 8 }}>
                     default
+                  </Label>
+                )}
+                {e.isTechPreview && (
+                  <Label isCompact color="orange" style={{ marginLeft: 8 }}>
+                    Tech Preview
                   </Label>
                 )}
               </SelectOption>

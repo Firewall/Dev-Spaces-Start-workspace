@@ -12,7 +12,7 @@ export function BrandIcon({ id, size = 16, style }: BrandIconProps) {
   if (!icon) return null
   return (
     <svg
-      viewBox="0 0 24 24"
+      viewBox={`0 0 ${icon.viewBox ?? 24} ${icon.viewBox ?? 24}`}
       width={size}
       height={size}
       fill={icon.color}
