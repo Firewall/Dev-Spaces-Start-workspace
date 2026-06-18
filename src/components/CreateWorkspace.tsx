@@ -160,7 +160,7 @@ function TemplateIcon({ icon, size }: { icon: string; size: number }) {
 }
 
 export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) {
-  const [mode, setMode] = useState<CreationMode>(null)
+  const [mode, setMode] = useState<CreationMode>('repo')
   const [name, setName] = useState('')
   const [repoUrl, setRepoUrl] = useState('')
   const [branch, setBranch] = useState('main')
