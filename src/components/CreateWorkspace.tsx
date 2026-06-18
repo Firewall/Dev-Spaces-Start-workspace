@@ -176,7 +176,6 @@ export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) 
     devfilePath: '',
   })
   const [gitRemotes, setGitRemotes] = useState<GitRemote[]>([{ name: 'origin', url: '' }])
-  const [gitRepoOptionsOpen, setGitRepoOptionsOpen] = useState(false)
   const [advancedOptionsOpen, setAdvancedOptionsOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const nameManuallyEdited = useRef(false)
@@ -693,77 +692,6 @@ export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) 
             </div>
           )}
 
-          {mode === 'repo' && (
-            <ExpandableSection
-              toggleText="Git Repo Options"
-              isExpanded={gitRepoOptionsOpen}
-              onToggle={(_e, isExpanded) => setGitRepoOptionsOpen(isExpanded)}
-            >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                <FormGroup label="Additional Git Remotes" fieldId="git-remotes">
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {gitRemotes.map((remote, index) => (
-                      <Split hasGutter key={index} style={{ alignItems: 'flex-end' }}>
-                        <SplitItem>
-                          <FormGroup label="Remote Name" fieldId={`remote-name-${index}`}>
-                            <TextInput
-                              id={`remote-name-${index}`}
-                              value={remote.name}
-                              onChange={(_e, val) => updateGitRemote(index, 'name', val)}
-                              placeholder="origin"
-                              aria-label="Remote Name"
-                            />
-                          </FormGroup>
-                        </SplitItem>
-                        <SplitItem isFilled>
-                          <FormGroup label="Remote URL" fieldId={`remote-url-${index}`}>
-                            <TextInput
-                              id={`remote-url-${index}`}
-                              value={remote.url}
-                              onChange={(_e, val) => updateGitRemote(index, 'url', val)}
-                              placeholder="HTTP or SSH URL"
-                              aria-label="Remote URL"
-                            />
-                          </FormGroup>
-                        </SplitItem>
-                        <SplitItem>
-                          <Button
-                            variant="plain"
-                            aria-label="Remove remote"
-                            onClick={() => removeGitRemote(index)}
-                            icon={<MinusIcon />}
-                          />
-                        </SplitItem>
-                      </Split>
-                    ))}
-                    <div>
-                      <Button
-                        variant="link"
-                        icon={<PlusCircleIcon />}
-                        onClick={addGitRemote}
-                      >
-                        Add Remote
-                      </Button>
-                    </div>
-                  </div>
-                </FormGroup>
-
-                <FormGroup
-                  label="Path to Devfile"
-                  fieldId="devfile-path"
-                  labelHelp={<FieldHelp text="Specify a custom path to your devfile relative to the repository root." />}
-                >
-                  <TextInput
-                    id="devfile-path"
-                    value={envSettings.devfilePath}
-                    onChange={(_e, val) => setEnvSettings((prev) => ({ ...prev, devfilePath: val }))}
-                    placeholder="Enter the relative path to the Devfile in the Git Repository"
-                  />
-                </FormGroup>
-              </div>
-            </ExpandableSection>
-          )}
-
           <FormGroup
             label="Workspace Name"
             fieldId="workspace-name"
@@ -813,6 +741,67 @@ export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) 
                 onToggle={(_e, isExpanded) => setAdvancedOptionsOpen(isExpanded)}
               >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                  <FormGroup
+                    label="Path to Devfile"
+                    fieldId="devfile-path"
+                    labelHelp={<FieldHelp text="Specify a custom path to your devfile relative to the repository root." />}
+                  >
+                    <TextInput
+                      id="devfile-path"
+                      value={envSettings.devfilePath}
+                      onChange={(_e, val) => setEnvSettings((prev) => ({ ...prev, devfilePath: val }))}
+                      placeholder="Enter the relative path to the Devfile in the Git Repository"
+                    />
+                  </FormGroup>
+
+                  <FormGroup label="Additional Git Remotes" fieldId="git-remotes">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      {gitRemotes.map((remote, index) => (
+                        <Split hasGutter key={index} style={{ alignItems: 'flex-end' }}>
+                          <SplitItem>
+                            <FormGroup label="Remote Name" fieldId={`remote-name-${index}`}>
+                              <TextInput
+                                id={`remote-name-${index}`}
+                                value={remote.name}
+                                onChange={(_e, val) => updateGitRemote(index, 'name', val)}
+                                placeholder="origin"
+                                aria-label="Remote Name"
+                              />
+                            </FormGroup>
+                          </SplitItem>
+                          <SplitItem isFilled>
+                            <FormGroup label="Remote URL" fieldId={`remote-url-${index}`}>
+                              <TextInput
+                                id={`remote-url-${index}`}
+                                value={remote.url}
+                                onChange={(_e, val) => updateGitRemote(index, 'url', val)}
+                                placeholder="HTTP or SSH URL"
+                                aria-label="Remote URL"
+                              />
+                            </FormGroup>
+                          </SplitItem>
+                          <SplitItem>
+                            <Button
+                              variant="plain"
+                              aria-label="Remove remote"
+                              onClick={() => removeGitRemote(index)}
+                              icon={<MinusIcon />}
+                            />
+                          </SplitItem>
+                        </Split>
+                      ))}
+                      <div>
+                        <Button
+                          variant="link"
+                          icon={<PlusCircleIcon />}
+                          onClick={addGitRemote}
+                        >
+                          Add Remote
+                        </Button>
+                      </div>
+                    </div>
+                  </FormGroup>
+
                   <FormGroup
                     label="Container Image"
                     fieldId="container-image"
