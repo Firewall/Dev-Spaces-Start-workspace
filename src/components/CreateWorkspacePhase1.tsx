@@ -49,6 +49,7 @@ import { DependencyBrandIcon } from './DependencyBrandIcon'
 import { getDependencyBrandIcon } from './dependencySimpleIcons'
 import { BranchDropdown } from './BranchDropdown'
 import { EditorDropdown } from './EditorDropdown'
+import { AIToolsSection } from './AIToolsSection'
 
 function FieldHelp({ text }: { text: string }) {
   return (
@@ -149,7 +150,7 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
   const [tempStorage, setTempStorage] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
   const [gitRemotes, setGitRemotes] = useState<GitRemote[]>([{ name: 'origin', url: '' }])
-  const [gitRepoOptionsOpen, setGitRepoOptionsOpen] = useState(false)
+  const [aiTools, setAiTools] = useState<string[]>([])
   const [advancedOptionsOpen, setAdvancedOptionsOpen] = useState(false)
   const [envSettings, setEnvSettings] = useState({
     containerImage: '',
@@ -646,12 +647,45 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
           )}
 
           {mode === 'repo' && (
+            <FormGroup
+              label="Select an Editor"
+              labelHelp={
+                <FieldHelp text="Choose the IDE that will be launched in your workspace." />
+              }
+            >
+              <EditorDropdown value={editor} onChange={setEditor} />
+            </FormGroup>
+          )}
+
+          {mode === 'repo' && (
+            <FormGroup
+              label="Add AI Tools"
+              labelHelp={<FieldHelp text="Select AI-powered coding assistants to install in your workspace. Tools marked with a checkmark are already authenticated with your account." />}
+            >
+              <AIToolsSection selected={aiTools} onChange={setAiTools} />
+            </FormGroup>
+          )}
+
+          {mode === 'repo' && (
             <ExpandableSection
-              toggleText="Git Repo Options"
-              isExpanded={gitRepoOptionsOpen}
-              onToggle={(_e, isExpanded) => setGitRepoOptionsOpen(isExpanded)}
+              toggleText="Advanced Options"
+              isExpanded={advancedOptionsOpen}
+              onToggle={(_e, isExpanded) => setAdvancedOptionsOpen(isExpanded)}
             >
               <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                <FormGroup
+                  label="Path to Devfile"
+                  fieldId="devfile-path"
+                  labelHelp={<FieldHelp text="Specify a custom path to your devfile relative to the repository root." />}
+                >
+                  <TextInput
+                    id="devfile-path"
+                    value={envSettings.devfilePath}
+                    onChange={(_e, val) => setEnvSettings((prev) => ({ ...prev, devfilePath: val }))}
+                    placeholder="Enter the relative path to the Devfile in the Git Repository"
+                  />
+                </FormGroup>
+
                 <FormGroup label="Additional Git Remotes" fieldId="git-remotes">
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     {gitRemotes.map((remote, index) => (
@@ -700,40 +734,6 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
                   </div>
                 </FormGroup>
 
-                <FormGroup
-                  label="Path to Devfile"
-                  fieldId="devfile-path"
-                  labelHelp={<FieldHelp text="Specify a custom path to your devfile relative to the repository root." />}
-                >
-                  <TextInput
-                    id="devfile-path"
-                    value={envSettings.devfilePath}
-                    onChange={(_e, val) => setEnvSettings((prev) => ({ ...prev, devfilePath: val }))}
-                    placeholder="Enter the relative path to the Devfile in the Git Repository"
-                  />
-                </FormGroup>
-              </div>
-            </ExpandableSection>
-          )}
-
-          {mode === 'repo' && (
-            <FormGroup
-              label="Select an Editor"
-              labelHelp={
-                <FieldHelp text="Choose the IDE that will be launched in your workspace." />
-              }
-            >
-              <EditorDropdown value={editor} onChange={setEditor} />
-            </FormGroup>
-          )}
-
-          {mode === 'repo' && (
-            <ExpandableSection
-              toggleText="Advanced Options"
-              isExpanded={advancedOptionsOpen}
-              onToggle={(_e, isExpanded) => setAdvancedOptionsOpen(isExpanded)}
-            >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                 <FormGroup
                   label="Container Image"
                   fieldId="container-image"
