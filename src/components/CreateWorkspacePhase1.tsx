@@ -652,6 +652,7 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
               labelHelp={
                 <FieldHelp text="Choose the IDE that will be launched in your workspace." />
               }
+              style={{ maxWidth: 400 }}
             >
               <EditorDropdown value={editor} onChange={setEditor} />
             </FormGroup>

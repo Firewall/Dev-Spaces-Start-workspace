@@ -714,6 +714,7 @@ export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) 
                 labelHelp={
                   <FieldHelp text="Choose the IDE that will be launched in your workspace. The default editor is Visual Studio Code - Open Source (Web). Select 'Custom Editor' for advanced configuration." />
                 }
+                style={{ maxWidth: 400 }}
               >
                 <EditorDropdown value={editor} onChange={setEditor} />
               </FormGroup>
