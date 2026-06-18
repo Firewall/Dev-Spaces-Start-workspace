@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useMemo } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import {
   Alert,
   Button,
@@ -135,21 +135,6 @@ interface CreateWorkspacePhase1Props {
   onPhaseChange: (phase: 'phase1' | 'phase2') => void
 }
 
-function nameFromRepoUrl(url: string): string {
-  try {
-    const path = url.replace(/\.git$/, '').split('/').pop() || ''
-    return path || ''
-  } catch {
-    return ''
-  }
-}
-
-function nameFromTemplate(templateId: string): string {
-  const tpl = TEMPLATES.find((t) => t.id === templateId)
-  if (!tpl) return ''
-  return tpl.id
-}
-
 function TemplateIcon({ icon, size }: { icon: string; size: number }) {
   const svg = getDependencyBrandIcon(icon)
   if (svg) return <DependencyBrandIcon icon={svg} size={size} />
@@ -158,7 +143,6 @@ function TemplateIcon({ icon, size }: { icon: string; size: number }) {
 
 export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspacePhase1Props) {
   const [mode, setMode] = useState<CreationMode>('repo')
-  const [name, setName] = useState('')
   const [repoUrl, setRepoUrl] = useState('')
   const [branch, setBranch] = useState('main')
   const [editor, setEditor] = useState('vscode-oss')
@@ -174,7 +158,6 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
     devfilePath: '',
   })
   const [submitting, setSubmitting] = useState(false)
-  const nameManuallyEdited = useRef(false)
 
   const [templateModalOpen, setTemplateModalOpen] = useState(false)
   const [templateSearch, setTemplateSearch] = useState('')
@@ -225,38 +208,18 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
     setMode(newMode)
     if (newMode === 'repo') {
       setSelectedTemplate(null)
-      if (!nameManuallyEdited.current) {
-        setName(repoUrl.trim() ? nameFromRepoUrl(repoUrl) : '')
-      }
     } else {
       setRepoUrl('')
       setBranch('main')
-      if (!nameManuallyEdited.current) {
-        setName(selectedTemplate ? nameFromTemplate(selectedTemplate) : '')
-      }
     }
-  }, [repoUrl, selectedTemplate])
-
-  const handleNameChange = useCallback((_e: unknown, val: string) => {
-    setName(val)
-    nameManuallyEdited.current = val !== ''
   }, [])
 
   const handleTemplateClick = useCallback((templateId: string) => {
-    setSelectedTemplate((prev) => {
-      const next = prev === templateId ? null : templateId
-      if (!nameManuallyEdited.current) {
-        setName(next ? nameFromTemplate(next) : '')
-      }
-      return next
-    })
+    setSelectedTemplate((prev) => prev === templateId ? null : templateId)
   }, [])
 
   const handleRepoChange = useCallback((_e: unknown, val: string) => {
     setRepoUrl(val)
-    if (!nameManuallyEdited.current) {
-      setName(val.trim() ? nameFromRepoUrl(val) : '')
-    }
   }, [])
 
   const addGitRemote = useCallback(() => {
@@ -421,10 +384,7 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
                     variant="plain"
                     aria-label="Clear template"
                     icon={<TimesIcon />}
-                    onClick={() => {
-                      setSelectedTemplate(null)
-                      if (!nameManuallyEdited.current) setName('')
-                    }}
+                    onClick={() => setSelectedTemplate(null)}
                     style={{ padding: 0 }}
                   />
                 </div>
@@ -670,10 +630,7 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
                       {selectedTemplate && (
                         <Button
                           variant="link"
-                          onClick={() => {
-                            setSelectedTemplate(null)
-                            if (!nameManuallyEdited.current) setName('')
-                          }}
+                          onClick={() => setSelectedTemplate(null)}
                         >
                           Clear
                         </Button>
@@ -758,21 +715,6 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
               </div>
             </ExpandableSection>
           )}
-
-          <FormGroup
-            label="Workspace Name"
-            fieldId="workspace-name"
-            labelHelp={
-              <FieldHelp text="A human-readable name for your workspace. Auto-generated from the repo or template if left blank." />
-            }
-          >
-            <TextInput
-              id="workspace-name"
-              value={name}
-              onChange={handleNameChange}
-              placeholder="my-project"
-            />
-          </FormGroup>
 
           {mode === 'repo' && (
             <FormGroup
