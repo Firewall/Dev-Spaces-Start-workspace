@@ -30,6 +30,7 @@ function FieldHelp({ text }: { text: string }) {
         aria-label="More info"
         onClick={(e) => e.preventDefault()}
         className="pf-v6-c-form__group-label-help"
+        style={{ background: 'none', border: 'none' }}
       >
         <HelpIcon />
       </button>
