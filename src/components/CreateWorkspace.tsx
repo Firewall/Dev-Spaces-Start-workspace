@@ -354,6 +354,21 @@ export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) 
             }}
           >
 
+          <FormGroup
+            label="Workspace Name"
+            fieldId="workspace-name"
+            labelHelp={
+              <FieldHelp text="A human-readable name for your workspace. Auto-generated from the repo or template if left blank." />
+            }
+          >
+            <TextInput
+              id="workspace-name"
+              value={name}
+              onChange={handleNameChange}
+              placeholder="my-project"
+            />
+          </FormGroup>
+
           {mode === 'repo' && (
             <FormGroup
               label="Git repo URL"
@@ -691,21 +706,6 @@ export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) 
               </Modal>
             </div>
           )}
-
-          <FormGroup
-            label="Workspace Name"
-            fieldId="workspace-name"
-            labelHelp={
-              <FieldHelp text="A human-readable name for your workspace. Auto-generated from the repo or template if left blank." />
-            }
-          >
-            <TextInput
-              id="workspace-name"
-              value={name}
-              onChange={handleNameChange}
-              placeholder="my-project"
-            />
-          </FormGroup>
 
           {mode === 'repo' && (
             <>
