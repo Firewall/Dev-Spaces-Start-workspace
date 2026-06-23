@@ -22,12 +22,11 @@ interface AITool {
 }
 
 const AVAILABLE_TOOLS: AITool[] = [
-  { id: 'copilot', name: 'GitHub Copilot', description: 'AI-powered code completion', authenticated: true },
-  { id: 'codewhisperer', name: 'Amazon CodeWhisperer', description: 'ML-powered code suggestions', authenticated: false },
-  { id: 'tabnine', name: 'Tabnine', description: 'AI code assistant', authenticated: true },
-  { id: 'cody', name: 'Sourcegraph Cody', description: 'AI coding assistant with context', authenticated: false },
-  { id: 'cursor-ai', name: 'Cursor AI', description: 'AI-first code editor features', authenticated: false },
-  { id: 'continue', name: 'Continue', description: 'Open-source AI assistant', authenticated: true },
+  { id: 'claude-code', name: 'Claude Code', description: 'Anthropic AI coding agent', authenticated: true },
+  { id: 'cursor-ai', name: 'Cursor Agent', description: 'AI-first code editor agent', authenticated: false },
+  { id: 'codex', name: 'Codex Agent', description: 'OpenAI autonomous coding agent', authenticated: true },
+  { id: 'opencode', name: 'OpenCode', description: 'Open-source AI coding CLI', authenticated: false },
+  { id: 'kiro', name: 'Kiro CLI', description: 'AWS AI-powered development CLI', authenticated: true },
 ]
 
 interface AIToolsSectionProps {
