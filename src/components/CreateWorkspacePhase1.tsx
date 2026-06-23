@@ -719,7 +719,7 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
                     onMinus={() =>
                       setEnvSettings((prev) => ({
                         ...prev,
-                        memoryLimit: String(Math.max(0, parseFloat((Number(prev.memoryLimit) || 0) - 0.5 + '').toFixed(2))),
+                        memoryLimit: String(Math.max(0, parseFloat(((Number(prev.memoryLimit) || 0) - 0.5).toFixed(2)))),
                       }))
                     }
                     onPlus={() =>
@@ -750,7 +750,7 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
                     onMinus={() =>
                       setEnvSettings((prev) => ({
                         ...prev,
-                        cpuLimit: String(Math.max(0, parseFloat((Number(prev.cpuLimit) || 0) - 0.5 + '').toFixed(2))),
+                        cpuLimit: String(Math.max(0, parseFloat(((Number(prev.cpuLimit) || 0) - 0.5).toFixed(2)))),
                       }))
                     }
                     onPlus={() =>
