@@ -4,6 +4,7 @@ import {
   Select,
   SelectList,
   SelectOption,
+  Tooltip,
 } from '@patternfly/react-core'
 import { CodeBranchIcon } from '@patternfly/react-icons'
 
@@ -27,18 +28,25 @@ export function BranchDropdown({ value, onChange, disabled }: BranchDropdownProp
         setIsOpen(false)
       }}
       selected={value}
-      toggle={(toggleRef) => (
-        <MenuToggle
-          ref={toggleRef}
-          onClick={() => setIsOpen((o) => !o)}
-          isExpanded={isOpen}
-          isDisabled={disabled}
-          icon={<CodeBranchIcon />}
-          style={{ minWidth: 180 }}
-        >
-          {value || 'Select branch'}
-        </MenuToggle>
-      )}
+      toggle={(toggleRef) => {
+        const toggle = (
+          <MenuToggle
+            ref={toggleRef}
+            onClick={() => setIsOpen((o) => !o)}
+            isExpanded={isOpen}
+            isDisabled={disabled}
+            icon={<CodeBranchIcon />}
+            style={{ minWidth: 180 }}
+          >
+            {value || 'Select branch'}
+          </MenuToggle>
+        )
+        return disabled ? (
+          <Tooltip content="Enter a Git repository URL to select a branch">
+            <span style={{ cursor: 'not-allowed' }}>{toggle}</span>
+          </Tooltip>
+        ) : toggle
+      }}
     >
       <SelectList>
         {MOCK_BRANCHES.map((b) => (
