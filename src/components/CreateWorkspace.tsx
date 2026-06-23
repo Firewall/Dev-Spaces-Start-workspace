@@ -787,13 +787,13 @@ export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) 
                       onMinus={() =>
                         setEnvSettings((prev) => ({
                           ...prev,
-                          memoryLimit: String(Math.max(0, (Number(prev.memoryLimit) || 0) - 1)),
+                          memoryLimit: String(Math.max(0, parseFloat((Number(prev.memoryLimit) || 0) - 0.5 + '').toFixed(2))),
                         }))
                       }
                       onPlus={() =>
                         setEnvSettings((prev) => ({
                           ...prev,
-                          memoryLimit: String((Number(prev.memoryLimit) || 0) + 1),
+                          memoryLimit: String(parseFloat(((Number(prev.memoryLimit) || 0) + 0.5).toFixed(2))),
                         }))
                       }
                       onChange={(event: React.FormEvent<HTMLInputElement>) => {
@@ -804,6 +804,7 @@ export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) 
                       minusBtnAriaLabel="Decrease memory"
                       plusBtnAriaLabel="Increase memory"
                       min={0}
+                      inputProps={{ step: 0.01 }}
                     />
                   </FormGroup>
 
@@ -817,13 +818,13 @@ export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) 
                       onMinus={() =>
                         setEnvSettings((prev) => ({
                           ...prev,
-                          cpuLimit: String(Math.max(0, (Number(prev.cpuLimit) || 0) - 1)),
+                          cpuLimit: String(Math.max(0, parseFloat((Number(prev.cpuLimit) || 0) - 0.5 + '').toFixed(2))),
                         }))
                       }
                       onPlus={() =>
                         setEnvSettings((prev) => ({
                           ...prev,
-                          cpuLimit: String((Number(prev.cpuLimit) || 0) + 1),
+                          cpuLimit: String(parseFloat(((Number(prev.cpuLimit) || 0) + 0.5).toFixed(2))),
                         }))
                       }
                       onChange={(event: React.FormEvent<HTMLInputElement>) => {
@@ -834,6 +835,7 @@ export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) 
                       minusBtnAriaLabel="Decrease CPU"
                       plusBtnAriaLabel="Increase CPU"
                       min={0}
+                      inputProps={{ step: 0.01 }}
                     />
                   </FormGroup>
 
