@@ -5,7 +5,6 @@ import {
   SelectList,
   SelectOption,
   Label,
-  LabelGroup,
 } from '@patternfly/react-core'
 import {
   CheckIcon,
@@ -52,20 +51,17 @@ export function AIToolsSection({ selected, onChange }: AIToolsSectionProps) {
   const selectedTools = AVAILABLE_TOOLS.filter((t) => selected.includes(t.id))
 
   return (
-    <div>
-      {selectedTools.length > 0 && (
-        <LabelGroup style={{ marginBottom: 8 }}>
-          {selectedTools.map((tool) => (
-            <Label
-              key={tool.id}
-              onClose={() => remove(tool.id)}
-              icon={hasBrandIcon(tool.id) ? <BrandIcon id={tool.id} size={14} /> : <StarIcon />}
-            >
-              {tool.name}
-            </Label>
-          ))}
-        </LabelGroup>
-      )}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+      {selectedTools.map((tool) => (
+        <Label
+          key={tool.id}
+          onClose={() => remove(tool.id)}
+          icon={hasBrandIcon(tool.id) ? <BrandIcon id={tool.id} size={14} /> : <StarIcon />}
+          style={{ height: 36, display: 'inline-flex', alignItems: 'center', padding: '0 12px', fontSize: '14px' }}
+        >
+          {tool.name}
+        </Label>
+      ))}
 
       <Select
         isOpen={isOpen}
