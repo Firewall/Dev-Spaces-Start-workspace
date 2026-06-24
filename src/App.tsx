@@ -27,6 +27,7 @@ import {
   BarsIcon,
   CodeIcon,
   CogIcon,
+  CommentsIcon,
   DesktopIcon,
   InfoCircleIcon,
   MoonIcon,
@@ -38,6 +39,7 @@ import {
 } from '@patternfly/react-icons'
 import type { ComponentType } from 'react'
 import { AgentSpace } from './components/AgentSpace'
+import { AgentSpaceV2 } from './components/AgentSpaceV2'
 import { CreateWorkspace } from './components/CreateWorkspace'
 import { CreateWorkspacePhase1 } from './components/CreateWorkspacePhase1'
 import { WorkspaceList } from './components/WorkspaceList'
@@ -49,6 +51,7 @@ const PHASE_STORAGE_KEY = 'dev-spaces-phase'
 const NAV_ITEMS: { label: string; id: string; icon: ComponentType }[] = [
   { label: 'Workspaces', id: 'workspaces', icon: ThLargeIcon },
   { label: 'Agent Space', id: 'agent-space', icon: RobotIcon },
+  { label: 'Agent Space v2', id: 'agent-space-v2', icon: CommentsIcon },
   { label: 'Devfile Creator', id: 'devfile-creator', icon: CodeIcon },
   { label: 'Backups', id: 'backups', icon: ArchiveIcon },
 ]
@@ -253,6 +256,8 @@ export default function App() {
       {signedIn ? (
         activePage === 'agent-space' ? (
           <AgentSpace />
+        ) : activePage === 'agent-space-v2' ? (
+          <AgentSpaceV2 />
         ) : activePage === 'create-workspace' ? (
           phase === 'phase1' ? (
             <CreateWorkspacePhase1 phase={phase} onPhaseChange={setPhase} />
