@@ -9,6 +9,7 @@ import {
   MastheadBrand,
   MastheadContent,
   MastheadMain,
+  MastheadToggle,
   MenuToggle,
   Nav,
   NavItem,
@@ -17,20 +18,26 @@ import {
   PageSection,
   PageSidebar,
   PageSidebarBody,
+  PageToggleButton,
   ToggleGroup,
   ToggleGroupItem,
 } from '@patternfly/react-core'
 import {
   ArchiveIcon,
+  BarsIcon,
   CodeIcon,
+  CogIcon,
   DesktopIcon,
+  InfoCircleIcon,
   MoonIcon,
-  OutlinedQuestionCircleIcon,
+  RobotIcon,
+  SignOutAltIcon,
   SunIcon,
   ThLargeIcon,
   UserIcon,
 } from '@patternfly/react-icons'
 import type { ComponentType } from 'react'
+import { AgentSpace } from './components/AgentSpace'
 import { CreateWorkspace } from './components/CreateWorkspace'
 import { CreateWorkspacePhase1 } from './components/CreateWorkspacePhase1'
 import { WorkspaceList } from './components/WorkspaceList'
@@ -41,6 +48,7 @@ const PHASE_STORAGE_KEY = 'dev-spaces-phase'
 
 const NAV_ITEMS: { label: string; id: string; icon: ComponentType }[] = [
   { label: 'Workspaces', id: 'workspaces', icon: ThLargeIcon },
+  { label: 'Agent Space', id: 'agent-space', icon: RobotIcon },
   { label: 'Devfile Creator', id: 'devfile-creator', icon: CodeIcon },
   { label: 'Backups', id: 'backups', icon: ArchiveIcon },
 ]
@@ -60,6 +68,7 @@ export default function App() {
   const [username] = useState('jane.doe')
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [activePage, setActivePage] = useState(getRouteFromHash)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [phase, setPhase] = useState<Phase>(() => {
     const saved = window.localStorage.getItem(PHASE_STORAGE_KEY)
     return saved === 'phase1' || saved === 'phase2' ? saved : 'phase1'
@@ -106,6 +115,16 @@ export default function App() {
 
   const masthead = (
     <Masthead>
+      <MastheadToggle>
+        <PageToggleButton
+          variant="plain"
+          aria-label="Global navigation"
+          isSidebarOpen={isSidebarOpen}
+          onSidebarToggle={() => setIsSidebarOpen((o) => !o)}
+        >
+          <BarsIcon />
+        </PageToggleButton>
+      </MastheadToggle>
       <MastheadMain>
         <MastheadBrand>
           <img
@@ -113,16 +132,11 @@ export default function App() {
             alt="Dev Spaces"
             style={{ height: 36, borderRadius: 8 }}
           />
+          <span style={{ marginLeft: 12, fontSize: 18, fontWeight: 600 }}>Dev Spaces</span>
         </MastheadBrand>
       </MastheadMain>
       <MastheadContent>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto' }}>
-          <Button variant="plain" aria-label="Applications">
-            <ThLargeIcon />
-          </Button>
-          <Button variant="plain" aria-label="Help">
-            <OutlinedQuestionCircleIcon />
-          </Button>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', width: '100%' }}>
           <Dropdown
             isOpen={profileMenuOpen}
             onSelect={() => setProfileMenuOpen(false)}
@@ -188,9 +202,18 @@ export default function App() {
             <Divider />
             <div style={{ padding: '8px 16px 4px', fontSize: 14, fontWeight: 600 }}>Actions</div>
             <DropdownList>
-              <DropdownItem key="user-prefs">User Preferences</DropdownItem>
-              <DropdownItem key="logout" onClick={() => setSignedIn(false)}>
-                Logout
+              <DropdownItem key="settings" icon={<CogIcon />}>
+                Settings
+              </DropdownItem>
+              <DropdownItem key="about" icon={<InfoCircleIcon />}>
+                About
+              </DropdownItem>
+              <DropdownItem
+                key="logout"
+                icon={<SignOutAltIcon />}
+                onClick={() => setSignedIn(false)}
+              >
+                Log out
               </DropdownItem>
             </DropdownList>
           </Dropdown>
@@ -200,7 +223,7 @@ export default function App() {
   )
 
   const sidebar = (
-    <PageSidebar>
+    <PageSidebar isSidebarOpen={isSidebarOpen} style={{ '--pf-v6-c-page__sidebar--Width--base': '5rem' } as React.CSSProperties}>
       <PageSidebarBody>
         <Nav onSelect={(_event, result) => {
           setActivePage(result.itemId as string)
@@ -228,7 +251,9 @@ export default function App() {
   return (
     <Page masthead={masthead} sidebar={sidebar}>
       {signedIn ? (
-        activePage === 'create-workspace' ? (
+        activePage === 'agent-space' ? (
+          <AgentSpace />
+        ) : activePage === 'create-workspace' ? (
           phase === 'phase1' ? (
             <CreateWorkspacePhase1 phase={phase} onPhaseChange={setPhase} />
           ) : (
