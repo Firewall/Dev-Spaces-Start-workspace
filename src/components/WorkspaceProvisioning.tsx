@@ -83,7 +83,7 @@ function getTimestamp(offset: number): string {
 export function WorkspaceProvisioning({ workspace, onComplete, onCancel }: WorkspaceProvisioningProps) {
   const [currentStep, setCurrentStep] = useState(0)
   const [logLines, setLogLines] = useState<string[]>([])
-  const logRef = useRef<HTMLElement>(null)
+  const logRef = useRef<HTMLPreElement>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout>>(null)
 
   useEffect(() => {
@@ -166,7 +166,7 @@ export function WorkspaceProvisioning({ workspace, onComplete, onCancel }: Works
           </Content>
           <CodeBlock>
             <CodeBlockCode
-              ref={logRef as React.Ref<HTMLElement>}
+              ref={logRef}
               style={{
                 maxHeight: 160,
                 overflowY: 'auto',
