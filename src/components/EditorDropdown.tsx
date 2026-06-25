@@ -13,7 +13,7 @@ import { hasBrandIcon } from './brandIconData'
 
 const JETBRAINS_IDS = new Set(['intellij', 'goland', 'pycharm', 'webstorm', 'clion', 'phpstorm', 'rider', 'rubymine', 'toolbox'])
 
-const EDITORS = [
+export const EDITORS = [
   { id: 'vscode-oss', label: 'Visual Studio Code - Open Source (Web)', isDefault: true },
   { id: 'vscode', label: 'Visual Studio Code - Desktop (SSH)' },
   { id: 'kiro', label: 'Kiro (SSH)', isTechPreview: true },

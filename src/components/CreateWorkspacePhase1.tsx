@@ -48,8 +48,12 @@ import {
 import { DependencyBrandIcon } from './DependencyBrandIcon'
 import { getDependencyBrandIcon } from './dependencySimpleIcons'
 import { BranchDropdown } from './BranchDropdown'
-import { EditorDropdown } from './EditorDropdown'
+import { EditorDropdown, EDITORS } from './EditorDropdown'
 import { AIToolsSection } from './AIToolsSection'
+import { WorkspaceProvisioning } from './WorkspaceProvisioning'
+import { VSCodeMockup } from './VSCodeMockup'
+import { nameFromRepoUrl } from './workspaceTypes'
+import type { WorkspaceInfo } from './workspaceTypes'
 
 function FieldHelp({ text }: { text: string }) {
   return (
@@ -158,7 +162,7 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
     cpuLimit: '',
     devfilePath: '',
   })
-  const [submitting, setSubmitting] = useState(false)
+  const [viewState, setViewState] = useState<'form' | 'provisioning' | 'connected'>('form')
 
   const [templateModalOpen, setTemplateModalOpen] = useState(false)
   const [templateSearch, setTemplateSearch] = useState('')
@@ -237,17 +241,29 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
     )
   }, [])
 
+  const workspaceInfo: WorkspaceInfo = useMemo(() => {
+    const editorEntry = EDITORS.find((e) => e.id === editor)
+    const derivedName = mode === 'repo' ? nameFromRepoUrl(repoUrl) : selectedTemplate || 'workspace'
+    return {
+      name: derivedName || 'workspace',
+      repoUrl,
+      branch,
+      editor,
+      editorLabel: editorEntry?.label ?? editor,
+      templateName: selectedTemplate ? (TEMPLATES.find((t) => t.id === selectedTemplate)?.name ?? selectedTemplate) : undefined,
+    }
+  }, [mode, repoUrl, branch, editor, selectedTemplate])
+
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault()
       if (!canSubmit) return
-      setSubmitting(true)
-      setTimeout(() => setSubmitting(false), 2000)
+      setViewState('provisioning')
     },
     [canSubmit],
   )
 
-  return (
+  const formView = (
     <>
       <PageSection variant="default">
         <Flex>
@@ -899,13 +915,11 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
             <Button
               type="submit"
               variant="primary"
-              isLoading={submitting}
-              isDisabled={submitting || !canSubmit}
-              spinnerAriaValueText="Creating"
+              isDisabled={!canSubmit}
               icon={<ArrowRightIcon />}
               iconPosition="end"
             >
-              {submitting ? 'Creating Workspace…' : 'Create Workspace'}
+              Create Workspace
             </Button>
           </div>
 
@@ -914,4 +928,75 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
       </PageSection>
     </>
   )
+
+  if (viewState === 'provisioning') {
+    return (
+      <>
+        <PageSection variant="default">
+          <Flex>
+            <FlexItem>
+              <Title headingLevel="h2">Workspaces</Title>
+            </FlexItem>
+            <FlexItem align={{ default: 'alignRight' }}>
+              <ToggleGroup aria-label="Prototype phase">
+                <ToggleGroupItem
+                  text="Phase 1"
+                  buttonId="phase1"
+                  isSelected={phase === 'phase1'}
+                  onChange={() => onPhaseChange('phase1')}
+                />
+                <ToggleGroupItem
+                  text="Phase 2"
+                  buttonId="phase2"
+                  isSelected={phase === 'phase2'}
+                  onChange={() => onPhaseChange('phase2')}
+                />
+              </ToggleGroup>
+            </FlexItem>
+          </Flex>
+        </PageSection>
+        <WorkspaceProvisioning
+          workspace={workspaceInfo}
+          onComplete={() => setViewState('connected')}
+          onCancel={() => setViewState('form')}
+        />
+      </>
+    )
+  }
+
+  if (viewState === 'connected') {
+    return (
+      <>
+        <PageSection variant="default">
+          <Flex>
+            <FlexItem>
+              <Title headingLevel="h2">Workspaces</Title>
+            </FlexItem>
+            <FlexItem align={{ default: 'alignRight' }}>
+              <ToggleGroup aria-label="Prototype phase">
+                <ToggleGroupItem
+                  text="Phase 1"
+                  buttonId="phase1"
+                  isSelected={phase === 'phase1'}
+                  onChange={() => onPhaseChange('phase1')}
+                />
+                <ToggleGroupItem
+                  text="Phase 2"
+                  buttonId="phase2"
+                  isSelected={phase === 'phase2'}
+                  onChange={() => onPhaseChange('phase2')}
+                />
+              </ToggleGroup>
+            </FlexItem>
+          </Flex>
+        </PageSection>
+        <VSCodeMockup
+          workspace={workspaceInfo}
+          onBackToWorkspaces={() => setViewState('form')}
+        />
+      </>
+    )
+  }
+
+  return formView
 }
