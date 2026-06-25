@@ -252,7 +252,7 @@ export default function App() {
   )
 
   return (
-    <Page masthead={masthead} sidebar={sidebar}>
+    <Page masthead={masthead} sidebar={sidebar} isContentFilled>
       {signedIn ? (
         activePage === 'agent-space' ? (
           <AgentSpace />

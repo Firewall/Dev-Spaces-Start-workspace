@@ -13,11 +13,21 @@ export const MOCK_PROJECTS: Project[] = [
 ]
 
 export const MOCK_AGENTS: Agent[] = [
-  { id: 'agent-1', name: 'Claude - feature/auth', tool: 'claude-code', status: 'running', projectId: 'proj-1', summary: 'Implementing OAuth2 login flow', lastActivity: Date.now() - 2 * 60 * 1000 },
-  { id: 'agent-2', name: 'Codex - refactor DB', tool: 'codex', status: 'stopped', projectId: 'proj-1', summary: 'Refactor database migration scripts', lastActivity: Date.now() - 14 * 60 * 60 * 1000 },
-  { id: 'agent-3', name: 'Claude - fix nav styles', tool: 'claude-code', status: 'stopped', projectId: 'proj-1', summary: 'Fix sidebar navigation styling issues', lastActivity: Date.now() - 5 * 24 * 60 * 60 * 1000 },
-  { id: 'agent-4', name: 'OpenCode - tests', tool: 'opencode', status: 'stopped', projectId: 'proj-2', summary: 'Add integration tests for API endpoints', lastActivity: Date.now() - 6 * 24 * 60 * 60 * 1000 },
-  { id: 'agent-5', name: 'Codex - docs', tool: 'codex', status: 'running', projectId: 'proj-2', summary: 'Generate API documentation from types', lastActivity: Date.now() - 10 * 60 * 1000 },
+  // web-app agents
+  { id: 'agent-1', name: 'Claude Code - Implementing OAuth2 login flow', tool: 'claude-code', status: 'running', projectId: 'proj-1', summary: 'Implementing OAuth2 login flow', lastActivity: Date.now() - 2 * 60 * 1000 },
+  { id: 'agent-6', name: 'Claude Code - Add user profile settings page', tool: 'claude-code', status: 'running', projectId: 'proj-1', summary: 'Add user profile settings page', lastActivity: Date.now() - 8 * 60 * 1000 },
+  { id: 'agent-2', name: 'Codex - Refactor database migration scripts', tool: 'codex', status: 'stopped', projectId: 'proj-1', summary: 'Refactor database migration scripts', lastActivity: Date.now() - 14 * 60 * 60 * 1000 },
+  { id: 'agent-7', name: 'Codex - Upgrade React Router to v7', tool: 'codex', status: 'stopped', projectId: 'proj-1', summary: 'Upgrade React Router to v7', lastActivity: Date.now() - 2 * 24 * 60 * 60 * 1000 },
+  { id: 'agent-8', name: 'OpenShift AI - Investigate memory leak in dashboard', tool: 'openshift-ai', status: 'stopped', projectId: 'proj-1', summary: 'Investigate memory leak in dashboard', lastActivity: Date.now() - 3 * 24 * 60 * 60 * 1000 },
+  { id: 'agent-3', name: 'Claude Code - Fix sidebar navigation styling issues', tool: 'claude-code', status: 'stopped', projectId: 'proj-1', summary: 'Fix sidebar navigation styling issues', lastActivity: Date.now() - 5 * 24 * 60 * 60 * 1000 },
+  { id: 'agent-9', name: 'Claude Code - Add dark mode theme support', tool: 'claude-code', status: 'stopped', projectId: 'proj-1', summary: 'Add dark mode theme support', lastActivity: Date.now() - 7 * 24 * 60 * 60 * 1000 },
+  // api-service agents
+  { id: 'agent-10', name: 'Claude Code - Fix rate limiting middleware', tool: 'claude-code', status: 'running', projectId: 'proj-2', summary: 'Fix rate limiting middleware', lastActivity: Date.now() - 3 * 60 * 1000 },
+  { id: 'agent-5', name: 'Codex - Generate API documentation from types', tool: 'codex', status: 'running', projectId: 'proj-2', summary: 'Generate API documentation from types', lastActivity: Date.now() - 10 * 60 * 1000 },
+  { id: 'agent-11', name: 'Claude Code - Add GraphQL subscriptions for real-time', tool: 'claude-code', status: 'stopped', projectId: 'proj-2', summary: 'Add GraphQL subscriptions for real-time', lastActivity: Date.now() - 1 * 24 * 60 * 60 * 1000 },
+  { id: 'agent-12', name: 'OpenCode - Optimize database query performance', tool: 'opencode', status: 'stopped', projectId: 'proj-2', summary: 'Optimize database query performance', lastActivity: Date.now() - 4 * 24 * 60 * 60 * 1000 },
+  { id: 'agent-4', name: 'OpenCode - Add integration tests for API endpoints', tool: 'opencode', status: 'stopped', projectId: 'proj-2', summary: 'Add integration tests for API endpoints', lastActivity: Date.now() - 6 * 24 * 60 * 60 * 1000 },
+  { id: 'agent-13', name: 'Codex - Set up CI/CD pipeline with GitHub Actions', tool: 'codex', status: 'stopped', projectId: 'proj-2', summary: 'Set up CI/CD pipeline with GitHub Actions', lastActivity: Date.now() - 10 * 24 * 60 * 60 * 1000 },
 ]
 
 export const INITIAL_AUTH: ToolAuth[] = [

@@ -1,3 +1,10 @@
 html, body, #root {
   height: 100%;
 }
+
+.pf-v6-c-page__main-container {
+  align-self: stretch;
+  max-height: 100%;
+  margin: 0;
+  border-radius: 0;
+}
