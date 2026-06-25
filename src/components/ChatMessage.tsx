@@ -1,4 +1,6 @@
-import type { ChatMessage as ChatMessageType } from './agentSpaceV2Types'
+import { useState } from 'react'
+import { AngleRightIcon, AngleDownIcon } from '@patternfly/react-icons'
+import type { ChatMessage as ChatMessageType, ToolCall } from './agentSpaceV2Types'
 
 interface ChatMessageProps {
   message: ChatMessageType
@@ -124,6 +126,111 @@ function renderInline(text: string) {
   return parts
 }
 
+function ThinkingBlock({ thinking }: { thinking: string }) {
+  const [expanded, setExpanded] = useState(false)
+
+  return (
+    <div style={{
+      margin: '4px 0 8px',
+      borderRadius: 8,
+      border: '1px solid var(--pf-t--global--border--color--default)',
+      overflow: 'hidden',
+    }}>
+      <button
+        onClick={() => setExpanded(e => !e)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          width: '100%',
+          padding: '6px 10px',
+          border: 'none',
+          background: 'rgba(127,127,127,0.08)',
+          color: 'var(--pf-t--global--text--color--subtle)',
+          fontSize: 12,
+          fontWeight: 600,
+          cursor: 'pointer',
+          fontFamily: 'inherit',
+        }}
+      >
+        {expanded ? <AngleDownIcon style={{ fontSize: 12 }} /> : <AngleRightIcon style={{ fontSize: 12 }} />}
+        Thinking
+      </button>
+      {expanded && (
+        <div style={{
+          padding: '8px 12px',
+          fontSize: 13,
+          color: 'var(--pf-t--global--text--color--subtle)',
+          lineHeight: 1.5,
+          fontStyle: 'italic',
+          whiteSpace: 'pre-wrap',
+        }}>
+          {thinking}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ToolCallBlock({ toolCall }: { toolCall: ToolCall }) {
+  const [expanded, setExpanded] = useState(false)
+
+  return (
+    <div style={{
+      margin: '3px 0',
+      borderRadius: 6,
+      border: '1px solid var(--pf-t--global--border--color--default)',
+      overflow: 'hidden',
+    }}>
+      <button
+        onClick={() => setExpanded(e => !e)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          width: '100%',
+          padding: '5px 10px',
+          border: 'none',
+          background: 'rgba(127,127,127,0.05)',
+          color: 'var(--pf-t--global--text--color--regular)',
+          fontSize: 12,
+          cursor: 'pointer',
+          fontFamily: 'inherit',
+        }}
+      >
+        {expanded ? <AngleDownIcon style={{ fontSize: 11 }} /> : <AngleRightIcon style={{ fontSize: 11 }} />}
+        <code style={{
+          fontFamily: 'monospace',
+          fontSize: 12,
+          fontWeight: 600,
+          color: 'var(--pf-t--global--color--brand--default)',
+        }}>{toolCall.name}</code>
+        <span style={{ color: 'var(--pf-t--global--text--color--subtle)', fontFamily: 'monospace', fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {toolCall.input}
+        </span>
+      </button>
+      {expanded && (
+        <div style={{ padding: '6px 10px', fontSize: 12, fontFamily: 'monospace', lineHeight: 1.5 }}>
+          <div style={{ color: 'var(--pf-t--global--text--color--subtle)', marginBottom: 2 }}>Input:</div>
+          <pre style={{
+            background: '#1e1e1e', color: '#d4d4d4', padding: '6px 10px',
+            borderRadius: 4, fontSize: 11, margin: '0 0 6px', whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+          }}>{toolCall.input}</pre>
+          {toolCall.output && (
+            <>
+              <div style={{ color: 'var(--pf-t--global--text--color--subtle)', marginBottom: 2 }}>Output:</div>
+              <pre style={{
+                background: '#1e1e1e', color: '#d4d4d4', padding: '6px 10px',
+                borderRadius: 4, fontSize: 11, margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+              }}>{toolCall.output}</pre>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.role === 'user'
 
@@ -147,6 +254,12 @@ export function ChatMessage({ message }: ChatMessageProps) {
         lineHeight: 1.5,
         wordBreak: 'break-word',
       }}>
+        {!isUser && message.thinking && <ThinkingBlock thinking={message.thinking} />}
+        {!isUser && message.toolCalls && message.toolCalls.length > 0 && (
+          <div style={{ margin: '0 0 8px' }}>
+            {message.toolCalls.map(tc => <ToolCallBlock key={tc.id} toolCall={tc} />)}
+          </div>
+        )}
         {isUser ? message.content : renderMarkdown(message.content)}
         {message.isStreaming && (
           <>

@@ -117,19 +117,19 @@ export default function App() {
   }, [activePage, signedIn])
 
   const masthead = (
-    <Masthead>
-      <MastheadToggle>
-        <PageToggleButton
-          variant="plain"
-          aria-label="Global navigation"
-          isSidebarOpen={isSidebarOpen}
-          onSidebarToggle={() => setIsSidebarOpen((o) => !o)}
-        >
-          <BarsIcon />
-        </PageToggleButton>
-      </MastheadToggle>
+    <Masthead style={{ alignItems: 'center' }}>
       <MastheadMain>
-        <MastheadBrand>
+        <MastheadToggle>
+          <PageToggleButton
+            variant="plain"
+            aria-label="Global navigation"
+            isSidebarOpen={isSidebarOpen}
+            onSidebarToggle={() => setIsSidebarOpen((o) => !o)}
+          >
+            <BarsIcon />
+          </PageToggleButton>
+        </MastheadToggle>
+        <MastheadBrand style={{ alignItems: 'center' }}>
           <img
             src={`${import.meta.env.BASE_URL}icon.png`}
             alt="Dev Spaces"

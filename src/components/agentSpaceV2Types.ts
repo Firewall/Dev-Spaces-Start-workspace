@@ -1,6 +1,6 @@
 export type ChatRole = 'user' | 'assistant' | 'system'
 
-export type ProviderId = 'anthropic' | 'openai' | 'local'
+export type ProviderId = 'anthropic' | 'openai' | 'local' | 'opencode'
 
 export interface ChatProvider {
   id: ProviderId
@@ -14,12 +14,21 @@ export interface ChatModel {
   providerId: ProviderId
 }
 
+export interface ToolCall {
+  id: string
+  name: string
+  input: string
+  output?: string
+}
+
 export interface ChatMessage {
   id: string
   role: ChatRole
   content: string
   timestamp: number
   isStreaming?: boolean
+  thinking?: string
+  toolCalls?: ToolCall[]
 }
 
 export interface ChatConversation {

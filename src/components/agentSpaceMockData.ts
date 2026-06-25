@@ -4,6 +4,7 @@ export const AGENT_TOOLS: { id: AgentToolId; name: string; description: string }
   { id: 'claude-code', name: 'Claude Code', description: 'Anthropic AI coding agent' },
   { id: 'codex', name: 'Codex', description: 'OpenAI autonomous coding agent' },
   { id: 'opencode', name: 'OpenCode', description: 'Open-source AI coding CLI' },
+  { id: 'openshift-ai', name: 'OpenShift AI', description: 'Local models via OpenShift AI' },
 ]
 
 export const MOCK_PROJECTS: Project[] = [
@@ -23,6 +24,7 @@ export const INITIAL_AUTH: ToolAuth[] = [
   { toolId: 'claude-code', authenticated: true },
   { toolId: 'codex', authenticated: true },
   { toolId: 'opencode', authenticated: false },
+  { toolId: 'openshift-ai', authenticated: false },
 ]
 
 export const PROVIDER_MODELS: Record<AgentToolId, ModelOption[]> = {
@@ -40,6 +42,13 @@ export const PROVIDER_MODELS: Record<AgentToolId, ModelOption[]> = {
     { id: 'claude-sonnet', name: 'Claude Sonnet' },
     { id: 'gpt-4o', name: 'GPT-4o' },
     { id: 'deepseek-r1', name: 'DeepSeek R1' },
+  ],
+  'openshift-ai': [
+    { id: 'granite-3b', name: 'Granite 3B' },
+    { id: 'granite-8b', name: 'Granite 8B' },
+    { id: 'granite-34b', name: 'Granite 34B' },
+    { id: 'llama-3-8b', name: 'Llama 3 8B' },
+    { id: 'mistral-7b-instruct', name: 'Mistral 7B Instruct' },
   ],
 }
 
@@ -80,6 +89,15 @@ export const MOCK_TERMINAL_OUTPUT: Record<AgentToolId, string[]> = {
     'OpenCode v0.2.0',
     'Loading project context...',
     'Project loaded: api-service',
+    'Ready for instructions.',
+    '> ',
+  ],
+  'openshift-ai': [
+    '$ openshift-ai',
+    'OpenShift AI CLI v0.1.0',
+    'Connecting to model serving endpoint...',
+    'Model server ready: granite-8b',
+    'Project loaded.',
     'Ready for instructions.',
     '> ',
   ],

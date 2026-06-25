@@ -1,4 +1,4 @@
-export type AgentToolId = 'claude-code' | 'codex' | 'opencode'
+export type AgentToolId = 'claude-code' | 'codex' | 'opencode' | 'openshift-ai'
 
 export type AgentStatus = 'running' | 'stopped' | 'connecting'
 

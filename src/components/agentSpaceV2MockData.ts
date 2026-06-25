@@ -28,6 +28,17 @@ export const CHAT_PROVIDERS: ChatProvider[] = [
       { id: 'deepseek-r1', name: 'DeepSeek R1', providerId: 'local' },
     ],
   },
+  {
+    id: 'opencode',
+    name: 'OpenCode (OpenShift AI)',
+    models: [
+      { id: 'granite-3b', name: 'Granite 3B', providerId: 'opencode' },
+      { id: 'granite-8b', name: 'Granite 8B', providerId: 'opencode' },
+      { id: 'granite-34b', name: 'Granite 34B', providerId: 'opencode' },
+      { id: 'llama-3-8b', name: 'Llama 3 8B', providerId: 'opencode' },
+      { id: 'mistral-7b-instruct', name: 'Mistral 7B Instruct', providerId: 'opencode' },
+    ],
+  },
 ]
 
 export const CHAT_WORKSPACES: ChatWorkspace[] = [
@@ -93,6 +104,32 @@ export const MOCK_CONVERSATIONS: ChatConversation[] = [
       { id: 'msg-10', role: 'assistant', content: 'A few issues to address:\n\n**1. Missing error handling for `jwt.verify`**\nIf the token is invalid or expired, `jwt.verify` throws. Wrap it:\n```typescript\ntry {\n  const decoded = jwt.verify(token, process.env.JWT_SECRET!)\n  req.user = decoded\n  next()\n} catch (err) {\n  return res.status(401).json({ error: "Invalid token" })\n}\n```\n\n**2. Non-null assertion on `JWT_SECRET`**\nUsing `!` is risky. Validate at startup:\n```typescript\nif (!process.env.JWT_SECRET) throw new Error("JWT_SECRET is required")\n```\n\n**3. No token type checking**\n`decoded` is typed as `string | JwtPayload`. You should narrow:\n```typescript\nif (typeof decoded === "string") {\n  return res.status(401).json({ error: "Unexpected token format" })\n}\n```\n\n**4. Consider token refresh strategy**\nJWTs are stateless — you can\'t revoke them. Plan for short expiry + refresh tokens, or maintain a revocation list for logout.', timestamp: now - 4 * 60 * 60 * 1000 + 5000 },
     ],
   },
+]
+
+export const MOCK_THINKING = [
+  "The user is asking about architecture patterns. Let me consider the repository pattern and how it fits with their existing codebase. I should also think about error handling at each layer since they mentioned production use...",
+  "I need to analyze the constraints here — 200ms p99 latency, 1000 concurrent requests, and data consistency. Optimistic concurrency control would be a good fit since pessimistic locking would bottleneck throughput. Let me think about the trade-offs...",
+  "Looking at this from multiple angles: architecture (monolith vs microservices), database query optimization, and caching strategy. The query patterns suggest they'd benefit from composite indexes. Let me also think about cache invalidation...",
+  "I should review this code carefully. The error handling has a gap — jwt.verify throws on invalid tokens. The non-null assertion on JWT_SECRET is risky for production. Let me also check for race conditions and resource leaks...",
+]
+
+export const MOCK_TOOL_CALLS = [
+  [
+    { id: 'tc-1', name: 'Read', input: 'src/services/repository.ts', output: 'export interface Repository<T> {\n  findById(id: string): Promise<T | null>\n  ...\n}' },
+    { id: 'tc-2', name: 'Grep', input: 'pattern: "class.*Repository", path: "src/"', output: '3 matches found in src/services/' },
+  ],
+  [
+    { id: 'tc-3', name: 'Bash', input: 'npm test -- --coverage', output: 'Tests: 42 passed, 3 failed\nCoverage: 78.4%' },
+  ],
+  [
+    { id: 'tc-4', name: 'Read', input: 'src/db/queries.ts', output: 'const feedQuery = db.select().from(posts).where(...)' },
+    { id: 'tc-5', name: 'Bash', input: 'psql -c "EXPLAIN ANALYZE SELECT ..."', output: 'Seq Scan on posts (cost=0.00..431.20 rows=8120)' },
+    { id: 'tc-6', name: 'Edit', input: 'src/db/queries.ts: add index hint', output: 'File updated successfully' },
+  ],
+  [
+    { id: 'tc-7', name: 'Read', input: 'src/middleware/auth.ts', output: 'export function authMiddleware(req, res, next) { ... }' },
+    { id: 'tc-8', name: 'Grep', input: 'pattern: "jwt.verify", path: "src/"', output: '2 matches: src/middleware/auth.ts:15, src/utils/token.ts:8' },
+  ],
 ]
 
 export const MOCK_STREAMING_RESPONSES: string[] = [
