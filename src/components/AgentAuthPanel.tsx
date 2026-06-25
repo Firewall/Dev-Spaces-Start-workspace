@@ -20,10 +20,6 @@ interface AgentAuthPanelProps {
 export function AgentAuthPanel({ toolAuth, onAuthenticate }: AgentAuthPanelProps) {
   const [isOpen, setIsOpen] = useState(false)
 
-  const authCount = AGENT_TOOLS.filter(
-    (t) => toolAuth.find((a) => a.toolId === t.id)?.authenticated,
-  ).length
-
   return (
     <Dropdown
       isOpen={isOpen}

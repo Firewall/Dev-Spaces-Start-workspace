@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { AngleRightIcon, AngleDownIcon } from '@patternfly/react-icons'
 import type { ChatMessage as ChatMessageType, ToolCall } from './agentSpaceV2Types'
 
@@ -96,7 +96,7 @@ function renderMarkdown(text: string) {
 }
 
 function renderInline(text: string) {
-  const parts: (string | JSX.Element)[] = []
+  const parts: (string | React.ReactElement)[] = []
   const regex = /(\*\*.*?\*\*)|(`[^`]+`)/g
   let lastIndex = 0
   let match: RegExpExecArray | null
