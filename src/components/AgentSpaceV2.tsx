@@ -33,7 +33,7 @@ import {
 import type { Agent, AgentSettings, AgentToolId, Project, ToolAuth } from './agentSpaceTypes'
 import type { ChatMessage as ChatMessageType } from './agentSpaceV2Types'
 import { AGENT_TOOLS, DEFAULT_AGENT_SETTINGS, INITIAL_AUTH, MOCK_AGENTS, MOCK_PROJECTS, PROVIDER_MODELS, MOCK_TERMINAL_OUTPUT } from './agentSpaceMockData'
-import { MOCK_STREAMING_RESPONSES } from './agentSpaceV2MockData'
+import { MOCK_STREAMING_RESPONSES, MOCK_THINKING, MOCK_TOOL_CALLS } from './agentSpaceV2MockData'
 import { AgentAuthPanel } from './AgentAuthPanel'
 import { AgentSidebar } from './AgentSidebar'
 import { AgentDetail } from './AgentDetail'
@@ -249,8 +249,11 @@ export function AgentSpaceV2() {
     const agentId = selectedAgentId
     const userMsg: ChatMessageType = { id: `msg-${nextMsgId++}`, role: 'user', content, timestamp: Date.now() }
     const assistantMsgId = `msg-${nextMsgId++}`
-    const assistantMsg: ChatMessageType = { id: assistantMsgId, role: 'assistant', content: '', timestamp: Date.now(), isStreaming: true }
-    const fullResponse = MOCK_STREAMING_RESPONSES[responseIndex % MOCK_STREAMING_RESPONSES.length]
+    const idx = responseIndex % MOCK_STREAMING_RESPONSES.length
+    const thinking = MOCK_THINKING[idx % MOCK_THINKING.length]
+    const toolCalls = MOCK_TOOL_CALLS[idx % MOCK_TOOL_CALLS.length]
+    const assistantMsg: ChatMessageType = { id: assistantMsgId, role: 'assistant', content: '', timestamp: Date.now(), isStreaming: true, thinking, toolCalls }
+    const fullResponse = MOCK_STREAMING_RESPONSES[idx]
     responseIndex++
 
     setChatMessages(prev => ({ ...prev, [agentId]: [...(prev[agentId] ?? []), userMsg, assistantMsg] }))
@@ -298,7 +301,7 @@ export function AgentSpaceV2() {
 
   return (
     <>
-      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+      <div style={{ display: 'flex', flex: 1, minHeight: 0, height: '100%' }}>
         {/* Left sidebar — identical to v1 */}
         <div style={{
           width: 260, minWidth: 260,
@@ -358,26 +361,56 @@ export function AgentSpaceV2() {
                       })()}
                     </FlexItem>
                     <FlexItem>
-                      <Label color="green" isCompact>connected</Label>
+                      <Tooltip content="Connected">
+                        <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                          <Label color="green" isCompact className="toolbar-connected-label">connected</Label>
+                          <span className="toolbar-connected-dot" />
+                        </span>
+                      </Tooltip>
                     </FlexItem>
                   </Flex>
                 </FlexItem>
 
                 <FlexItem>
-                  <Flex alignItems={{ default: 'alignItemsCenter' }} gap={{ default: 'gapSm' }}>
+                  <Flex alignItems={{ default: 'alignItemsCenter' }} gap={{ default: 'gapXs' }}>
                     <style>{`
                       .agent-toolbar-v2 .pf-v6-c-menu-toggle,
                       .agent-toolbar-v2 .pf-v6-c-button {
-                        height: 36px !important; max-height: 36px !important; min-height: 36px !important;
-                        font-size: 14px; display: inline-flex; align-items: center; box-sizing: border-box;
+                        height: 28px !important; max-height: 28px !important; min-height: 28px !important;
+                        font-size: 13px; display: inline-flex; align-items: center; box-sizing: border-box;
+                        padding-inline: 8px !important; padding-block: 0 !important;
                       }
                       .agent-toolbar-v2 .pf-v6-c-menu-toggle.pf-m-split-button { padding: 0 !important; }
                       .agent-toolbar-v2 .pf-v6-c-menu-toggle.pf-m-split-button .pf-v6-c-menu-toggle__button {
-                        height: 34px !important; display: inline-flex; align-items: center; padding-block: 0 !important;
+                        height: 26px !important; display: inline-flex; align-items: center;
+                        padding-block: 0 !important; padding-inline: 4px 8px !important;
                       }
                       .agent-toolbar-v2 .pf-v6-c-menu-toggle.pf-m-split-button .pf-v6-c-menu-toggle__controls {
-                        height: 34px !important; padding-inline: 4px; padding-block: 0 !important;
+                        height: 26px !important; padding-inline: 4px; padding-block: 0 !important;
                         display: inline-flex; align-items: center; justify-content: center;
+                      }
+                      .agent-toolbar-v2 .pf-v6-c-menu-toggle.pf-m-split-button .pf-v6-c-menu-toggle__controls .pf-v6-c-menu-toggle__toggle-icon {
+                        display: inline-flex; align-items: center; min-width: 12px;
+                      }
+                      .toolbar-commit-icon { margin-right: 6px; }
+                      .toolbar-connected-dot {
+                        display: none;
+                        width: 10px; height: 10px; border-radius: 50%;
+                        background-color: #3e8635; cursor: default;
+                      }
+                      @media (max-width: 1500px) {
+                        .toolbar-provider-name { display: none !important; }
+                      }
+                      @media (max-width: 1400px) {
+                        .toolbar-connected-label { display: none !important; }
+                        .toolbar-connected-dot { display: inline-block !important; }
+                      }
+                      @media (max-width: 1300px) {
+                        .toolbar-commit-text { display: none !important; }
+                        .toolbar-commit-icon { margin-right: 0 !important; }
+                      }
+                      @media (max-width: 1150px) {
+                        .toolbar-disconnect-text { display: none !important; }
                       }
                     `}</style>
 
@@ -403,7 +436,7 @@ export function AgentSpaceV2() {
                       <Tooltip content={terminalPanelOpen ? 'Hide terminal' : 'Show terminal'}>
                         <Button variant="control" icon={<TerminalIcon />} aria-label="Toggle terminal panel"
                           onClick={() => setTerminalPanelOpen(prev => !prev)}
-                          style={{ width: 36, justifyContent: 'center', ...(terminalPanelOpen ? { background: 'var(--pf-t--global--background--color--action--plain--clicked)' } : {}) }}
+                          style={{ width: 28, justifyContent: 'center', ...(terminalPanelOpen ? { background: 'var(--pf-t--global--background--color--action--plain--clicked)' } : {}) }}
                         />
                       </Tooltip>
                     </FlexItem>
@@ -412,7 +445,7 @@ export function AgentSpaceV2() {
                       <Tooltip content={diffPanelOpen ? 'Hide diff' : 'Show diff'}>
                         <Button variant="control" icon={<CodeIcon />} aria-label="Toggle diff panel"
                           onClick={() => setDiffPanelOpen(prev => !prev)}
-                          style={{ width: 36, justifyContent: 'center', ...(diffPanelOpen ? { background: 'var(--pf-t--global--background--color--action--plain--clicked)' } : {}) }}
+                          style={{ width: 28, justifyContent: 'center', ...(diffPanelOpen ? { background: 'var(--pf-t--global--background--color--action--plain--clicked)' } : {}) }}
                         />
                       </Tooltip>
                     </FlexItem>
@@ -421,7 +454,7 @@ export function AgentSpaceV2() {
                       <Dropdown isOpen={commitOpen} onSelect={() => setCommitOpen(false)} onOpenChange={setCommitOpen} popperProps={{ position: 'right' }}
                         toggle={(toggleRef) => (
                           <MenuToggle ref={toggleRef} isExpanded={commitOpen} onClick={() => setCommitOpen(o => !o)} variant="primary"
-                            splitButtonItems={[<MenuToggleAction key="commit-push-action"><CloudUploadAltIcon style={{ marginRight: 6 }} />Commit &amp; push</MenuToggleAction>]}
+                            splitButtonItems={[<MenuToggleAction key="commit-push-action"><CloudUploadAltIcon className="toolbar-commit-icon" /><span className="toolbar-commit-text">Commit &amp; push</span></MenuToggleAction>]}
                           />
                         )}
                       >
@@ -435,7 +468,7 @@ export function AgentSpaceV2() {
                     </FlexItem>
 
                     <FlexItem className="agent-toolbar-v2">
-                      <Button variant="secondary" icon={<TimesIcon />} onClick={handleDisconnect}>Disconnect</Button>
+                      <Tooltip content="Disconnect"><Button variant="secondary" icon={<TimesIcon />} onClick={handleDisconnect}><span className="toolbar-disconnect-text">Disconnect</span></Button></Tooltip>
                     </FlexItem>
                   </Flex>
                 </FlexItem>

@@ -154,7 +154,7 @@ export function AgentProviderDropdown({
             <FlexItem>
               <BrandIcon id={tool} size={18} />
             </FlexItem>
-            <FlexItem>{toolName}</FlexItem>
+            <FlexItem className="toolbar-provider-name">{toolName}</FlexItem>
           </Flex>
         </MenuToggle>
       }
