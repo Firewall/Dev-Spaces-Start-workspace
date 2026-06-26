@@ -2,6 +2,17 @@ import type { ChatProvider, ChatConversation, ChatWorkspace } from './agentSpace
 
 export const CHAT_PROVIDERS: ChatProvider[] = [
   {
+    id: 'opencode',
+    name: 'OpenShift AI',
+    models: [
+      { id: 'glm-5.2', name: 'GLM-5.2', providerId: 'opencode' },
+      { id: 'minimax-m3', name: 'MiniMax M3', providerId: 'opencode' },
+      { id: 'qwen-3.7', name: 'Qwen 3.7', providerId: 'opencode' },
+      { id: 'deepseek-v4-pro', name: 'Deepseek V4 Pro', providerId: 'opencode' },
+      { id: 'kimi-k2.7', name: 'Kimi K2.7', providerId: 'opencode' },
+    ],
+  },
+  {
     id: 'anthropic',
     name: 'Anthropic',
     models: [
@@ -26,17 +37,6 @@ export const CHAT_PROVIDERS: ChatProvider[] = [
       { id: 'llama-3', name: 'Llama 3', providerId: 'local' },
       { id: 'mistral-7b', name: 'Mistral 7B', providerId: 'local' },
       { id: 'deepseek-r1', name: 'DeepSeek R1', providerId: 'local' },
-    ],
-  },
-  {
-    id: 'opencode',
-    name: 'OpenShift AI',
-    models: [
-      { id: 'glm-5.2', name: 'GLM-5.2', providerId: 'opencode' },
-      { id: 'minimax-m3', name: 'MiniMax M3', providerId: 'opencode' },
-      { id: 'qwen-3.7', name: 'Qwen 3.7', providerId: 'opencode' },
-      { id: 'deepseek-v4-pro', name: 'Deepseek V4 Pro', providerId: 'opencode' },
-      { id: 'kimi-k2.7', name: 'Kimi K2.7', providerId: 'opencode' },
     ],
   },
 ]

@@ -152,6 +152,11 @@ export function AgentProviderDropdown({
       .agent-provider-menu .pf-v6-c-menu__item-toggle-icon {
         font-size: 12px;
       }
+      .agent-provider-menu .pf-v6-c-menu {
+        white-space: nowrap;
+        width: max-content;
+        min-width: 0;
+      }
     `}</style>
     <MenuContainer
       isOpen={isOpen}

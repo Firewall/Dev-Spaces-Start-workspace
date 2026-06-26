@@ -1,10 +1,10 @@
 import type { Agent, AgentSettings, AgentToolId, ModelOption, Project, ToolAuth } from './agentSpaceTypes'
 
 export const AGENT_TOOLS: { id: AgentToolId; name: string; description: string }[] = [
+  { id: 'openshift-ai', name: 'OpenShift AI', description: 'Local models via OpenShift AI' },
   { id: 'claude-code', name: 'Claude Code', description: 'Anthropic AI coding agent' },
   { id: 'codex', name: 'Codex', description: 'OpenAI autonomous coding agent' },
   { id: 'opencode', name: 'OpenCode', description: 'Open-source AI coding CLI' },
-  { id: 'openshift-ai', name: 'OpenShift AI', description: 'Local models via OpenShift AI' },
 ]
 
 export const MOCK_PROJECTS: Project[] = [
