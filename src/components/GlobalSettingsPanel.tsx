@@ -1,0 +1,220 @@
+import { useState } from 'react'
+import {
+  Button,
+  EmptyState,
+  EmptyStateBody,
+  Label,
+  Switch,
+  TextInput,
+  Title,
+} from '@patternfly/react-core'
+import {
+  ArrowLeftIcon,
+  CogIcon,
+  PluggedIcon,
+  SearchIcon,
+} from '@patternfly/react-icons'
+import type { McpServer, Skill } from './globalSettingsMockData'
+import {
+  MOCK_MCP_CATALOG,
+  MOCK_SKILLS_CATALOG,
+  SKILL_CATEGORY_LABELS,
+} from './globalSettingsMockData'
+
+export type SettingsView = 'mcps' | 'skills' | 'settings'
+
+const STATUS_COLORS: Record<McpServer['status'], 'green' | 'grey' | 'red'> = {
+  connected: 'green',
+  disconnected: 'grey',
+  error: 'red',
+}
+
+const CATEGORY_COLORS: Record<Skill['category'], 'blue' | 'purple' | 'orange' | 'cyan' | 'grey'> = {
+  code: 'blue',
+  research: 'purple',
+  testing: 'orange',
+  devops: 'cyan',
+  general: 'grey',
+}
+
+const VIEW_TITLES: Record<SettingsView, string> = {
+  mcps: 'MCP Servers',
+  skills: 'Skills',
+  settings: 'Settings',
+}
+
+interface GlobalSettingsPanelProps {
+  view: SettingsView
+  onBack: () => void
+}
+
+export function GlobalSettingsPanel({ view, onBack }: GlobalSettingsPanelProps) {
+  const [mcpServers, setMcpServers] = useState<McpServer[]>(MOCK_MCP_CATALOG)
+  const [skills, setSkills] = useState<Skill[]>(MOCK_SKILLS_CATALOG)
+  const [mcpFilter, setMcpFilter] = useState('')
+  const [skillFilter, setSkillFilter] = useState('')
+
+  const toggleMcp = (id: string) => {
+    setMcpServers(prev =>
+      prev.map(s => {
+        if (s.id !== id) return s
+        const enabled = !s.enabled
+        return { ...s, enabled, status: enabled ? 'connected' as const : 'disconnected' as const }
+      }),
+    )
+  }
+
+  const toggleSkill = (id: string) => {
+    setSkills(prev => prev.map(s => (s.id === id ? { ...s, enabled: !s.enabled } : s)))
+  }
+
+  const filteredMcps = mcpServers.filter(s =>
+    s.name.toLowerCase().includes(mcpFilter.toLowerCase()) ||
+    s.description.toLowerCase().includes(mcpFilter.toLowerCase()),
+  )
+
+  const filteredSkills = skills.filter(s =>
+    s.name.toLowerCase().includes(skillFilter.toLowerCase()) ||
+    s.description.toLowerCase().includes(skillFilter.toLowerCase()),
+  )
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div style={{
+        padding: '12px 24px',
+        borderBottom: '1px solid var(--pf-t--global--border--color--default)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+      }}>
+        <Button variant="plain" icon={<ArrowLeftIcon />} onClick={onBack} aria-label="Back" style={{ padding: 4 }} />
+        <Title headingLevel="h2" size="lg" style={{ margin: 0 }}>{VIEW_TITLES[view]}</Title>
+      </div>
+
+      <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
+        {view === 'mcps' && (
+          <>
+            <div style={{ marginBottom: 16, maxWidth: 480 }}>
+              <TextInput
+                placeholder="Filter MCP servers..."
+                value={mcpFilter}
+                onChange={(_e, val) => setMcpFilter(val)}
+                aria-label="Filter MCPs"
+                customIcon={<SearchIcon />}
+              />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 1, maxWidth: 640 }}>
+              {filteredMcps.map(server => (
+                <div
+                  key={server.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '12px 16px',
+                    borderRadius: 8,
+                    background: 'var(--pf-t--global--background--color--secondary--default)',
+                    marginBottom: 8,
+                  }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                      <span style={{ fontWeight: 600, fontSize: 14 }}>{server.name}</span>
+                      <Label color={STATUS_COLORS[server.status]} isCompact>
+                        {server.status}
+                      </Label>
+                      <span style={{ fontSize: 12, opacity: 0.6 }}>
+                        {server.tools} tools
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 13, opacity: 0.7 }}>{server.description}</div>
+                    <div style={{ fontSize: 11, opacity: 0.4, marginTop: 4, fontFamily: 'monospace' }}>
+                      {server.endpoint}
+                    </div>
+                  </div>
+                  <Switch
+                    isChecked={server.enabled}
+                    onChange={() => toggleMcp(server.id)}
+                    aria-label={`Toggle ${server.name}`}
+                  />
+                </div>
+              ))}
+
+              {filteredMcps.length === 0 && (
+                <div style={{ textAlign: 'center', padding: 24, opacity: 0.5 }}>
+                  No MCP servers match your filter
+                </div>
+              )}
+            </div>
+
+            <Button variant="link" icon={<PluggedIcon />} style={{ marginTop: 8 }}>
+              Add MCP server
+            </Button>
+          </>
+        )}
+
+        {view === 'skills' && (
+          <>
+            <div style={{ marginBottom: 16, maxWidth: 480 }}>
+              <TextInput
+                placeholder="Filter skills..."
+                value={skillFilter}
+                onChange={(_e, val) => setSkillFilter(val)}
+                aria-label="Filter skills"
+                customIcon={<SearchIcon />}
+              />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 1, maxWidth: 640 }}>
+              {filteredSkills.map(skill => (
+                <div
+                  key={skill.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '12px 16px',
+                    borderRadius: 8,
+                    background: 'var(--pf-t--global--background--color--secondary--default)',
+                    marginBottom: 8,
+                  }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                      <span style={{ fontWeight: 600, fontSize: 14 }}>{skill.name}</span>
+                      <Label color={CATEGORY_COLORS[skill.category]} isCompact>
+                        {SKILL_CATEGORY_LABELS[skill.category]}
+                      </Label>
+                    </div>
+                    <div style={{ fontSize: 13, opacity: 0.7 }}>{skill.description}</div>
+                  </div>
+                  <Switch
+                    isChecked={skill.enabled}
+                    onChange={() => toggleSkill(skill.id)}
+                    aria-label={`Toggle ${skill.name}`}
+                  />
+                </div>
+              ))}
+
+              {filteredSkills.length === 0 && (
+                <div style={{ textAlign: 'center', padding: 24, opacity: 0.5 }}>
+                  No skills match your filter
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {view === 'settings' && (
+          <EmptyState icon={CogIcon} titleText="Settings" headingLevel="h3">
+            <EmptyStateBody>
+              Global settings will be available here in a future update.
+              These settings will affect all agent spaces and workspaces.
+            </EmptyStateBody>
+          </EmptyState>
+        )}
+      </div>
+    </div>
+  )
+}

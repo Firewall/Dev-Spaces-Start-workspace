@@ -22,7 +22,9 @@ import {
   CloudUploadAltIcon,
   CodeBranchIcon,
   CodeIcon,
+  CogIcon,
   DesktopIcon,
+  WrenchIcon,
   ExternalLinkAltIcon,
   GithubIcon,
   PlusCircleIcon,
@@ -45,6 +47,7 @@ import { EDITORS } from './EditorDropdown'
 import { AgentProviderDropdown } from './AgentProviderDropdown'
 import { ChatMessage } from './ChatMessage'
 import { ChatInput } from './ChatInput'
+import { GlobalSettingsPanel, type SettingsView } from './GlobalSettingsPanel'
 
 const AUTH_STORAGE_KEY = 'agent-space-v2-auth'
 let nextProjectId = 200
@@ -81,6 +84,7 @@ export function AgentSpaceV2() {
   const [addProjectModalOpen, setAddProjectModalOpen] = useState(false)
   const [addAgentModalOpen, setAddAgentModalOpen] = useState(false)
   const [addAgentProjectId, setAddAgentProjectId] = useState('')
+  const [activeSettingsView, setActiveSettingsView] = useState<SettingsView | null>(null)
   const [agentSettingsMap, setAgentSettingsMap] = useState<Record<string, AgentSettings>>(() => {
     const map: Record<string, AgentSettings> = {}
     MOCK_AGENTS.forEach(a => {
@@ -330,11 +334,47 @@ export function AgentSpaceV2() {
             onDeleteProject={handleDeleteProject}
             onRenameProject={handleRenameProject}
           />
+          <div
+            style={{
+              borderTop: '1px solid var(--pf-t--global--border--color--default)',
+              padding: '4px 0',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            {([
+              { key: 'mcps' as const, label: 'MCPs', icon: <PluggedIcon /> },
+              { key: 'skills' as const, label: 'Skills', icon: <WrenchIcon /> },
+              { key: 'settings' as const, label: 'Settings', icon: <CogIcon /> },
+            ]).map(item => (
+              <Button
+                key={item.key}
+                variant="plain"
+                icon={item.icon}
+                onClick={() => setActiveSettingsView(item.key)}
+                style={{
+                  fontSize: 13,
+                  width: '100%',
+                  justifyContent: 'flex-start',
+                  gap: 8,
+                  padding: '6px 16px',
+                  borderRadius: 0,
+                  background: activeSettingsView === item.key
+                    ? 'var(--pf-t--global--background--color--action--plain--clicked)'
+                    : undefined,
+                }}
+              >
+                {item.label}
+              </Button>
+            ))}
+          </div>
         </div>
 
         {/* Main content area */}
         <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-          {isConnected && selectedAgent ? (
+          {activeSettingsView ? (
+            <GlobalSettingsPanel view={activeSettingsView} onBack={() => setActiveSettingsView(null)} />
+          ) : isConnected && selectedAgent ? (
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
               {/* Toolbar — same as v1 AgentTerminal */}
               <Flex

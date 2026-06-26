@@ -8,7 +8,7 @@ import {
   PageSection,
   Title,
 } from '@patternfly/react-core'
-import { PlusCircleIcon, PluggedIcon } from '@patternfly/react-icons'
+import { CogIcon, PlusCircleIcon, PluggedIcon, WrenchIcon } from '@patternfly/react-icons'
 import type { Agent, AgentSettings, AgentToolId, Project, ToolAuth } from './agentSpaceTypes'
 import { AGENT_TOOLS, DEFAULT_AGENT_SETTINGS, INITIAL_AUTH, MOCK_AGENTS, MOCK_PROJECTS, PROVIDER_MODELS } from './agentSpaceMockData'
 import { AgentAuthPanel } from './AgentAuthPanel'
@@ -17,6 +17,7 @@ import { AgentDetail } from './AgentDetail'
 import { AgentTerminal } from './AgentTerminal'
 import { AddProjectModal } from './AddProjectModal'
 import { AddAgentModal } from './AddAgentModal'
+import { GlobalSettingsPanel, type SettingsView } from './GlobalSettingsPanel'
 
 const AUTH_STORAGE_KEY = 'agent-space-auth'
 let nextProjectId = 100
@@ -55,6 +56,7 @@ export function AgentSpace() {
   const [addProjectModalOpen, setAddProjectModalOpen] = useState(false)
   const [addAgentModalOpen, setAddAgentModalOpen] = useState(false)
   const [addAgentProjectId, setAddAgentProjectId] = useState<string>('')
+  const [activeSettingsView, setActiveSettingsView] = useState<SettingsView | null>(null)
   const [agentSettingsMap, setAgentSettingsMap] = useState<Record<string, AgentSettings>>(() => {
     const map: Record<string, AgentSettings> = {}
     MOCK_AGENTS.forEach((a) => {
@@ -291,11 +293,47 @@ export function AgentSpace() {
             onDeleteProject={handleDeleteProject}
             onRenameProject={handleRenameProject}
           />
+          <div
+            style={{
+              borderTop: '1px solid var(--pf-t--global--border--color--default)',
+              padding: '4px 0',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            {([
+              { key: 'mcps' as const, label: 'MCPs', icon: <PluggedIcon /> },
+              { key: 'skills' as const, label: 'Skills', icon: <WrenchIcon /> },
+              { key: 'settings' as const, label: 'Settings', icon: <CogIcon /> },
+            ]).map(item => (
+              <Button
+                key={item.key}
+                variant="plain"
+                icon={item.icon}
+                onClick={() => setActiveSettingsView(item.key)}
+                style={{
+                  fontSize: 13,
+                  width: '100%',
+                  justifyContent: 'flex-start',
+                  gap: 8,
+                  padding: '6px 16px',
+                  borderRadius: 0,
+                  background: activeSettingsView === item.key
+                    ? 'var(--pf-t--global--background--color--action--plain--clicked)'
+                    : undefined,
+                }}
+              >
+                {item.label}
+              </Button>
+            ))}
+          </div>
         </div>
 
         <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
           <div style={{ flex: 1, overflow: 'auto' }}>
-          {isConnected && selectedAgent ? (
+          {activeSettingsView ? (
+            <GlobalSettingsPanel view={activeSettingsView} onBack={() => setActiveSettingsView(null)} />
+          ) : isConnected && selectedAgent ? (
             <AgentTerminal
               agent={selectedAgent}
               settings={selectedAgentSettings}
