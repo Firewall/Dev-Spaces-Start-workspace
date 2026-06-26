@@ -115,13 +115,14 @@ export function AgentTerminal({ agent, settings, onDisconnect, onToolChange, onS
                 padding: 0 !important;
               }
               .agent-toolbar .pf-v6-c-menu-toggle.pf-m-split-button .pf-v6-c-menu-toggle__button {
-                height: 34px !important;
+                height: 100% !important;
                 display: inline-flex;
                 align-items: center;
                 padding-block: 0 !important;
+                padding-inline: 8px !important;
               }
               .agent-toolbar .pf-v6-c-menu-toggle.pf-m-split-button .pf-v6-c-menu-toggle__controls {
-                height: 34px !important;
+                height: 100% !important;
                 padding-inline: 4px;
                 padding-block: 0 !important;
                 display: inline-flex;

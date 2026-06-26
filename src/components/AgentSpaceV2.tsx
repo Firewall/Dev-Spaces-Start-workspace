@@ -23,6 +23,7 @@ import {
   CodeBranchIcon,
   CodeIcon,
   CogIcon,
+  CubesIcon,
   DesktopIcon,
   WrenchIcon,
   ExternalLinkAltIcon,
@@ -343,6 +344,7 @@ export function AgentSpaceV2() {
             }}
           >
             {([
+              { key: 'providers' as const, label: 'Providers', icon: <CubesIcon /> },
               { key: 'mcps' as const, label: 'MCPs', icon: <PluggedIcon /> },
               { key: 'skills' as const, label: 'Skills', icon: <WrenchIcon /> },
               { key: 'settings' as const, label: 'Settings', icon: <CogIcon /> },
@@ -420,19 +422,27 @@ export function AgentSpaceV2() {
                         font-size: 13px; display: inline-flex; align-items: center; box-sizing: border-box;
                         padding-inline: 8px !important; padding-block: 0 !important;
                       }
-                      .agent-toolbar-v2 .pf-v6-c-menu-toggle.pf-m-split-button { padding: 0 !important; }
-                      .agent-toolbar-v2 .pf-v6-c-menu-toggle.pf-m-split-button .pf-v6-c-menu-toggle__button {
-                        height: 26px !important; display: inline-flex; align-items: center;
-                        padding-block: 0 !important; padding-inline: 4px 8px !important;
+                      .agent-toolbar-v2 .pf-v6-c-menu-toggle.pf-m-split-button {
+                        padding: 0 !important;
+                        --pf-v6-c-menu-toggle--PaddingBlockStart: 0;
+                        --pf-v6-c-menu-toggle--PaddingBlockEnd: 0;
+                        --pf-v6-c-menu-toggle--PaddingInlineStart: 6px;
+                        --pf-v6-c-menu-toggle--PaddingInlineEnd: 6px;
+                        --pf-v6-c-menu-toggle--m-split-button--pill--child--PaddingInlineEnd--offset: 6px;
+                        --pf-v6-c-menu-toggle--m-split-button--pill--child--PaddingInlineStart--offset: 4px;
+                      }
+                      .agent-toolbar-v2 .pf-v6-c-menu-toggle.pf-m-split-button > * {
+                        align-self: stretch !important;
+                        display: inline-flex !important; align-items: center !important;
+                        padding-block: 0 !important;
                       }
                       .agent-toolbar-v2 .pf-v6-c-menu-toggle.pf-m-split-button .pf-v6-c-menu-toggle__controls {
-                        height: 26px !important; padding-inline: 4px; padding-block: 0 !important;
                         display: inline-flex; align-items: center; justify-content: center;
                       }
                       .agent-toolbar-v2 .pf-v6-c-menu-toggle.pf-m-split-button .pf-v6-c-menu-toggle__controls .pf-v6-c-menu-toggle__toggle-icon {
                         display: inline-flex; align-items: center; min-width: 12px;
                       }
-                      .toolbar-commit-icon { margin-right: 6px; }
+                      .toolbar-commit-icon { margin-right: 4px; }
                       .toolbar-connected-dot {
                         display: none;
                         width: 10px; height: 10px; border-radius: 50%;

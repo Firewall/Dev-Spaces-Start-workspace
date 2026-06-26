@@ -20,8 +20,10 @@ import {
   MOCK_SKILLS_CATALOG,
   SKILL_CATEGORY_LABELS,
 } from './globalSettingsMockData'
+import { AGENT_TOOLS, PROVIDER_MODELS } from './agentSpaceMockData'
+import { BrandIcon } from './BrandIcons'
 
-export type SettingsView = 'mcps' | 'skills' | 'settings'
+export type SettingsView = 'providers' | 'mcps' | 'skills' | 'settings'
 
 const STATUS_COLORS: Record<McpServer['status'], 'green' | 'grey' | 'red'> = {
   connected: 'green',
@@ -38,6 +40,7 @@ const CATEGORY_COLORS: Record<Skill['category'], 'blue' | 'purple' | 'orange' | 
 }
 
 const VIEW_TITLES: Record<SettingsView, string> = {
+  providers: 'Providers',
   mcps: 'MCP Servers',
   skills: 'Skills',
   settings: 'Settings',
@@ -48,9 +51,17 @@ interface GlobalSettingsPanelProps {
   onBack: () => void
 }
 
+const INITIAL_PROVIDER_STATUS: Record<string, boolean> = {
+  'openshift-ai': true,
+  'opencode': true,
+  'claude-code': false,
+  'codex': false,
+}
+
 export function GlobalSettingsPanel({ view, onBack }: GlobalSettingsPanelProps) {
   const [mcpServers, setMcpServers] = useState<McpServer[]>(MOCK_MCP_CATALOG)
   const [skills, setSkills] = useState<Skill[]>(MOCK_SKILLS_CATALOG)
+  const [providerConnected, setProviderConnected] = useState<Record<string, boolean>>(INITIAL_PROVIDER_STATUS)
   const [mcpFilter, setMcpFilter] = useState('')
   const [skillFilter, setSkillFilter] = useState('')
 
@@ -92,6 +103,54 @@ export function GlobalSettingsPanel({ view, onBack }: GlobalSettingsPanelProps) 
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
+        {view === 'providers' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 1, maxWidth: 640 }}>
+            {AGENT_TOOLS.map(tool => {
+              const models = PROVIDER_MODELS[tool.id] ?? []
+              const connected = providerConnected[tool.id] ?? false
+              return (
+                <div
+                  key={tool.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 12,
+                    padding: '12px 16px',
+                    borderRadius: 8,
+                    background: 'var(--pf-t--global--background--color--secondary--default)',
+                    marginBottom: 8,
+                  }}
+                >
+                  <div style={{ paddingTop: 2 }}>
+                    <BrandIcon id={tool.id} size={24} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                      <span style={{ fontWeight: 600, fontSize: 14 }}>{tool.name}</span>
+                      <Label color={connected ? 'green' : 'grey'} isCompact>
+                        {connected ? 'connected' : 'disconnected'}
+                      </Label>
+                    </div>
+                    <div style={{ fontSize: 13, opacity: 0.7 }}>{tool.description}</div>
+                    {models.length > 0 && (
+                      <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+                        {models.map(m => (
+                          <Label key={m.id} isCompact color="blue">{m.name}</Label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <Switch
+                    isChecked={connected}
+                    onChange={() => setProviderConnected(prev => ({ ...prev, [tool.id]: !prev[tool.id] }))}
+                    aria-label={`Toggle ${tool.name}`}
+                  />
+                </div>
+              )
+            })}
+          </div>
+        )}
+
         {view === 'mcps' && (
           <>
             <div style={{ marginBottom: 16, maxWidth: 480 }}>

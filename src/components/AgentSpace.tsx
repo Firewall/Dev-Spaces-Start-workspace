@@ -8,7 +8,7 @@ import {
   PageSection,
   Title,
 } from '@patternfly/react-core'
-import { CogIcon, PlusCircleIcon, PluggedIcon, WrenchIcon } from '@patternfly/react-icons'
+import { CogIcon, CubesIcon, PlusCircleIcon, PluggedIcon, WrenchIcon } from '@patternfly/react-icons'
 import type { Agent, AgentSettings, AgentToolId, Project, ToolAuth } from './agentSpaceTypes'
 import { AGENT_TOOLS, DEFAULT_AGENT_SETTINGS, INITIAL_AUTH, MOCK_AGENTS, MOCK_PROJECTS, PROVIDER_MODELS } from './agentSpaceMockData'
 import { AgentAuthPanel } from './AgentAuthPanel'
@@ -302,6 +302,7 @@ export function AgentSpace() {
             }}
           >
             {([
+              { key: 'providers' as const, label: 'Providers', icon: <CubesIcon /> },
               { key: 'mcps' as const, label: 'MCPs', icon: <PluggedIcon /> },
               { key: 'skills' as const, label: 'Skills', icon: <WrenchIcon /> },
               { key: 'settings' as const, label: 'Settings', icon: <CogIcon /> },
