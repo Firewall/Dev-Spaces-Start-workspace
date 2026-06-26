@@ -92,7 +92,7 @@ export function AgentSidebar({
   }, [agents])
 
   return (
-    <div style={{ flex: 1, overflowY: 'auto' }}>
+    <div style={{ flex: 1, overflowY: 'auto', outline: 'none' }}>
       <style>{`
         .agent-sidebar-item { position: relative; }
         .agent-sidebar-archive { visibility: hidden; }

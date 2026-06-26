@@ -310,7 +310,7 @@ export function AgentSpaceV2() {
         <div style={{
           width: 260, minWidth: 260,
           borderRight: '1px solid var(--pf-t--global--border--color--default)',
-          display: 'flex', flexDirection: 'column',
+          display: 'flex', flexDirection: 'column', outline: 'none',
         }}>
           <div style={{
             padding: '10px 12px',
