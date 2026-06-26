@@ -19,6 +19,7 @@ import {
   Tooltip,
 } from '@patternfly/react-core'
 import {
+  ArrowLeftIcon,
   CloudUploadAltIcon,
   CodeBranchIcon,
   CodeIcon,
@@ -347,6 +348,17 @@ export function AgentSpaceV2() {
               flexDirection: 'column',
             }}
           >
+            {activeSettingsView && (
+              <div style={{
+                padding: '10px 12px',
+                borderBottom: '1px solid var(--pf-t--global--border--color--default)',
+                marginBottom: 4,
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              }}>
+                <Title headingLevel="h2" size="lg" style={{ margin: 0 }}>Settings</Title>
+                <Button variant="plain" size="sm" icon={<ArrowLeftIcon />} onClick={() => setActiveSettingsView(null)} aria-label="Back" style={{ padding: 4 }} />
+              </div>
+            )}
             {([
               { key: 'providers' as const, label: 'Providers', icon: <CubesIcon /> },
               { key: 'mcps' as const, label: 'MCPs', icon: <PluggedIcon /> },
