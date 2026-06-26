@@ -38,7 +38,6 @@ import type { Agent, AgentSettings, AgentToolId, Project, ToolAuth } from './age
 import type { ChatMessage as ChatMessageType } from './agentSpaceV2Types'
 import { AGENT_TOOLS, DEFAULT_AGENT_SETTINGS, INITIAL_AUTH, MOCK_AGENTS, MOCK_PROJECTS, PROVIDER_MODELS, MOCK_TERMINAL_OUTPUT } from './agentSpaceMockData'
 import { MOCK_STREAMING_RESPONSES, MOCK_THINKING, MOCK_TOOL_CALLS } from './agentSpaceV2MockData'
-import { AgentAuthPanel } from './AgentAuthPanel'
 import { AgentSidebar } from './AgentSidebar'
 import { AgentDetail } from './AgentDetail'
 import { AddProjectModal } from './AddProjectModal'
@@ -322,10 +321,7 @@ export function AgentSpaceV2() {
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               }}>
                 <Title headingLevel="h2" size="lg" style={{ margin: 0 }}>Projects</Title>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                  <Button variant="plain" size="sm" icon={<PlusCircleIcon />} onClick={() => setAddProjectModalOpen(true)} aria-label="Add project" style={{ padding: 4 }} />
-                  <AgentAuthPanel toolAuth={toolAuth} onAuthenticate={handleAuthenticate} />
-                </span>
+                <Button variant="plain" size="sm" icon={<PlusCircleIcon />} onClick={() => setAddProjectModalOpen(true)} aria-label="Add project" style={{ padding: 4 }} />
               </div>
               <AgentSidebar
                 projects={projects}
