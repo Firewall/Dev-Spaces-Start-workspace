@@ -391,10 +391,12 @@ export function AgentSpaceV2() {
           ) : isConnected && selectedAgent ? (
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
               {/* Toolbar — same as v1 AgentTerminal */}
+              <div style={{ containerType: 'inline-size', borderBottom: '1px solid var(--pf-t--global--border--color--default)' }}>
               <Flex
                 alignItems={{ default: 'alignItemsCenter' }}
                 justifyContent={{ default: 'justifyContentSpaceBetween' }}
-                style={{ padding: '8px 16px', borderBottom: '1px solid var(--pf-t--global--border--color--default)' }}
+                flexWrap={{ default: 'nowrap' }}
+                style={{ padding: '8px 16px' }}
               >
                 <FlexItem>
                   <Flex alignItems={{ default: 'alignItemsCenter' }} gap={{ default: 'gapSm' }}>
@@ -462,18 +464,18 @@ export function AgentSpaceV2() {
                         width: 10px; height: 10px; border-radius: 50%;
                         background-color: #3e8635; cursor: default;
                       }
-                      @media (max-width: 1500px) {
+                      @container (max-width: 1240px) {
                         .toolbar-provider-name { display: none !important; }
                       }
-                      @media (max-width: 1400px) {
+                      @container (max-width: 1140px) {
                         .toolbar-connected-label { display: none !important; }
                         .toolbar-connected-dot { display: inline-block !important; }
                       }
-                      @media (max-width: 1300px) {
+                      @container (max-width: 1040px) {
                         .toolbar-commit-text { display: none !important; }
                         .toolbar-commit-icon { margin-right: 0 !important; }
                       }
-                      @media (max-width: 1150px) {
+                      @container (max-width: 890px) {
                         .toolbar-disconnect-text { display: none !important; }
                       }
                     `}</style>
@@ -537,6 +539,7 @@ export function AgentSpaceV2() {
                   </Flex>
                 </FlexItem>
               </Flex>
+              </div>
 
               {/* Chat area + panels */}
               <div style={{ flex: 1, display: 'flex', flexDirection: 'row', minHeight: 0 }}>

@@ -66,12 +66,13 @@ export function AgentTerminal({ agent, settings, onDisconnect, onToolChange, onS
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div style={{ containerType: 'inline-size', borderBottom: '1px solid var(--pf-t--global--border--color--default)' }}>
       <Flex
         alignItems={{ default: 'alignItemsCenter' }}
         justifyContent={{ default: 'justifyContentSpaceBetween' }}
+        flexWrap={{ default: 'nowrap' }}
         style={{
           padding: '8px 16px',
-          borderBottom: '1px solid var(--pf-t--global--border--color--default)',
         }}
       >
         <FlexItem>
@@ -253,6 +254,7 @@ export function AgentTerminal({ agent, settings, onDisconnect, onToolChange, onS
           </Flex>
         </FlexItem>
       </Flex>
+      </div>
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'row', minHeight: 0 }}>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
