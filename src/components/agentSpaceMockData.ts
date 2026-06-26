@@ -59,6 +59,7 @@ export const PROVIDER_MODELS: Record<AgentToolId, ModelOption[]> = {
     { id: 'qwen-3.7', name: 'Qwen 3.7' },
     { id: 'deepseek-v4-pro', name: 'Deepseek V4 Pro' },
     { id: 'kimi-k2.7', name: 'Kimi K2.7' },
+    { id: 'mistral-medium-5', name: 'Mistral Medium 5' },
   ],
 }
 

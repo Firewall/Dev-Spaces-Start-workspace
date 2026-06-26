@@ -10,6 +10,7 @@ export const CHAT_PROVIDERS: ChatProvider[] = [
       { id: 'qwen-3.7', name: 'Qwen 3.7', providerId: 'opencode' },
       { id: 'deepseek-v4-pro', name: 'Deepseek V4 Pro', providerId: 'opencode' },
       { id: 'kimi-k2.7', name: 'Kimi K2.7', providerId: 'opencode' },
+      { id: 'mistral-medium-5', name: 'Mistral Medium 5', providerId: 'opencode' },
     ],
   },
   {

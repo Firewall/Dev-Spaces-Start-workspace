@@ -313,28 +313,32 @@ export function AgentSpaceV2() {
           borderRight: '1px solid var(--pf-t--global--border--color--default)',
           display: 'flex', flexDirection: 'column', outline: 'none',
         }}>
-          <div style={{
-            padding: '10px 12px',
-            borderBottom: '1px solid var(--pf-t--global--border--color--default)',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          }}>
-            <Title headingLevel="h2" size="lg" style={{ margin: 0 }}>Projects</Title>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-              <Button variant="plain" size="sm" icon={<PlusCircleIcon />} onClick={() => setAddProjectModalOpen(true)} aria-label="Add project" style={{ padding: 4 }} />
-              <AgentAuthPanel toolAuth={toolAuth} onAuthenticate={handleAuthenticate} />
-            </span>
-          </div>
-          <AgentSidebar
-            projects={projects}
-            agents={agents}
-            selectedAgentId={selectedAgentId}
-            connectedAgentIds={connectedAgentIds}
-            onSelectAgent={setSelectedAgentId}
-            onAddAgent={handleAddAgent}
-            onDeleteAgent={handleDeleteAgent}
-            onDeleteProject={handleDeleteProject}
-            onRenameProject={handleRenameProject}
-          />
+          {!activeSettingsView && (
+            <>
+              <div style={{
+                padding: '10px 12px',
+                borderBottom: '1px solid var(--pf-t--global--border--color--default)',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              }}>
+                <Title headingLevel="h2" size="lg" style={{ margin: 0 }}>Projects</Title>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  <Button variant="plain" size="sm" icon={<PlusCircleIcon />} onClick={() => setAddProjectModalOpen(true)} aria-label="Add project" style={{ padding: 4 }} />
+                  <AgentAuthPanel toolAuth={toolAuth} onAuthenticate={handleAuthenticate} />
+                </span>
+              </div>
+              <AgentSidebar
+                projects={projects}
+                agents={agents}
+                selectedAgentId={selectedAgentId}
+                connectedAgentIds={connectedAgentIds}
+                onSelectAgent={setSelectedAgentId}
+                onAddAgent={handleAddAgent}
+                onDeleteAgent={handleDeleteAgent}
+                onDeleteProject={handleDeleteProject}
+                onRenameProject={handleRenameProject}
+              />
+            </>
+          )}
           <div
             style={{
               borderTop: '1px solid var(--pf-t--global--border--color--default)',
@@ -430,6 +434,8 @@ export function AgentSpaceV2() {
                         --pf-v6-c-menu-toggle--PaddingInlineEnd: 6px;
                         --pf-v6-c-menu-toggle--m-split-button--pill--child--PaddingInlineEnd--offset: 6px;
                         --pf-v6-c-menu-toggle--m-split-button--pill--child--PaddingInlineStart--offset: 4px;
+                        --pf-v6-c-menu-toggle__button--toggle-icon--PaddingInlineStart: 4px;
+                        --pf-v6-c-menu-toggle__button--toggle-icon--PaddingInlineEnd: 4px;
                       }
                       .agent-toolbar-v2 .pf-v6-c-menu-toggle.pf-m-split-button > * {
                         align-self: stretch !important;
@@ -442,7 +448,7 @@ export function AgentSpaceV2() {
                       .agent-toolbar-v2 .pf-v6-c-menu-toggle.pf-m-split-button .pf-v6-c-menu-toggle__controls .pf-v6-c-menu-toggle__toggle-icon {
                         display: inline-flex; align-items: center; min-width: 12px;
                       }
-                      .toolbar-commit-icon { margin-right: 4px; }
+                      .toolbar-commit-icon { margin-right: 0; }
                       .toolbar-connected-dot {
                         display: none;
                         width: 10px; height: 10px; border-radius: 50%;
