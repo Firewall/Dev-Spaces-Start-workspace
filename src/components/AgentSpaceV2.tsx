@@ -262,7 +262,7 @@ export function AgentSpaceV2() {
     let charIndex = 0
     const thinkingDelay = window.setTimeout(() => {
       streamingRef.current = window.setInterval(() => {
-        const chunkSize = Math.floor(Math.random() * 3) + 2
+        const chunkSize = Math.floor(Math.random() * 8) + 6
         charIndex = Math.min(charIndex + chunkSize, fullResponse.length)
         const partial = fullResponse.slice(0, charIndex)
         const done = charIndex >= fullResponse.length
