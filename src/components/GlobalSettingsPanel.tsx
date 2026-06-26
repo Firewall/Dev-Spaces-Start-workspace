@@ -29,11 +29,11 @@ const STATUS_COLORS: Record<McpServer['status'], 'green' | 'grey' | 'red'> = {
   error: 'red',
 }
 
-const CATEGORY_COLORS: Record<Skill['category'], 'blue' | 'purple' | 'orange' | 'cyan' | 'grey'> = {
+const CATEGORY_COLORS: Record<Skill['category'], 'blue' | 'purple' | 'orange' | 'teal' | 'grey'> = {
   code: 'blue',
   research: 'purple',
   testing: 'orange',
-  devops: 'cyan',
+  devops: 'teal',
   general: 'grey',
 }
 
