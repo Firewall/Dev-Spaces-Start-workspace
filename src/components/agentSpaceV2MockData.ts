@@ -30,13 +30,13 @@ export const CHAT_PROVIDERS: ChatProvider[] = [
   },
   {
     id: 'opencode',
-    name: 'OpenCode (OpenShift AI)',
+    name: 'OpenShift AI',
     models: [
-      { id: 'granite-3b', name: 'Granite 3B', providerId: 'opencode' },
-      { id: 'granite-8b', name: 'Granite 8B', providerId: 'opencode' },
-      { id: 'granite-34b', name: 'Granite 34B', providerId: 'opencode' },
-      { id: 'llama-3-8b', name: 'Llama 3 8B', providerId: 'opencode' },
-      { id: 'mistral-7b-instruct', name: 'Mistral 7B Instruct', providerId: 'opencode' },
+      { id: 'glm-5.2', name: 'GLM-5.2', providerId: 'opencode' },
+      { id: 'minimax-m3', name: 'MiniMax M3', providerId: 'opencode' },
+      { id: 'qwen-3.7', name: 'Qwen 3.7', providerId: 'opencode' },
+      { id: 'deepseek-v4-pro', name: 'Deepseek V4 Pro', providerId: 'opencode' },
+      { id: 'kimi-k2.7', name: 'Kimi K2.7', providerId: 'opencode' },
     ],
   },
 ]
@@ -54,8 +54,8 @@ export const MOCK_CONVERSATIONS: ChatConversation[] = [
     id: 'conv-1',
     title: 'Kubernetes pod scheduling',
     workspaceId: 'ws-devspaces',
-    modelId: 'claude-opus-4',
-    providerId: 'anthropic',
+    modelId: 'glm-5.2',
+    providerId: 'opencode',
     createdAt: now - 2 * 60 * 60 * 1000,
     updatedAt: now - 5 * 60 * 1000,
     messages: [
@@ -69,8 +69,8 @@ export const MOCK_CONVERSATIONS: ChatConversation[] = [
     id: 'conv-2',
     title: 'React performance optimization',
     workspaceId: 'ws-general',
-    modelId: 'gpt-4o',
-    providerId: 'openai',
+    modelId: 'glm-5.2',
+    providerId: 'opencode',
     createdAt: now - 24 * 60 * 60 * 1000,
     updatedAt: now - 3 * 60 * 60 * 1000,
     messages: [
@@ -82,8 +82,8 @@ export const MOCK_CONVERSATIONS: ChatConversation[] = [
     id: 'conv-3',
     title: 'Devfile schema validation',
     workspaceId: 'ws-devspaces',
-    modelId: 'claude-sonnet-4',
-    providerId: 'anthropic',
+    modelId: 'glm-5.2',
+    providerId: 'opencode',
     createdAt: now - 48 * 60 * 60 * 1000,
     updatedAt: now - 24 * 60 * 60 * 1000,
     messages: [
@@ -95,8 +95,8 @@ export const MOCK_CONVERSATIONS: ChatConversation[] = [
     id: 'conv-4',
     title: 'PR review: auth middleware refactor',
     workspaceId: 'ws-review',
-    modelId: 'claude-opus-4',
-    providerId: 'anthropic',
+    modelId: 'glm-5.2',
+    providerId: 'opencode',
     createdAt: now - 4 * 60 * 60 * 1000,
     updatedAt: now - 2 * 60 * 60 * 1000,
     messages: [
@@ -142,5 +142,5 @@ export const MOCK_STREAMING_RESPONSES: string[] = [
   "I've analyzed the code and here are my findings:\n\n**What's working well:**\n- Clean separation between the transport and business logic layers\n- Good use of TypeScript discriminated unions for the event types\n- Test coverage is solid for the happy path\n\n**Areas for improvement:**\n\n1. **Error handling gaps** — the `catch` block on line 47 swallows the error silently. At minimum, log it:\n```typescript\ncatch (error) {\n  logger.error('Processing failed', { error, context: event })\n  throw new ProcessingError('Failed to handle event', { cause: error })\n}\n```\n\n2. **Race condition** — the `isProcessing` flag isn't atomic. Under concurrent access, two requests could both read `false` before either sets it to `true`. Use a mutex or database-level locking.\n\n3. **Memory leak potential** — event listeners are added in `init()` but never removed. Add cleanup:\n```typescript\nfunction destroy() {\n  emitter.removeAllListeners()\n  clearInterval(healthCheckTimer)\n}\n```\n\nOverall the code is well-structured. These are refinements, not rewrites.",
 ]
 
-export const DEFAULT_PROVIDER_ID = 'anthropic' as const
-export const DEFAULT_MODEL_ID = 'claude-opus-4'
+export const DEFAULT_PROVIDER_ID = 'opencode' as const
+export const DEFAULT_MODEL_ID = 'glm-5.2'

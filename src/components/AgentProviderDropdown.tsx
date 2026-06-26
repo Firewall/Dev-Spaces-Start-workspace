@@ -9,6 +9,7 @@ import {
   MenuList,
   MenuToggle,
   Switch,
+  Tooltip,
 } from '@patternfly/react-core'
 import type { AccessMode, AgentMode, AgentSettings, AgentToolId, ContextWindowSize, ReasoningMode } from './agentSpaceTypes'
 import { AGENT_TOOLS, CONTEXT_WINDOW_OPTIONS, PROVIDER_MODELS } from './agentSpaceMockData'
@@ -41,6 +42,19 @@ export function AgentProviderDropdown({
   const models = PROVIDER_MODELS[tool] ?? []
   const currentModelName = models.find((m) => m.id === settings.model)?.name ?? settings.model
   const currentCtxLabel = CONTEXT_WINDOW_OPTIONS.find((o) => o.id === settings.contextWindow)?.label ?? settings.contextWindow
+  const currentAccessLabel = ACCESS_OPTIONS.find((o) => o.id === settings.accessMode)?.label ?? settings.accessMode
+
+  const tooltipContent = (
+    <div style={{ textAlign: 'left' }}>
+      <div><strong>Provider:</strong> {toolName}</div>
+      <div><strong>Model:</strong> {currentModelName}</div>
+      <div><strong>Reasoning:</strong> {settings.reasoningMode === 'standard' ? 'Standard' : 'Extended'}</div>
+      <div><strong>Context:</strong> {currentCtxLabel}</div>
+      <div><strong>Fast mode:</strong> {settings.fastMode ? 'On' : 'Off'}</div>
+      <div><strong>Mode:</strong> {settings.agentMode === 'build' ? 'Build' : 'Plan'}</div>
+      <div><strong>Access:</strong> {currentAccessLabel}</div>
+    </div>
+  )
 
   const update = (patch: Partial<AgentSettings>) => {
     onSettingsChange({ ...settings, ...patch })
@@ -143,20 +157,22 @@ export function AgentProviderDropdown({
       isOpen={isOpen}
       onOpenChange={setIsOpen}
       toggle={
-        <MenuToggle
-          ref={toggleRef}
-          onClick={() => setIsOpen((o) => !o)}
-          isExpanded={isOpen}
-          variant="plainText"
-          style={{ fontWeight: 600, fontSize: 14, padding: '4px 8px' }}
-        >
-          <Flex alignItems={{ default: 'alignItemsCenter' }} gap={{ default: 'gapSm' }}>
-            <FlexItem>
-              <BrandIcon id={tool} size={18} />
-            </FlexItem>
-            <FlexItem className="toolbar-provider-name">{toolName}</FlexItem>
-          </Flex>
-        </MenuToggle>
+        <Tooltip content={tooltipContent} position="bottom">
+          <MenuToggle
+            ref={toggleRef}
+            onClick={() => setIsOpen((o) => !o)}
+            isExpanded={isOpen}
+            variant="plainText"
+            style={{ fontWeight: 600, fontSize: 14, padding: '4px 8px' }}
+          >
+            <Flex alignItems={{ default: 'alignItemsCenter' }} gap={{ default: 'gapSm' }}>
+              <FlexItem>
+                <BrandIcon id={tool} size={18} />
+              </FlexItem>
+              <FlexItem className="toolbar-provider-name">{currentModelName}</FlexItem>
+            </Flex>
+          </MenuToggle>
+        </Tooltip>
       }
       toggleRef={toggleRef}
       menu={
