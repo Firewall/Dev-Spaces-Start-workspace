@@ -714,6 +714,26 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
             >
               <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                 <FormGroup
+                  label="Create New"
+                  fieldId="create-new-repo"
+                  labelHelp={<FieldHelp text="When enabled, a new workspace will be created from this repository. When disabled, the existing workspace previously created from this repository will be re-used." />}
+                >
+                  <Switch
+                    id="create-new-repo"
+                    isChecked={createNew}
+                    onChange={(_e, checked) => setCreateNew(checked)}
+                    aria-label="Create new workspace"
+                  />
+                  <HelperText>
+                    <HelperTextItem>
+                      {createNew
+                        ? 'A new workspace will be created from this repository.'
+                        : 'The existing workspace for this repository will be re-used.'}
+                    </HelperTextItem>
+                  </HelperText>
+                </FormGroup>
+
+                <FormGroup
                   label="Path to Devfile"
                   fieldId="devfile-path"
                   labelHelp={<FieldHelp text="Specify a custom path to your devfile relative to the repository root." />}
@@ -868,27 +888,25 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
               onToggle={(_e, isExpanded) => setAdvancedOptionsOpen(isExpanded)}
             >
               <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                {selectedTemplate !== null && (
-                  <FormGroup
-                    label="Create New"
-                    fieldId="create-new"
-                    labelHelp={<FieldHelp text="When enabled, a new workspace will be created from the selected template. When disabled, the existing workspace previously created from this template will be re-used." />}
-                  >
-                    <Switch
-                      id="create-new"
-                      isChecked={createNew}
-                      onChange={(_e, checked) => setCreateNew(checked)}
-                      aria-label="Create new workspace"
-                    />
-                    <HelperText>
-                      <HelperTextItem>
-                        {createNew
-                          ? 'A new workspace will be created from this template.'
-                          : 'The existing workspace for this template will be re-used.'}
-                      </HelperTextItem>
-                    </HelperText>
-                  </FormGroup>
-                )}
+                <FormGroup
+                  label="Create New"
+                  fieldId="create-new"
+                  labelHelp={<FieldHelp text="When enabled, a new workspace will be created from the selected template. When disabled, the existing workspace previously created from this template will be re-used." />}
+                >
+                  <Switch
+                    id="create-new"
+                    isChecked={createNew}
+                    onChange={(_e, checked) => setCreateNew(checked)}
+                    aria-label="Create new workspace"
+                  />
+                  <HelperText>
+                    <HelperTextItem>
+                      {createNew
+                        ? 'A new workspace will be created from this template.'
+                        : 'The existing workspace for this template will be re-used.'}
+                    </HelperTextItem>
+                  </HelperText>
+                </FormGroup>
 
                 <FormGroup label="Temporary Storage" fieldId="temp-storage">
                   <Switch
