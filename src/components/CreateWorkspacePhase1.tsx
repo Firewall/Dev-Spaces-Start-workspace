@@ -148,6 +148,7 @@ function TemplateIcon({ icon, size }: { icon: string; size: number }) {
 
 export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspacePhase1Props) {
   const [mode, setMode] = useState<CreationMode>('repo')
+  const [name, setName] = useState('')
   const [repoUrl, setRepoUrl] = useState('')
   const [branch, setBranch] = useState('main')
   const [editor, setEditor] = useState('vscode-oss')
@@ -156,6 +157,7 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
   const [gitRemotes, setGitRemotes] = useState<GitRemote[]>([{ name: 'origin', url: '' }])
   const [aiTools, setAiTools] = useState<string[]>([])
   const [advancedOptionsOpen, setAdvancedOptionsOpen] = useState(false)
+  const [createNew, setCreateNew] = useState(true)
   const [envSettings, setEnvSettings] = useState({
     containerImage: '',
     memoryLimit: '',
@@ -221,6 +223,10 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
 
   const handleTemplateClick = useCallback((templateId: string) => {
     setSelectedTemplate((prev) => prev === templateId ? null : templateId)
+  }, [])
+
+  const handleNameChange = useCallback((_e: unknown, val: string) => {
+    setName(val)
   }, [])
 
   const handleRepoChange = useCallback((_e: unknown, val: string) => {
@@ -662,6 +668,23 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
             </div>
           )}
 
+          {mode === 'template' && (
+            <FormGroup
+              label="Workspace Name"
+              fieldId="workspace-name"
+              labelHelp={
+                <FieldHelp text="A human-readable name for your workspace. Auto-generated from the template if left blank." />
+              }
+            >
+              <TextInput
+                id="workspace-name"
+                value={name}
+                onChange={handleNameChange}
+                placeholder="my-project"
+              />
+            </FormGroup>
+          )}
+
           {mode === 'repo' && (
             <FormGroup
               label="Select an Editor"
@@ -839,76 +862,104 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
           )}
 
           {mode === 'template' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-              <FormGroup label="Temporary Storage" fieldId="temp-storage">
-                <Switch
-                  id="temp-storage"
-                  isChecked={tempStorage}
-                  onChange={(_e, checked) => setTempStorage(checked)}
-                  aria-label="Temporary storage"
-                />
-              </FormGroup>
+            <ExpandableSection
+              toggleText="Advanced Options"
+              isExpanded={advancedOptionsOpen}
+              onToggle={(_e, isExpanded) => setAdvancedOptionsOpen(isExpanded)}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                {selectedTemplate !== null && (
+                  <FormGroup
+                    label="Create New"
+                    fieldId="create-new"
+                    labelHelp={<FieldHelp text="When enabled, a new workspace will be created from the selected template. When disabled, the existing workspace previously created from this template will be re-used." />}
+                  >
+                    <Switch
+                      id="create-new"
+                      isChecked={createNew}
+                      onChange={(_e, checked) => setCreateNew(checked)}
+                      aria-label="Create new workspace"
+                    />
+                    <HelperText>
+                      <HelperTextItem>
+                        {createNew
+                          ? 'A new workspace will be created from this template.'
+                          : 'The existing workspace for this template will be re-used.'}
+                      </HelperTextItem>
+                    </HelperText>
+                  </FormGroup>
+                )}
 
-              <FormGroup
-                label={`Memory Limit (${envSettings.memoryLimit ? `${envSettings.memoryLimit}Gi` : 'default'})`}
-                fieldId="memory-limit"
-              >
-                <NumberInput
-                  id="memory-limit"
-                  value={envSettings.memoryLimit ? Number(envSettings.memoryLimit) : undefined}
-                  onMinus={() =>
-                    setEnvSettings((prev) => ({
-                      ...prev,
-                      memoryLimit: String(Math.max(0, (Number(prev.memoryLimit) || 0) - 1)),
-                    }))
-                  }
-                  onPlus={() =>
-                    setEnvSettings((prev) => ({
-                      ...prev,
-                      memoryLimit: String((Number(prev.memoryLimit) || 0) + 1),
-                    }))
-                  }
-                  onChange={(event: React.FormEvent<HTMLInputElement>) => {
-                    const val = (event.target as HTMLInputElement).value
-                    setEnvSettings((prev) => ({ ...prev, memoryLimit: val }))
-                  }}
-                  inputAriaLabel="Memory limit"
-                  minusBtnAriaLabel="Decrease memory"
-                  plusBtnAriaLabel="Increase memory"
-                  min={0}
-                />
-              </FormGroup>
+                <FormGroup label="Temporary Storage" fieldId="temp-storage">
+                  <Switch
+                    id="temp-storage"
+                    isChecked={tempStorage}
+                    onChange={(_e, checked) => setTempStorage(checked)}
+                    aria-label="Temporary storage"
+                  />
+                </FormGroup>
 
-              <FormGroup
-                label={`CPU Limit (${envSettings.cpuLimit ? `${envSettings.cpuLimit} cores` : 'default'})`}
-                fieldId="cpu-limit"
-              >
-                <NumberInput
-                  id="cpu-limit"
-                  value={envSettings.cpuLimit ? Number(envSettings.cpuLimit) : undefined}
-                  onMinus={() =>
-                    setEnvSettings((prev) => ({
-                      ...prev,
-                      cpuLimit: String(Math.max(0, (Number(prev.cpuLimit) || 0) - 1)),
-                    }))
-                  }
-                  onPlus={() =>
-                    setEnvSettings((prev) => ({
-                      ...prev,
-                      cpuLimit: String((Number(prev.cpuLimit) || 0) + 1),
-                    }))
-                  }
-                  onChange={(event: React.FormEvent<HTMLInputElement>) => {
-                    const val = (event.target as HTMLInputElement).value
-                    setEnvSettings((prev) => ({ ...prev, cpuLimit: val }))
-                  }}
-                  inputAriaLabel="CPU limit"
-                  minusBtnAriaLabel="Decrease CPU"
-                  plusBtnAriaLabel="Increase CPU"
-                  min={0}
-                />
-              </FormGroup>
-            </div>
+                <FormGroup
+                  label={`Memory Limit (${envSettings.memoryLimit ? `${envSettings.memoryLimit}Gi` : 'default'})`}
+                  fieldId="memory-limit"
+                >
+                  <NumberInput
+                    id="memory-limit"
+                    value={envSettings.memoryLimit ? Number(envSettings.memoryLimit) : undefined}
+                    onMinus={() =>
+                      setEnvSettings((prev) => ({
+                        ...prev,
+                        memoryLimit: String(Math.max(0, (Number(prev.memoryLimit) || 0) - 1)),
+                      }))
+                    }
+                    onPlus={() =>
+                      setEnvSettings((prev) => ({
+                        ...prev,
+                        memoryLimit: String((Number(prev.memoryLimit) || 0) + 1),
+                      }))
+                    }
+                    onChange={(event: React.FormEvent<HTMLInputElement>) => {
+                      const val = (event.target as HTMLInputElement).value
+                      setEnvSettings((prev) => ({ ...prev, memoryLimit: val }))
+                    }}
+                    inputAriaLabel="Memory limit"
+                    minusBtnAriaLabel="Decrease memory"
+                    plusBtnAriaLabel="Increase memory"
+                    min={0}
+                  />
+                </FormGroup>
+
+                <FormGroup
+                  label={`CPU Limit (${envSettings.cpuLimit ? `${envSettings.cpuLimit} cores` : 'default'})`}
+                  fieldId="cpu-limit"
+                >
+                  <NumberInput
+                    id="cpu-limit"
+                    value={envSettings.cpuLimit ? Number(envSettings.cpuLimit) : undefined}
+                    onMinus={() =>
+                      setEnvSettings((prev) => ({
+                        ...prev,
+                        cpuLimit: String(Math.max(0, (Number(prev.cpuLimit) || 0) - 1)),
+                      }))
+                    }
+                    onPlus={() =>
+                      setEnvSettings((prev) => ({
+                        ...prev,
+                        cpuLimit: String((Number(prev.cpuLimit) || 0) + 1),
+                      }))
+                    }
+                    onChange={(event: React.FormEvent<HTMLInputElement>) => {
+                      const val = (event.target as HTMLInputElement).value
+                      setEnvSettings((prev) => ({ ...prev, cpuLimit: val }))
+                    }}
+                    inputAriaLabel="CPU limit"
+                    minusBtnAriaLabel="Decrease CPU"
+                    plusBtnAriaLabel="Increase CPU"
+                    min={0}
+                  />
+                </FormGroup>
+              </div>
+            </ExpandableSection>
           )}
 
           <div style={{ marginTop: 24 }}>
