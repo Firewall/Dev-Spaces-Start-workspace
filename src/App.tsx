@@ -30,13 +30,13 @@ import {
 import type { ComponentType } from 'react'
 import { CreateWorkspace } from './components/CreateWorkspace'
 import { CreateWorkspacePhase1 } from './components/CreateWorkspacePhase1'
+import { WorkspaceList } from './components/WorkspaceList'
 
 type Phase = 'phase1' | 'phase2'
 const PHASE_STORAGE_KEY = 'dev-spaces-phase'
 
 const NAV_ITEMS: { label: string; id: string; icon: ComponentType }[] = [
   { label: 'Workspaces', id: 'workspaces', icon: ThLargeIcon },
-  { label: 'Agent Space', id: 'agent-space', icon: CodeIcon },
   { label: 'Devfile Creator', id: 'devfile-creator', icon: CodeIcon },
   { label: 'Backups', id: 'backups', icon: ArchiveIcon },
 ]
@@ -49,6 +49,7 @@ export default function App() {
   const [username] = useState('jane.doe')
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [activeNavItem, setActiveNavItem] = useState('workspaces')
+  const [showCreateWorkspace, setShowCreateWorkspace] = useState(false)
   const [phase, setPhase] = useState<Phase>(() => {
     const saved = window.localStorage.getItem(PHASE_STORAGE_KEY)
     return saved === 'phase1' || saved === 'phase2' ? saved : 'phase1'
@@ -131,7 +132,10 @@ export default function App() {
   const sidebar = (
     <PageSidebar>
       <PageSidebarBody>
-        <Nav onSelect={(_event, result) => setActiveNavItem(result.itemId as string)}>
+        <Nav onSelect={(_event, result) => {
+          setActiveNavItem(result.itemId as string)
+          setShowCreateWorkspace(false)
+        }}>
           <NavList>
             {NAV_ITEMS.map((item) => {
               const NavIcon = item.icon
@@ -155,10 +159,18 @@ export default function App() {
   return (
     <Page masthead={masthead} sidebar={sidebar}>
       {signedIn ? (
-        phase === 'phase1' ? (
-          <CreateWorkspacePhase1 phase={phase} onPhaseChange={setPhase} />
+        showCreateWorkspace ? (
+          phase === 'phase1' ? (
+            <CreateWorkspacePhase1 phase={phase} onPhaseChange={setPhase} />
+          ) : (
+            <CreateWorkspace phase={phase} onPhaseChange={setPhase} />
+          )
         ) : (
-          <CreateWorkspace phase={phase} onPhaseChange={setPhase} />
+          <WorkspaceList
+            phase={phase}
+            onPhaseChange={setPhase}
+            onCreateWorkspace={() => setShowCreateWorkspace(true)}
+          />
         )
       ) : (
         <PageSection
