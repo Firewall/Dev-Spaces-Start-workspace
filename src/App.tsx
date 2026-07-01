@@ -45,15 +45,21 @@ const NAV_ITEMS: { label: string; id: string; icon: ComponentType }[] = [
   { label: 'Backups', id: 'backups', icon: ArchiveIcon },
 ]
 
+const VALID_ROUTES = new Set([...NAV_ITEMS.map((item) => item.id), 'create-workspace'])
+
 const THEME_STORAGE_KEY = 'dev-spaces-theme'
 const DARK_THEME_CLASS = 'pf-v6-theme-dark'
+
+function getRouteFromHash(): string {
+  const route = window.location.hash.replace('#/', '').replace('#', '')
+  return VALID_ROUTES.has(route) ? route : 'workspaces'
+}
 
 export default function App() {
   const [signedIn, setSignedIn] = useState(true)
   const [username] = useState('jane.doe')
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
-  const [activeNavItem, setActiveNavItem] = useState('workspaces')
-  const [showCreateWorkspace, setShowCreateWorkspace] = useState(false)
+  const [activePage, setActivePage] = useState(getRouteFromHash)
   const [phase, setPhase] = useState<Phase>(() => {
     const saved = window.localStorage.getItem(PHASE_STORAGE_KEY)
     return saved === 'phase1' || saved === 'phase2' ? saved : 'phase1'
@@ -78,6 +84,25 @@ export default function App() {
       document.documentElement.classList.toggle(DARK_THEME_CLASS, themeMode === 'dark')
     }
   }, [themeMode])
+
+  useEffect(() => {
+    window.location.hash = `#/${activePage}`
+  }, [activePage])
+
+  useEffect(() => {
+    const onHashChange = () => setActivePage(getRouteFromHash())
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [])
+
+  useEffect(() => {
+    if (!signedIn) {
+      document.title = 'Sign In - Dev Spaces'
+      return
+    }
+    const navItem = NAV_ITEMS.find((item) => item.id === activePage)
+    document.title = navItem ? `${navItem.label} - Dev Spaces` : activePage === 'create-workspace' ? 'Create Workspace - Dev Spaces' : 'Dev Spaces'
+  }, [activePage, signedIn])
 
   const masthead = (
     <Masthead>
@@ -178,8 +203,7 @@ export default function App() {
     <PageSidebar>
       <PageSidebarBody>
         <Nav onSelect={(_event, result) => {
-          setActiveNavItem(result.itemId as string)
-          setShowCreateWorkspace(false)
+          setActivePage(result.itemId as string)
         }}>
           <NavList>
             {NAV_ITEMS.map((item) => {
@@ -188,7 +212,7 @@ export default function App() {
                 <NavItem
                   key={item.id}
                   itemId={item.id}
-                  isActive={activeNavItem === item.id}
+                  isActive={activePage === item.id || (item.id === 'workspaces' && activePage === 'create-workspace')}
                   icon={<NavIcon />}
                 >
                   {item.label}
@@ -204,7 +228,7 @@ export default function App() {
   return (
     <Page masthead={masthead} sidebar={sidebar}>
       {signedIn ? (
-        showCreateWorkspace ? (
+        activePage === 'create-workspace' ? (
           phase === 'phase1' ? (
             <CreateWorkspacePhase1 phase={phase} onPhaseChange={setPhase} />
           ) : (
@@ -212,7 +236,7 @@ export default function App() {
           )
         ) : (
           <WorkspaceList
-            onCreateWorkspace={() => setShowCreateWorkspace(true)}
+            onCreateWorkspace={() => setActivePage('create-workspace')}
           />
         )
       ) : (
