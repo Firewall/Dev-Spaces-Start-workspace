@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   Button,
+  Divider,
   Dropdown,
   DropdownItem,
   DropdownList,
@@ -16,14 +17,17 @@ import {
   PageSection,
   PageSidebar,
   PageSidebarBody,
-  Switch,
+  ToggleGroup,
+  ToggleGroupItem,
 } from '@patternfly/react-core'
 import {
   ArchiveIcon,
   CodeIcon,
-  CogIcon,
-  InfoCircleIcon,
+  DesktopIcon,
+  MoonIcon,
+  OutlinedQuestionCircleIcon,
   SignOutAltIcon,
+  SunIcon,
   ThLargeIcon,
   UserIcon,
 } from '@patternfly/react-icons'
@@ -33,6 +37,7 @@ import { CreateWorkspacePhase1 } from './components/CreateWorkspacePhase1'
 import { WorkspaceList } from './components/WorkspaceList'
 
 type Phase = 'phase1' | 'phase2'
+type ThemeMode = 'light' | 'dark' | 'auto'
 const PHASE_STORAGE_KEY = 'dev-spaces-phase'
 
 const NAV_ITEMS: { label: string; id: string; icon: ComponentType }[] = [
@@ -59,19 +64,21 @@ export default function App() {
     window.localStorage.setItem(PHASE_STORAGE_KEY, phase)
   }, [phase])
 
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY)
-    if (savedTheme) {
-      return savedTheme === 'dark'
-    }
-
-    return document.documentElement.classList.contains(DARK_THEME_CLASS)
+  const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
+    const saved = window.localStorage.getItem(THEME_STORAGE_KEY)
+    if (saved === 'light' || saved === 'dark' || saved === 'auto') return saved
+    return 'auto'
   })
 
   useEffect(() => {
-    document.documentElement.classList.toggle(DARK_THEME_CLASS, isDarkMode)
-    window.localStorage.setItem(THEME_STORAGE_KEY, isDarkMode ? 'dark' : 'light')
-  }, [isDarkMode])
+    window.localStorage.setItem(THEME_STORAGE_KEY, themeMode)
+    if (themeMode === 'auto') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+      document.documentElement.classList.toggle(DARK_THEME_CLASS, prefersDark)
+    } else {
+      document.documentElement.classList.toggle(DARK_THEME_CLASS, themeMode === 'dark')
+    }
+  }, [themeMode])
 
   const masthead = (
     <Masthead>
@@ -85,13 +92,13 @@ export default function App() {
         </MastheadBrand>
       </MastheadMain>
       <MastheadContent>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <Switch
-            id="theme-toggle"
-            label="Dark mode"
-            isChecked={isDarkMode}
-            onChange={(_event, checked) => setIsDarkMode(checked)}
-          />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto' }}>
+          <Button variant="plain" aria-label="Applications">
+            <ThLargeIcon />
+          </Button>
+          <Button variant="plain" aria-label="Help">
+            <OutlinedQuestionCircleIcon />
+          </Button>
           <Dropdown
             isOpen={profileMenuOpen}
             onSelect={() => setProfileMenuOpen(false)}
@@ -102,25 +109,64 @@ export default function App() {
                 ref={toggleRef}
                 onClick={() => setProfileMenuOpen((o) => !o)}
                 isExpanded={profileMenuOpen}
-                icon={<UserIcon />}
+                variant="plainText"
               >
-                {username}
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {username}
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 28,
+                      height: 28,
+                      borderRadius: '50%',
+                      backgroundColor: '#6b4226',
+                      color: '#fff',
+                      fontSize: 12,
+                    }}
+                  >
+                    <UserIcon />
+                  </span>
+                </span>
               </MenuToggle>
             )}
           >
+            <div
+              style={{ padding: '12px 16px' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>Appearance</div>
+              <ToggleGroup aria-label="Theme mode">
+                <ToggleGroupItem
+                  icon={<SunIcon />}
+                  buttonId="theme-light"
+                  isSelected={themeMode === 'light'}
+                  onChange={() => setThemeMode('light')}
+                  aria-label="Light theme"
+                />
+                <ToggleGroupItem
+                  icon={<MoonIcon />}
+                  buttonId="theme-dark"
+                  isSelected={themeMode === 'dark'}
+                  onChange={() => setThemeMode('dark')}
+                  aria-label="Dark theme"
+                />
+                <ToggleGroupItem
+                  icon={<DesktopIcon />}
+                  buttonId="theme-auto"
+                  isSelected={themeMode === 'auto'}
+                  onChange={() => setThemeMode('auto')}
+                  aria-label="System theme"
+                />
+              </ToggleGroup>
+            </div>
+            <Divider />
+            <div style={{ padding: '8px 16px 4px', fontSize: 14, fontWeight: 600 }}>Actions</div>
             <DropdownList>
-              <DropdownItem key="settings" icon={<CogIcon />}>
-                Settings
-              </DropdownItem>
-              <DropdownItem key="about" icon={<InfoCircleIcon />}>
-                About
-              </DropdownItem>
-              <DropdownItem
-                key="logout"
-                icon={<SignOutAltIcon />}
-                onClick={() => setSignedIn(false)}
-              >
-                Log out
+              <DropdownItem key="user-prefs">User Preferences</DropdownItem>
+              <DropdownItem key="logout" onClick={() => setSignedIn(false)}>
+                Logout
               </DropdownItem>
             </DropdownList>
           </Dropdown>
@@ -167,8 +213,6 @@ export default function App() {
           )
         ) : (
           <WorkspaceList
-            phase={phase}
-            onPhaseChange={setPhase}
             onCreateWorkspace={() => setShowCreateWorkspace(true)}
           />
         )

@@ -295,12 +295,18 @@ export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) 
 
   const formView = (
     <>
-      <PageSection variant="default">
-        <Flex>
-          <FlexItem>
-            <Title headingLevel="h2">Workspaces</Title>
-          </FlexItem>
-          <FlexItem align={{ default: 'alignRight' }}>
+      <PageSection style={{ maxWidth: 860 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+          <div style={{ flex: 1 }}>
+            <Content>
+              <Title headingLevel="h1">Create Workspace</Title>
+              <p>
+                Import a Git repository or start from a template to launch a cloud
+                development environment.
+              </p>
+            </Content>
+          </div>
+          <div style={{ flexShrink: 0 }}>
             <ToggleGroup aria-label="Prototype phase">
               <ToggleGroupItem
                 text="Phase 1"
@@ -315,18 +321,11 @@ export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) 
                 onChange={() => onPhaseChange('phase2')}
               />
             </ToggleGroup>
-          </FlexItem>
-        </Flex>
+          </div>
+        </div>
       </PageSection>
 
       <PageSection style={{ maxWidth: 860 }}>
-        <Content>
-          <Title headingLevel="h1">Create Workspace</Title>
-          <p>
-            Import a Git repository or start from a template to launch a cloud
-            development environment.
-          </p>
-        </Content>
 
         <Form onSubmit={handleSubmit} style={{ marginTop: 24 }}>
           <ToggleGroup aria-label="Creation mode">
