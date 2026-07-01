@@ -27,7 +27,6 @@ jobs:
           description: Building preview...
 
       - name: Checkout
-        if: github.event.action != 'closed'
         uses: actions/checkout@v5
 
       - name: Setup Node.js
