@@ -7,6 +7,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  statuses: write
 
 concurrency:
   group: pr-preview-${{ github.event.pull_request.number }}
@@ -16,6 +17,15 @@ jobs:
   preview:
     runs-on: ubuntu-latest
     steps:
+      - name: Set build status to pending
+        if: github.event.action != 'closed'
+        uses: myrotvorets/set-commit-status-action@v2.0.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          status: pending
+          context: PR Preview
+          description: Building preview...
+
       - name: Checkout
         if: github.event.action != 'closed'
         uses: actions/checkout@v5
@@ -36,6 +46,40 @@ jobs:
         run: npm run build -- --base=/Dev-Spaces-Start-workspace/pr-preview/pr-${{ github.event.pull_request.number }}/
 
       - name: Deploy preview
+        id: deploy
         uses: rossjrw/pr-preview-action@v1
         with:
           source-dir: dist
+          comment: false
+          wait-for-pages-deployment: true
+
+      - name: Set build status to success
+        if: github.event.action != 'closed' && success()
+        uses: myrotvorets/set-commit-status-action@v2.0.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          status: success
+          context: PR Preview
+          description: Preview is live
+          targetUrl: ${{ steps.deploy.outputs.preview-url }}
+
+      - name: Comment preview URL on PR
+        if: github.event.action != 'closed' && success()
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: pr-preview
+          message: |
+            ## Preview
+            | | |
+            |---|---|
+            | **Preview URL** | ${{ steps.deploy.outputs.preview-url }} |
+            | **Commit** | ${{ github.sha }} |
+
+      - name: Set build status to failure
+        if: github.event.action != 'closed' && failure()
+        uses: myrotvorets/set-commit-status-action@v2.0.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          status: failure
+          context: PR Preview
+          description: Preview build failed
