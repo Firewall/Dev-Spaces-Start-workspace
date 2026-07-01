@@ -238,15 +238,18 @@ export function AgentSpace() {
     [projects, addAgentProjectId],
   )
 
-  useEffect(() => {
-    if (!selectedAgentId) return
-    if (connectedAgentIds.has(selectedAgentId)) return
+  const shouldAutoConnect = useMemo(() => {
+    if (!selectedAgentId) return false
+    if (connectedAgentIds.has(selectedAgentId)) return false
     const agent = agents.find((a) => a.id === selectedAgentId)
-    if (!agent || agent.status === 'connecting') return
-    const authenticated = toolAuth.find((a) => a.toolId === agent.tool)?.authenticated ?? false
-    if (!authenticated) return
-    handleConnect()
-  }, [selectedAgentId])
+    if (!agent || agent.status === 'connecting') return false
+    return toolAuth.find((a) => a.toolId === agent.tool)?.authenticated ?? false
+  }, [selectedAgentId, connectedAgentIds, agents, toolAuth])
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- handleConnect simulates async connection
+    if (shouldAutoConnect) handleConnect()
+  }, [shouldAutoConnect, handleConnect])
 
   const isConnected = selectedAgentId != null && connectedAgentIds.has(selectedAgentId)
 

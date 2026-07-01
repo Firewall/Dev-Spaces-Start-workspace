@@ -119,7 +119,10 @@ export function AgentSpaceV2() {
   }, [])
 
   // Auto-scroll chat
-  const currentMessages = selectedAgentId ? (chatMessages[selectedAgentId] ?? []) : []
+  const currentMessages = useMemo(
+    () => selectedAgentId ? (chatMessages[selectedAgentId] ?? []) : [],
+    [selectedAgentId, chatMessages],
+  )
   useEffect(() => {
     const container = messagesContainerRef.current
     if (!container) return
@@ -127,13 +130,13 @@ export function AgentSpaceV2() {
     if (nearBottom) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [currentMessages])
 
-  // Reset toolbar state on agent switch
-  useEffect(() => {
+  const selectAgent = useCallback((id: string | null) => {
+    setSelectedAgentId(id)
     setOpenInOpen(false)
     setCommitOpen(false)
     setTerminalPanelOpen(false)
     setDiffPanelOpen(false)
-  }, [selectedAgentId])
+  }, [])
 
   // --- Derived values ---
   const selectedAgent = useMemo(() => agents.find(a => a.id === selectedAgentId), [agents, selectedAgentId])
@@ -179,12 +182,12 @@ export function AgentSpaceV2() {
     setProjects(prev => prev.filter(p => p.id !== projectId))
     setAgents(prev => {
       const removed = prev.filter(a => a.projectId === projectId)
-      if (removed.some(a => a.id === selectedAgentId)) setSelectedAgentId(null)
+      if (removed.some(a => a.id === selectedAgentId)) selectAgent(null)
       const removedIds = removed.map(a => a.id)
       setConnectedAgentIds(prev => { const next = new Set(prev); removedIds.forEach(id => next.delete(id)); return next })
       return prev.filter(a => a.projectId !== projectId)
     })
-  }, [selectedAgentId])
+  }, [selectedAgentId, selectAgent])
 
   const createAgent = useCallback((projectId: string, tool: AgentToolId) => {
     const id = `agent-${nextAgentId++}`
@@ -194,8 +197,8 @@ export function AgentSpaceV2() {
     const models = PROVIDER_MODELS[tool]
     setAgentSettingsMap(prev => ({ ...prev, [id]: { ...DEFAULT_AGENT_SETTINGS, model: models?.[0]?.id ?? DEFAULT_AGENT_SETTINGS.model } }))
     setAgents(prev => [...prev, { id, name, tool, status: 'stopped', projectId, summary, lastActivity: Date.now() }])
-    setSelectedAgentId(id)
-  }, [])
+    selectAgent(id)
+  }, [selectAgent])
 
   const handleAddAgent = useCallback((projectId: string) => {
     const projectAgents = agents.filter(a => a.projectId === projectId)
@@ -218,9 +221,9 @@ export function AgentSpaceV2() {
 
   const handleDeleteAgent = useCallback((agentId: string) => {
     setConnectedAgentIds(prev => { const next = new Set(prev); next.delete(agentId); return next })
-    if (agentId === selectedAgentId) setSelectedAgentId(null)
+    if (agentId === selectedAgentId) selectAgent(null)
     setAgents(prev => prev.filter(a => a.id !== agentId))
-  }, [selectedAgentId])
+  }, [selectedAgentId, selectAgent])
 
   const handleToolChange = useCallback((newTool: AgentToolId) => {
     if (!selectedAgentId) return
@@ -239,15 +242,18 @@ export function AgentSpaceV2() {
   }, [selectedAgentId])
 
   // Auto-connect on select
-  useEffect(() => {
-    if (!selectedAgentId) return
-    if (connectedAgentIds.has(selectedAgentId)) return
+  const shouldAutoConnect = useMemo(() => {
+    if (!selectedAgentId) return false
+    if (connectedAgentIds.has(selectedAgentId)) return false
     const agent = agents.find(a => a.id === selectedAgentId)
-    if (!agent || agent.status === 'connecting') return
-    const authenticated = toolAuth.find(a => a.toolId === agent.tool)?.authenticated ?? false
-    if (!authenticated) return
-    handleConnect()
-  }, [selectedAgentId])
+    if (!agent || agent.status === 'connecting') return false
+    return toolAuth.find(a => a.toolId === agent.tool)?.authenticated ?? false
+  }, [selectedAgentId, connectedAgentIds, agents, toolAuth])
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- handleConnect simulates async connection
+    if (shouldAutoConnect) handleConnect()
+  }, [shouldAutoConnect, handleConnect])
 
   // --- Chat handler ---
   const handleSendMessage = useCallback((content: string) => {
@@ -294,9 +300,12 @@ export function AgentSpaceV2() {
 
   // --- Terminal lines for the terminal panel ---
   const [terminalLines, setTerminalLines] = useState<string[]>([])
+  const terminalTool = selectedAgent?.tool
+  const terminalKey = selectedAgent?.id
   useEffect(() => {
-    if (!selectedAgent || !isConnected) { setTerminalLines([]); return }
-    const allLines = MOCK_TERMINAL_OUTPUT[selectedAgent.tool]
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- synchronizing mock terminal output with component state
+    if (!terminalTool || !isConnected) { setTerminalLines([]); return }
+    const allLines = MOCK_TERMINAL_OUTPUT[terminalTool]
     setTerminalLines([])
     let index = 0
     const interval = setInterval(() => {
@@ -304,7 +313,7 @@ export function AgentSpaceV2() {
       else clearInterval(interval)
     }, 400)
     return () => clearInterval(interval)
-  }, [selectedAgent?.id, isConnected])
+  }, [terminalKey, terminalTool, isConnected])
 
   return (
     <>
@@ -330,7 +339,7 @@ export function AgentSpaceV2() {
                 agents={agents}
                 selectedAgentId={selectedAgentId}
                 connectedAgentIds={connectedAgentIds}
-                onSelectAgent={setSelectedAgentId}
+                onSelectAgent={selectAgent}
                 onAddAgent={handleAddAgent}
                 onDeleteAgent={handleDeleteAgent}
                 onDeleteProject={handleDeleteProject}
@@ -415,7 +424,7 @@ export function AgentSpaceV2() {
                       {(() => {
                         const toolName = AGENT_TOOLS.find(t => t.id === selectedAgent.tool)?.name ?? ''
                         const parts = selectedAgent.name.split(' - ')
-                        return parts.length > 1 ? parts.slice(1).join(' - ') : selectedAgent.name.replace(toolName, '').replace(/^[\s\-]+/, '') || selectedAgent.name
+                        return parts.length > 1 ? parts.slice(1).join(' - ') : selectedAgent.name.replace(toolName, '').replace(/^[\s-]+/, '') || selectedAgent.name
                       })()}
                     </FlexItem>
                     <FlexItem>
