@@ -49,7 +49,9 @@ export function AgentSpace() {
     return INITIAL_AUTH
   })
 
-  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null)
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(
+    () => MOCK_AGENTS.find(a => a.status === 'running')?.id ?? null,
+  )
   const [connectedAgentIds, setConnectedAgentIds] = useState<Set<string>>(
     () => new Set(MOCK_AGENTS.filter((a) => a.status === 'running').map((a) => a.id)),
   )
