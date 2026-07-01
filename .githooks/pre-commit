@@ -1,0 +1,8 @@
+#!/bin/sh
+
+npx tsc --noEmit
+
+STAGED=$(git diff --cached --name-only --diff-filter=ACM -- '*.ts' '*.tsx')
+if [ -n "$STAGED" ]; then
+  echo "$STAGED" | xargs npx eslint
+fi
