@@ -993,7 +993,7 @@ export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) 
         <PageSection variant="default">
           <Flex>
             <FlexItem>
-              <Title headingLevel="h2">Workspaces</Title>
+              <Title headingLevel="h2">Create Workspace</Title>
             </FlexItem>
             <FlexItem align={{ default: 'alignRight' }}>
               <ToggleGroup aria-label="Prototype phase">
@@ -1028,7 +1028,7 @@ export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) 
         <PageSection variant="default">
           <Flex>
             <FlexItem>
-              <Title headingLevel="h2">Workspaces</Title>
+              <Title headingLevel="h2">Create Workspace</Title>
             </FlexItem>
             <FlexItem align={{ default: 'alignRight' }}>
               <ToggleGroup aria-label="Prototype phase">
