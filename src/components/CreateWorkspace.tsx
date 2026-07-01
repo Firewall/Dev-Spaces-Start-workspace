@@ -166,8 +166,8 @@ export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) 
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
   const [envSettings, setEnvSettings] = useState({
     containerImage: '',
-    memoryLimit: '',
-    cpuLimit: '',
+    memoryLimit: '2',
+    cpuLimit: '1',
     devfilePath: '',
   })
   const [gitRemotes, setGitRemotes] = useState<GitRemote[]>([{ name: 'origin', url: '' }])
@@ -784,37 +784,6 @@ export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) 
                   </FormGroup>
 
                   <FormGroup
-                    label={`Memory Limit (${envSettings.memoryLimit ? `${envSettings.memoryLimit}Gi` : 'default'})`}
-                    fieldId="memory-limit"
-                  >
-                    <NumberInput
-                      id="memory-limit"
-                      value={envSettings.memoryLimit ? Number(envSettings.memoryLimit) : undefined}
-                      onMinus={() =>
-                        setEnvSettings((prev) => ({
-                          ...prev,
-                          memoryLimit: String(Math.max(0, parseFloat(((Number(prev.memoryLimit) || 0) - 0.5).toFixed(2)))),
-                        }))
-                      }
-                      onPlus={() =>
-                        setEnvSettings((prev) => ({
-                          ...prev,
-                          memoryLimit: String(parseFloat(((Number(prev.memoryLimit) || 0) + 0.5).toFixed(2))),
-                        }))
-                      }
-                      onChange={(event: React.FormEvent<HTMLInputElement>) => {
-                        const val = (event.target as HTMLInputElement).value
-                        setEnvSettings((prev) => ({ ...prev, memoryLimit: val }))
-                      }}
-                      inputAriaLabel="Memory limit"
-                      minusBtnAriaLabel="Decrease memory"
-                      plusBtnAriaLabel="Increase memory"
-                      min={0}
-                      inputProps={{ step: 0.01 }}
-                    />
-                  </FormGroup>
-
-                  <FormGroup
                     label={`CPU Limit (${envSettings.cpuLimit ? `${envSettings.cpuLimit} cores` : 'default'})`}
                     fieldId="cpu-limit"
                   >
@@ -840,6 +809,37 @@ export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) 
                       inputAriaLabel="CPU limit"
                       minusBtnAriaLabel="Decrease CPU"
                       plusBtnAriaLabel="Increase CPU"
+                      min={0}
+                      inputProps={{ step: 0.01 }}
+                    />
+                  </FormGroup>
+
+                  <FormGroup
+                    label={`Memory Limit (${envSettings.memoryLimit ? `${envSettings.memoryLimit}Gi` : 'default'})`}
+                    fieldId="memory-limit"
+                  >
+                    <NumberInput
+                      id="memory-limit"
+                      value={envSettings.memoryLimit ? Number(envSettings.memoryLimit) : undefined}
+                      onMinus={() =>
+                        setEnvSettings((prev) => ({
+                          ...prev,
+                          memoryLimit: String(Math.max(0, parseFloat(((Number(prev.memoryLimit) || 0) - 0.5).toFixed(2)))),
+                        }))
+                      }
+                      onPlus={() =>
+                        setEnvSettings((prev) => ({
+                          ...prev,
+                          memoryLimit: String(parseFloat(((Number(prev.memoryLimit) || 0) + 0.5).toFixed(2))),
+                        }))
+                      }
+                      onChange={(event: React.FormEvent<HTMLInputElement>) => {
+                        const val = (event.target as HTMLInputElement).value
+                        setEnvSettings((prev) => ({ ...prev, memoryLimit: val }))
+                      }}
+                      inputAriaLabel="Memory limit"
+                      minusBtnAriaLabel="Decrease memory"
+                      plusBtnAriaLabel="Increase memory"
                       min={0}
                       inputProps={{ step: 0.01 }}
                     />
@@ -909,36 +909,6 @@ export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) 
               </FormGroup>
 
               <FormGroup
-                label={`Memory Limit (${envSettings.memoryLimit ? `${envSettings.memoryLimit}Gi` : 'default'})`}
-                fieldId="memory-limit"
-              >
-                <NumberInput
-                  id="memory-limit"
-                  value={envSettings.memoryLimit ? Number(envSettings.memoryLimit) : undefined}
-                  onMinus={() =>
-                    setEnvSettings((prev) => ({
-                      ...prev,
-                      memoryLimit: String(Math.max(0, (Number(prev.memoryLimit) || 0) - 1)),
-                    }))
-                  }
-                  onPlus={() =>
-                    setEnvSettings((prev) => ({
-                      ...prev,
-                      memoryLimit: String((Number(prev.memoryLimit) || 0) + 1),
-                    }))
-                  }
-                  onChange={(event: React.FormEvent<HTMLInputElement>) => {
-                    const val = (event.target as HTMLInputElement).value
-                    setEnvSettings((prev) => ({ ...prev, memoryLimit: val }))
-                  }}
-                  inputAriaLabel="Memory limit"
-                  minusBtnAriaLabel="Decrease memory"
-                  plusBtnAriaLabel="Increase memory"
-                  min={0}
-                />
-              </FormGroup>
-
-              <FormGroup
                 label={`CPU Limit (${envSettings.cpuLimit ? `${envSettings.cpuLimit} cores` : 'default'})`}
                 fieldId="cpu-limit"
               >
@@ -964,6 +934,36 @@ export function CreateWorkspace({ phase, onPhaseChange }: CreateWorkspaceProps) 
                   inputAriaLabel="CPU limit"
                   minusBtnAriaLabel="Decrease CPU"
                   plusBtnAriaLabel="Increase CPU"
+                  min={0}
+                />
+              </FormGroup>
+
+              <FormGroup
+                label={`Memory Limit (${envSettings.memoryLimit ? `${envSettings.memoryLimit}Gi` : 'default'})`}
+                fieldId="memory-limit"
+              >
+                <NumberInput
+                  id="memory-limit"
+                  value={envSettings.memoryLimit ? Number(envSettings.memoryLimit) : undefined}
+                  onMinus={() =>
+                    setEnvSettings((prev) => ({
+                      ...prev,
+                      memoryLimit: String(Math.max(0, (Number(prev.memoryLimit) || 0) - 1)),
+                    }))
+                  }
+                  onPlus={() =>
+                    setEnvSettings((prev) => ({
+                      ...prev,
+                      memoryLimit: String((Number(prev.memoryLimit) || 0) + 1),
+                    }))
+                  }
+                  onChange={(event: React.FormEvent<HTMLInputElement>) => {
+                    const val = (event.target as HTMLInputElement).value
+                    setEnvSettings((prev) => ({ ...prev, memoryLimit: val }))
+                  }}
+                  inputAriaLabel="Memory limit"
+                  minusBtnAriaLabel="Decrease memory"
+                  plusBtnAriaLabel="Increase memory"
                   min={0}
                 />
               </FormGroup>

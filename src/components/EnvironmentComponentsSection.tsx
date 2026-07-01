@@ -788,7 +788,7 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
               <FormGroup label="cpuLimit" fieldId="snippet-cpu-limit">
                 <TextInput
                   id="snippet-cpu-limit"
-                  placeholder="2"
+                  placeholder="1"
                   value={snippetCpuLimit}
                   onChange={(_e, val) => setSnippetCpuLimit(val)}
                 />

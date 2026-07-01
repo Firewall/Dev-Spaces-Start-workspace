@@ -89,7 +89,7 @@ export function EnvironmentSettings({ value, onChange }: EnvironmentSettingsProp
               id="memory-limit"
               value={value.memoryLimit}
               onChange={(_e, val) => update({ memoryLimit: val })}
-              placeholder="4Gi"
+              placeholder="2Gi"
             />
           </FormGroup>
         </GridItem>
@@ -103,7 +103,7 @@ export function EnvironmentSettings({ value, onChange }: EnvironmentSettingsProp
               id="cpu-limit"
               value={value.cpuLimit}
               onChange={(_e, val) => update({ cpuLimit: val })}
-              placeholder="2"
+              placeholder="1"
             />
           </FormGroup>
         </GridItem>
