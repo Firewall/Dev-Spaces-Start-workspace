@@ -26,7 +26,6 @@ import {
   DesktopIcon,
   MoonIcon,
   OutlinedQuestionCircleIcon,
-  SignOutAltIcon,
   SunIcon,
   ThLargeIcon,
   UserIcon,

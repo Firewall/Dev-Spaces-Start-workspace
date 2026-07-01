@@ -21,7 +21,6 @@ import {
   EllipsisVIcon,
   ExternalLinkAltIcon,
   PlusCircleIcon,
-  SortAmountDownIcon,
 } from '@patternfly/react-icons'
 import {
   Table,
@@ -84,12 +83,6 @@ const MOCK_WORKSPACES: Workspace[] = [
     status: 'running',
   },
 ]
-
-const EDITOR_ICONS: Record<string, string> = {
-  terminal: '█',
-  vscode: '',
-  intellij: '',
-}
 
 function formatDate(date: Date): string {
   const month = date.toLocaleString('en-US', { month: 'short' })
@@ -281,7 +274,7 @@ export function WorkspaceList({ onCreateWorkspace }: WorkspaceListProps) {
                 Delete
               </Button>
             </ToolbarItem>
-            <ToolbarItem align={{ default: 'alignRight' }}>
+            <ToolbarItem align={{ default: 'alignEnd' }}>
               <Button
                 variant="link"
                 icon={<PlusCircleIcon />}
@@ -310,7 +303,7 @@ export function WorkspaceList({ onCreateWorkspace }: WorkspaceListProps) {
                 <Th sort={getSortParams('lastModified')} width={15}>Last Modified</Th>
                 <Th width={20}>Project(s)</Th>
                 <Th width={10} screenReaderText="Open" />
-                <Th width={5} screenReaderText="Actions" />
+                <Th width={10} screenReaderText="Actions" />
               </Tr>
             </Thead>
             <Tbody>
