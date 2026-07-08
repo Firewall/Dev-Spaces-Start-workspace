@@ -28,15 +28,18 @@ import {
 } from '@patternfly/react-core'
 import {
   AutomationIcon,
+  CheckCircleIcon,
   CogIcon,
   CubesIcon,
   EllipsisVIcon,
+  ExclamationCircleIcon,
   ExternalLinkAltIcon,
   EyeIcon,
   EyeSlashIcon,
   GitAltIcon,
   KeyIcon,
   LockIcon,
+  MinusCircleIcon,
   PluggedIcon,
   PlusCircleIcon,
   RegistryIcon,
@@ -153,10 +156,19 @@ const DEFAULT_MCP_REGISTRIES: Registry[] = [
   { id: 'mr-2', name: 'Community MCP Registry', url: 'https://mcp-community.example.com', itemCount: 89, enabled: true },
 ]
 
-const MCP_STATUS_COLORS: Record<InstalledMcp['status'], 'green' | 'grey' | 'red'> = {
-  connected: 'green',
-  disconnected: 'grey',
-  error: 'red',
+const MCP_STATUS_CONFIG: Record<InstalledMcp['status'], { icon: React.ReactNode; label: string }> = {
+  connected: {
+    icon: <CheckCircleIcon style={{ color: 'var(--pf-t--global--icon--color--status--success--default)' }} />,
+    label: 'Connected',
+  },
+  disconnected: {
+    icon: <MinusCircleIcon style={{ color: 'var(--pf-t--global--icon--color--status--info--default)' }} />,
+    label: 'Disconnected',
+  },
+  error: {
+    icon: <ExclamationCircleIcon style={{ color: 'var(--pf-t--global--icon--color--status--danger--default)' }} />,
+    label: 'Error',
+  },
 }
 
 function TabHeader({ title, subtitle, action }: { title: string; subtitle: string; action?: React.ReactNode }) {
@@ -786,9 +798,10 @@ export function UserPreferences({ activeTab, onTabChange }: { activeTab: Prefere
                         <Td dataLabel="Name">{mcp.name}</Td>
                         <Td dataLabel="Description">{mcp.description}</Td>
                         <Td dataLabel="Status">
-                          <Label isCompact color={MCP_STATUS_COLORS[mcp.status]}>
-                            {mcp.status.charAt(0).toUpperCase() + mcp.status.slice(1)}
-                          </Label>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                            {MCP_STATUS_CONFIG[mcp.status].icon}
+                            {MCP_STATUS_CONFIG[mcp.status].label}
+                          </span>
                         </Td>
                         <Td dataLabel="Registry">{mcp.registry || '—'}</Td>
                         <Td isActionCell>
