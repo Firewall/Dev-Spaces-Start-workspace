@@ -137,7 +137,7 @@ const EXISTING_WORKSPACES = [
 
 interface CreateWorkspacePhase1Props {
   phase: string
-  onPhaseChange: (phase: 'phase1' | 'phase2') => void
+  onPhaseChange: (phase: 'phase1' | 'phase2' | 'tabbed' | 'splittab') => void
 }
 
 function TemplateIcon({ icon, size }: { icon: string; size: number }) {
@@ -296,6 +296,18 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
                 isSelected={phase === 'phase2'}
                 onChange={() => onPhaseChange('phase2')}
               />
+              <ToggleGroupItem
+                text="Tabbed"
+                buttonId="tabbed"
+                isSelected={phase === 'tabbed'}
+                onChange={() => onPhaseChange('tabbed')}
+              />
+              <ToggleGroupItem
+                text="SplitTab"
+                buttonId="splittab"
+                isSelected={phase === 'splittab'}
+                onChange={() => onPhaseChange('splittab')}
+              />
             </ToggleGroup>
           </div>
         </div>
@@ -354,7 +366,7 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
 
           {mode === 'repo' && (
             <FormGroup
-              label="Git repo URL"
+              label="Git Repository URL"
               isRequired
               fieldId="repo-url"
               labelHelp={

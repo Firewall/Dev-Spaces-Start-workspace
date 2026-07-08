@@ -280,7 +280,7 @@ export function WorkspaceList({ onCreateWorkspace }: WorkspaceListProps) {
                 icon={<PlusCircleIcon />}
                 onClick={onCreateWorkspace}
               >
-                Add Workspace
+                Create Workspace
               </Button>
             </ToolbarItem>
           </ToolbarContent>
