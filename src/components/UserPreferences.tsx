@@ -5,6 +5,9 @@ import {
   Dropdown,
   DropdownItem,
   DropdownList,
+  EmptyState,
+  EmptyStateActions,
+  EmptyStateFooter,
   FormGroup,
   Label,
   MenuToggle,
@@ -89,12 +92,11 @@ const MOCK_RHDH_SKILLS: Omit<Skill, 'id' | 'rhdhInstance'>[] = [
   { name: 'Security Scanning', description: 'Integrates SAST and DAST security scans into workflows', source: 'rhdh' },
 ]
 
-function EmptyState({ icon: Icon, title, action }: { icon: React.ComponentType<{ size?: number }>; title: string; action?: React.ReactNode }) {
+function TabHeader({ title, subtitle }: { title: string; subtitle: string }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 0' }}>
-      <Icon size={48} />
-      <div style={{ marginTop: 16, fontSize: 18, fontWeight: 600 }}>{title}</div>
-      {action && <div style={{ marginTop: 12 }}>{action}</div>}
+    <div style={{ marginBottom: 16 }}>
+      <Title headingLevel="h2" size="lg">{title}</Title>
+      <div style={{ marginTop: 4, fontSize: 14, color: 'var(--pf-t--global--text--color--subtle)' }}>{subtitle}</div>
     </div>
   )
 }
@@ -297,17 +299,18 @@ export function UserPreferences() {
 
           <div style={{ flex: 1, minWidth: 0 }}>
         {activeTab === 'container-registries' && (
-          <div style={{ background: 'var(--pf-t--global--background--color--secondary--default)', borderRadius: 8, padding: 24 }}>
+          <>
+          <TabHeader title="Container Registries" subtitle="Manage container image registries for pulling and pushing images in your workspaces." />
             {registries.length === 0 ? (
-              <EmptyState
-                icon={CubesIcon}
-                title="No Container Registries"
-                action={
-                  <Button variant="link" icon={<PlusCircleIcon />} onClick={() => setShowAddRegistry(true)}>
-                    Add Container Registry
-                  </Button>
-                }
-              />
+              <EmptyState headingLevel="h3" icon={CubesIcon} titleText="No Container Registries">
+                <EmptyStateFooter>
+                  <EmptyStateActions>
+                    <Button variant="link" icon={<PlusCircleIcon />} onClick={() => setShowAddRegistry(true)}>
+                      Add Container Registry
+                    </Button>
+                  </EmptyStateActions>
+                </EmptyStateFooter>
+              </EmptyState>
             ) : (
               <>
                 <Toolbar>
@@ -343,17 +346,19 @@ export function UserPreferences() {
                 </Table>
               </>
             )}
-          </div>
+          </>
         )}
 
         {activeTab === 'git-services' && (
-          <div style={{ background: 'var(--pf-t--global--background--color--secondary--default)', borderRadius: 8, padding: 24 }}>
-            <EmptyState icon={CubesIcon} title="No Git Services" />
-          </div>
+          <>
+          <TabHeader title="Git Services" subtitle="Connect to Git providers to clone repositories and manage source code." />
+          <EmptyState headingLevel="h3" icon={CubesIcon} titleText="No Git Services" />
+          </>
         )}
 
         {activeTab === 'personal-access-tokens' && (
           <>
+            <TabHeader title="Personal Access Tokens" subtitle="Manage tokens for authenticating with Git providers and APIs." />
             <Toolbar>
               <ToolbarContent>
                 <ToolbarItem>
@@ -372,11 +377,8 @@ export function UserPreferences() {
                 </ToolbarItem>
               </ToolbarContent>
             </Toolbar>
-            <div style={{ background: 'var(--pf-t--global--background--color--secondary--default)', borderRadius: 8 }}>
               {tokens.length === 0 ? (
-                <div style={{ padding: '60px 0', textAlign: 'center' }}>
-                  <div style={{ fontSize: 18, fontWeight: 600 }}>No Personal Access Tokens</div>
-                </div>
+                <EmptyState headingLevel="h3" icon={LockIcon} titleText="No Personal Access Tokens" />
               ) : (
                 <Table aria-label="Personal access tokens table" variant="compact">
                   <Thead>
@@ -425,28 +427,29 @@ export function UserPreferences() {
                   </Tbody>
                 </Table>
               )}
-            </div>
           </>
         )}
 
         {activeTab === 'gitconfig' && (
-          <div style={{ background: 'var(--pf-t--global--background--color--secondary--default)', borderRadius: 8, padding: 24 }}>
-            <EmptyState icon={CogIcon} title="No gitconfig found" />
-          </div>
+          <>
+          <TabHeader title="Gitconfig" subtitle="Configure your Git identity and preferences for workspace environments." />
+          <EmptyState headingLevel="h3" icon={CogIcon} titleText="No gitconfig found" />
+          </>
         )}
 
         {activeTab === 'ssh-keys' && (
-          <div style={{ background: 'var(--pf-t--global--background--color--secondary--default)', borderRadius: 8, padding: 24 }}>
+          <>
+          <TabHeader title="SSH Keys" subtitle="Add SSH keys for secure authentication with Git repositories." />
             {sshKeys.length === 0 ? (
-              <EmptyState
-                icon={KeyIcon}
-                title="No SSH Keys"
-                action={
-                  <Button variant="link" icon={<PlusCircleIcon />} onClick={() => setShowAddSSHKey(true)}>
-                    Add SSH Key
-                  </Button>
-                }
-              />
+              <EmptyState headingLevel="h3" icon={KeyIcon} titleText="No SSH Keys">
+                <EmptyStateFooter>
+                  <EmptyStateActions>
+                    <Button variant="link" icon={<PlusCircleIcon />} onClick={() => setShowAddSSHKey(true)}>
+                      Add SSH Key
+                    </Button>
+                  </EmptyStateActions>
+                </EmptyStateFooter>
+              </EmptyState>
             ) : (
               <>
                 <Toolbar>
@@ -482,107 +485,108 @@ export function UserPreferences() {
                 </Table>
               </>
             )}
-          </div>
+          </>
         )}
 
         {activeTab === 'ai-skills' && (
-          <div style={{ background: 'var(--pf-t--global--background--color--secondary--default)', borderRadius: 8, padding: 24 }}>
-            {skills.length === 0 ? (
-              <EmptyState
-                icon={AutomationIcon}
-                title="No Skills configured"
-                action={
-                  <div style={{ display: 'flex', gap: 12 }}>
-                    <Button variant="link" icon={<PlusCircleIcon />} onClick={() => setShowAddSkill(true)}>
-                      Add Skill
-                    </Button>
-                    <Button variant="link" onClick={() => setShowImportSkills(true)}>
-                      Import from Red Hat Developer Hub
-                    </Button>
-                  </div>
-                }
-              />
-            ) : (
-              <>
-                <Toolbar>
-                  <ToolbarContent>
-                    <ToolbarItem style={{ marginLeft: 'auto' }}>
+          <>
+            <TabHeader title="Skills" subtitle="Skills configured here will be available in every AI agent across all your workspaces." />
+              {skills.length === 0 ? (
+                <EmptyState headingLevel="h3" icon={AutomationIcon} titleText="No Skills configured">
+                  <EmptyStateFooter>
+                    <EmptyStateActions>
                       <Button variant="link" icon={<PlusCircleIcon />} onClick={() => setShowAddSkill(true)}>
                         Add Skill
                       </Button>
-                    </ToolbarItem>
-                    <ToolbarItem>
                       <Button variant="link" onClick={() => setShowImportSkills(true)}>
-                        Import from RHDH
+                        Import from Red Hat Developer Hub
                       </Button>
-                    </ToolbarItem>
-                  </ToolbarContent>
-                </Toolbar>
-                <Table aria-label="Skills table" variant="compact">
-                  <Thead>
-                    <Tr>
-                      <Th width={25}>Name</Th>
-                      <Th width={35}>Description</Th>
-                      <Th width={15}>Source</Th>
-                      <Th width={15}>Instance</Th>
-                      <Th width={10} screenReaderText="Actions" />
-                    </Tr>
-                  </Thead>
-                  <Tbody>
-                    {skills.map(skill => (
-                      <Tr key={skill.id}>
-                        <Td dataLabel="Name">{skill.name}</Td>
-                        <Td dataLabel="Description">{skill.description}</Td>
-                        <Td dataLabel="Source">
-                          <Label isCompact color={skill.source === 'rhdh' ? 'blue' : 'grey'}>
-                            {skill.source === 'rhdh' ? 'RHDH' : 'Manual'}
-                          </Label>
-                        </Td>
-                        <Td dataLabel="Instance">{skill.rhdhInstance || '—'}</Td>
-                        <Td isActionCell>
-                          <Dropdown
-                            isOpen={skillMenuOpenId === skill.id}
-                            onSelect={() => setSkillMenuOpenId(null)}
-                            onOpenChange={open => { if (!open) setSkillMenuOpenId(null) }}
-                            toggle={(toggleRef) => (
-                              <MenuToggle
-                                ref={toggleRef}
-                                variant="plain"
-                                onClick={() => setSkillMenuOpenId(skillMenuOpenId === skill.id ? null : skill.id)}
-                                isExpanded={skillMenuOpenId === skill.id}
-                                aria-label="Skill actions"
-                              >
-                                <EllipsisVIcon />
-                              </MenuToggle>
-                            )}
-                            popperProps={{ position: 'right' }}
-                          >
-                            <DropdownList>
-                              <DropdownItem key="delete" onClick={() => handleDeleteSkill(skill.id)}>
-                                Delete
-                              </DropdownItem>
-                            </DropdownList>
-                          </Dropdown>
-                        </Td>
+                    </EmptyStateActions>
+                  </EmptyStateFooter>
+                </EmptyState>
+              ) : (
+                <>
+                  <Toolbar>
+                    <ToolbarContent>
+                      <ToolbarItem style={{ marginLeft: 'auto' }}>
+                        <Button variant="link" icon={<PlusCircleIcon />} onClick={() => setShowAddSkill(true)}>
+                          Add Skill
+                        </Button>
+                      </ToolbarItem>
+                      <ToolbarItem>
+                        <Button variant="link" onClick={() => setShowImportSkills(true)}>
+                          Import from RHDH
+                        </Button>
+                      </ToolbarItem>
+                    </ToolbarContent>
+                  </Toolbar>
+                  <Table aria-label="Skills table" variant="compact">
+                    <Thead>
+                      <Tr>
+                        <Th width={25}>Name</Th>
+                        <Th width={35}>Description</Th>
+                        <Th width={15}>Source</Th>
+                        <Th width={15}>Instance</Th>
+                        <Th width={10} screenReaderText="Actions" />
                       </Tr>
-                    ))}
-                  </Tbody>
-                </Table>
-              </>
-            )}
-          </div>
+                    </Thead>
+                    <Tbody>
+                      {skills.map(skill => (
+                        <Tr key={skill.id}>
+                          <Td dataLabel="Name">{skill.name}</Td>
+                          <Td dataLabel="Description">{skill.description}</Td>
+                          <Td dataLabel="Source">
+                            <Label isCompact color={skill.source === 'rhdh' ? 'blue' : 'grey'}>
+                              {skill.source === 'rhdh' ? 'RHDH' : 'Manual'}
+                            </Label>
+                          </Td>
+                          <Td dataLabel="Instance">{skill.rhdhInstance || '—'}</Td>
+                          <Td isActionCell>
+                            <Dropdown
+                              isOpen={skillMenuOpenId === skill.id}
+                              onSelect={() => setSkillMenuOpenId(null)}
+                              onOpenChange={open => { if (!open) setSkillMenuOpenId(null) }}
+                              toggle={(toggleRef) => (
+                                <MenuToggle
+                                  ref={toggleRef}
+                                  variant="plain"
+                                  onClick={() => setSkillMenuOpenId(skillMenuOpenId === skill.id ? null : skill.id)}
+                                  isExpanded={skillMenuOpenId === skill.id}
+                                  aria-label="Skill actions"
+                                >
+                                  <EllipsisVIcon />
+                                </MenuToggle>
+                              )}
+                              popperProps={{ position: 'right' }}
+                            >
+                              <DropdownList>
+                                <DropdownItem key="delete" onClick={() => handleDeleteSkill(skill.id)}>
+                                  Delete
+                                </DropdownItem>
+                              </DropdownList>
+                            </Dropdown>
+                          </Td>
+                        </Tr>
+                      ))}
+                    </Tbody>
+                  </Table>
+                </>
+              )}
+          </>
         )}
 
         {activeTab === 'ai-mcps' && (
-          <div style={{ background: 'var(--pf-t--global--background--color--secondary--default)', borderRadius: 8, padding: 24 }}>
-            <EmptyState icon={PluggedIcon} title="No MCPs configured" />
-          </div>
+          <>
+          <TabHeader title="MCPs" subtitle="Connect Model Context Protocol servers to extend AI agent capabilities." />
+          <EmptyState headingLevel="h3" icon={PluggedIcon} titleText="No MCPs configured" />
+          </>
         )}
 
         {activeTab === 'ai-agent-configurations' && (
-          <div style={{ background: 'var(--pf-t--global--background--color--secondary--default)', borderRadius: 8, padding: 24 }}>
-            <EmptyState icon={RobotIcon} title="No Agent Configurations" />
-          </div>
+          <>
+          <TabHeader title="Agent Configurations" subtitle="Define and manage AI agent configurations for your workspaces." />
+          <EmptyState headingLevel="h3" icon={RobotIcon} titleText="No Agent Configurations" />
+          </>
         )}
           </div>
         </div>
