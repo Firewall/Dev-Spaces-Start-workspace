@@ -406,7 +406,6 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
                     gap: 10,
                     padding: '8px 12px',
                     border: '1px solid var(--pf-t--global--border--color--default)',
-                    borderRadius: 9999,
                     background: 'var(--pf-t--global--background--color--primary--default)',
                   }}
                 >
@@ -439,7 +438,6 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
                     width: '100%',
                     padding: '28px 24px',
                     border: '2px dashed var(--pf-t--global--border--color--default)',
-                    borderRadius: 12,
                     background: 'var(--pf-t--global--background--color--secondary--default)',
                     cursor: 'pointer',
                     fontSize: 16,
@@ -581,7 +579,6 @@ export function CreateWorkspacePhase1({ phase, onPhaseChange }: CreateWorkspaceP
                               isSelected={isSelected}
                               onClick={() => handleTemplateClick(tpl.id)}
                               style={{
-                                borderRadius: 12,
                                 border: isSelected
                                   ? '1px solid var(--pf-t--global--color--brand--default)'
                                   : '1px solid var(--pf-t--global--border--color--default)',

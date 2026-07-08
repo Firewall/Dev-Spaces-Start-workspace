@@ -297,7 +297,6 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
                 gap: 8,
                 padding: '6px 10px',
                 border: '1px solid var(--pf-v6-global--BorderColor--100, #d2d2d2)',
-                borderRadius: 9999,
                 background: 'var(--pf-v6-global--BackgroundColor--100, #fff)',
               }}
             >
@@ -438,7 +437,6 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
                     gap: 16,
                     padding: 16,
                     border: '1px solid var(--pf-v6-global--BorderColor--100, #d2d2d2)',
-                    borderRadius: 12,
                     background: 'var(--pf-v6-global--BackgroundColor--200, #f5f5f5)',
                   }}
                 >
@@ -467,7 +465,6 @@ export function EnvironmentComponentsSection({ selected, onChange }: Environment
                           isSelected={isSelected}
                           onClick={() => toggle(c.id)}
                           style={{
-                            borderRadius: 12,
                             border: isSelected
                               ? '1px solid var(--pf-v6-global--primary-color--100, #0066cc)'
                               : '1px solid var(--pf-v6-global--BorderColor--100, #d2d2d2)',
