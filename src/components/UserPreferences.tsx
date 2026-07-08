@@ -71,10 +71,10 @@ const INITIAL_TOKENS: PersonalAccessToken[] = [
   { id: '1', name: 'qnxmh', provider: 'github', endpoint: 'https://github.com' },
 ]
 
-function EmptyState({ icon: Icon, title, action }: { icon: React.ComponentType<{ size?: string }>; title: string; action?: React.ReactNode }) {
+function EmptyState({ icon: Icon, title, action }: { icon: React.ComponentType<{ size?: number }>; title: string; action?: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 0' }}>
-      <Icon size="xl" />
+      <Icon size={48} />
       <div style={{ marginTop: 16, fontSize: 18, fontWeight: 600 }}>{title}</div>
       {action && <div style={{ marginTop: 12 }}>{action}</div>}
     </div>
