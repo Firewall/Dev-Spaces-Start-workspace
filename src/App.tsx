@@ -33,6 +33,7 @@ import {
 import type { ComponentType } from 'react'
 import { CreateWorkspace } from './components/CreateWorkspace'
 import { CreateWorkspacePhase1 } from './components/CreateWorkspacePhase1'
+import { UserPreferences } from './components/UserPreferences'
 import { WorkspaceList } from './components/WorkspaceList'
 
 type Phase = 'phase1' | 'phase2'
@@ -45,7 +46,7 @@ const NAV_ITEMS: { label: string; id: string; icon: ComponentType }[] = [
   { label: 'Backups', id: 'backups', icon: ArchiveIcon },
 ]
 
-const VALID_ROUTES = new Set([...NAV_ITEMS.map((item) => item.id), 'create-workspace'])
+const VALID_ROUTES = new Set([...NAV_ITEMS.map((item) => item.id), 'create-workspace', 'user-preferences'])
 
 const THEME_STORAGE_KEY = 'dev-spaces-theme'
 const DARK_THEME_CLASS = 'pf-v6-theme-dark'
@@ -101,7 +102,13 @@ export default function App() {
       return
     }
     const navItem = NAV_ITEMS.find((item) => item.id === activePage)
-    document.title = navItem ? `${navItem.label} - Dev Spaces` : activePage === 'create-workspace' ? 'Create Workspace - Dev Spaces' : 'Dev Spaces'
+    document.title = navItem
+      ? `${navItem.label} - Dev Spaces`
+      : activePage === 'create-workspace'
+        ? 'Create Workspace - Dev Spaces'
+        : activePage === 'user-preferences'
+          ? 'User Preferences - Dev Spaces'
+          : 'Dev Spaces'
   }, [activePage, signedIn])
 
   const masthead = (
@@ -125,7 +132,11 @@ export default function App() {
           </Button>
           <Dropdown
             isOpen={profileMenuOpen}
-            onSelect={() => setProfileMenuOpen(false)}
+            onSelect={(_event, value) => {
+              setProfileMenuOpen(false)
+              if (value === 'user-prefs') setActivePage('user-preferences')
+              if (value === 'logout') setSignedIn(false)
+            }}
             onOpenChange={setProfileMenuOpen}
             popperProps={{ position: 'right' }}
             toggle={(toggleRef) => (
@@ -188,8 +199,8 @@ export default function App() {
             <Divider />
             <div style={{ padding: '8px 16px 4px', fontSize: 14, fontWeight: 600 }}>Actions</div>
             <DropdownList>
-              <DropdownItem key="user-prefs">User Preferences</DropdownItem>
-              <DropdownItem key="logout" onClick={() => setSignedIn(false)}>
+              <DropdownItem key="user-prefs" value="user-prefs">User Preferences</DropdownItem>
+              <DropdownItem key="logout" value="logout">
                 Logout
               </DropdownItem>
             </DropdownList>
@@ -228,7 +239,9 @@ export default function App() {
   return (
     <Page masthead={masthead} sidebar={sidebar}>
       {signedIn ? (
-        activePage === 'create-workspace' ? (
+        activePage === 'user-preferences' ? (
+          <UserPreferences />
+        ) : activePage === 'create-workspace' ? (
           phase === 'phase1' ? (
             <CreateWorkspacePhase1 phase={phase} onPhaseChange={setPhase} />
           ) : (
