@@ -455,12 +455,12 @@ export function UserPreferences({ activeTab, onTabChange }: { activeTab: Prefere
               <NavItem itemId="ssh-keys" isActive={activeTab === 'ssh-keys'} icon={<KeyIcon />}>SSH Keys</NavItem>
             </NavGroup>
             <NavGroup title="AI">
-              <NavExpandable title="Skills" isActive={activeTab.startsWith('skills-')} isExpanded={activeTab.startsWith('skills-')}>
+              <NavExpandable title={<><AutomationIcon style={{ marginRight: 8 }} />Skills</>} isActive={activeTab.startsWith('skills-')} isExpanded>
                 <NavItem itemId="skills-installed" isActive={activeTab === 'skills-installed'}>Installed ({skills.length})</NavItem>
                 <NavItem itemId="skills-catalog" isActive={activeTab === 'skills-catalog'}>Catalog</NavItem>
                 <NavItem itemId="skills-registries" isActive={activeTab === 'skills-registries'}>Registries</NavItem>
               </NavExpandable>
-              <NavExpandable title="MCPs" isActive={activeTab.startsWith('mcps-')} isExpanded={activeTab.startsWith('mcps-')}>
+              <NavExpandable title={<><PluggedIcon style={{ marginRight: 8 }} />MCPs</>} isActive={activeTab.startsWith('mcps-')} isExpanded>
                 <NavItem itemId="mcps-installed" isActive={activeTab === 'mcps-installed'}>Installed ({installedMcps.length})</NavItem>
                 <NavItem itemId="mcps-catalog" isActive={activeTab === 'mcps-catalog'}>Catalog</NavItem>
                 <NavItem itemId="mcps-registries" isActive={activeTab === 'mcps-registries'}>Registries</NavItem>
