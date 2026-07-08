@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import {
   Button,
+  Checkbox,
   Dropdown,
   DropdownItem,
   DropdownList,
   FormGroup,
+  Label,
   MenuToggle,
   Modal,
   ModalBody,
@@ -67,8 +69,24 @@ interface SSHKey {
   key: string
 }
 
+interface Skill {
+  id: string
+  name: string
+  description: string
+  source: 'manual' | 'rhdh'
+  rhdhInstance?: string
+}
+
 const INITIAL_TOKENS: PersonalAccessToken[] = [
   { id: '1', name: 'qnxmh', provider: 'github', endpoint: 'https://github.com' },
+]
+
+const MOCK_RHDH_SKILLS: Omit<Skill, 'id' | 'rhdhInstance'>[] = [
+  { name: 'Kubernetes Deployment', description: 'Automates Kubernetes manifest generation and deployment', source: 'rhdh' },
+  { name: 'CI/CD Pipeline Setup', description: 'Creates and configures CI/CD pipelines using Tekton', source: 'rhdh' },
+  { name: 'API Scaffolding', description: 'Generates REST API boilerplate with OpenAPI spec', source: 'rhdh' },
+  { name: 'Database Migration', description: 'Manages database schema migrations with Flyway or Liquibase', source: 'rhdh' },
+  { name: 'Security Scanning', description: 'Integrates SAST and DAST security scans into workflows', source: 'rhdh' },
 ]
 
 function EmptyState({ icon: Icon, title, action }: { icon: React.ComponentType<{ size?: number }>; title: string; action?: React.ReactNode }) {
@@ -104,6 +122,16 @@ export function UserPreferences() {
   const [showAddSSHKey, setShowAddSSHKey] = useState(false)
   const [sshKeyName, setSSHKeyName] = useState('')
   const [sshKeyValue, setSSHKeyValue] = useState('')
+
+  const [skills, setSkills] = useState<Skill[]>([])
+  const [showAddSkill, setShowAddSkill] = useState(false)
+  const [showImportSkills, setShowImportSkills] = useState(false)
+  const [skillName, setSkillName] = useState('')
+  const [skillDescription, setSkillDescription] = useState('')
+  const [skillMenuOpenId, setSkillMenuOpenId] = useState<string | null>(null)
+  const [rhdhInstanceUrl, setRhdhInstanceUrl] = useState('')
+  const [rhdhConnected, setRhdhConnected] = useState(false)
+  const [rhdhSelectedSkills, setRhdhSelectedSkills] = useState<Set<number>>(new Set())
 
   const resetRegistryForm = () => {
     setRegRegistry('')
@@ -186,6 +214,56 @@ export function UserPreferences() {
 
   const handleDeleteSSHKey = (id: string) => {
     setSSHKeys(prev => prev.filter(k => k.id !== id))
+  }
+
+  const resetSkillForm = () => {
+    setSkillName('')
+    setSkillDescription('')
+  }
+
+  const handleAddSkill = () => {
+    setSkills(prev => [...prev, {
+      id: String(Date.now()),
+      name: skillName,
+      description: skillDescription,
+      source: 'manual',
+    }])
+    setShowAddSkill(false)
+    resetSkillForm()
+  }
+
+  const handleDeleteSkill = (id: string) => {
+    setSkills(prev => prev.filter(s => s.id !== id))
+  }
+
+  const resetRhdhForm = () => {
+    setRhdhInstanceUrl('')
+    setRhdhConnected(false)
+    setRhdhSelectedSkills(new Set())
+  }
+
+  const handleRhdhConnect = () => {
+    setRhdhConnected(true)
+  }
+
+  const handleToggleRhdhSkill = (index: number) => {
+    setRhdhSelectedSkills(prev => {
+      const next = new Set(prev)
+      if (next.has(index)) next.delete(index)
+      else next.add(index)
+      return next
+    })
+  }
+
+  const handleImportRhdhSkills = () => {
+    const imported = Array.from(rhdhSelectedSkills).map(idx => ({
+      ...MOCK_RHDH_SKILLS[idx],
+      id: String(Date.now() + idx),
+      rhdhInstance: rhdhInstanceUrl,
+    }))
+    setSkills(prev => [...prev, ...imported])
+    setShowImportSkills(false)
+    resetRhdhForm()
   }
 
   const allTokensSelected = tokens.length > 0 && selectedTokenIds.size === tokens.length
@@ -409,7 +487,89 @@ export function UserPreferences() {
 
         {activeTab === 'ai-skills' && (
           <div style={{ background: 'var(--pf-t--global--background--color--secondary--default)', borderRadius: 8, padding: 24 }}>
-            <EmptyState icon={AutomationIcon} title="No Skills configured" />
+            {skills.length === 0 ? (
+              <EmptyState
+                icon={AutomationIcon}
+                title="No Skills configured"
+                action={
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <Button variant="link" icon={<PlusCircleIcon />} onClick={() => setShowAddSkill(true)}>
+                      Add Skill
+                    </Button>
+                    <Button variant="link" onClick={() => setShowImportSkills(true)}>
+                      Import from Red Hat Developer Hub
+                    </Button>
+                  </div>
+                }
+              />
+            ) : (
+              <>
+                <Toolbar>
+                  <ToolbarContent>
+                    <ToolbarItem style={{ marginLeft: 'auto' }}>
+                      <Button variant="link" icon={<PlusCircleIcon />} onClick={() => setShowAddSkill(true)}>
+                        Add Skill
+                      </Button>
+                    </ToolbarItem>
+                    <ToolbarItem>
+                      <Button variant="link" onClick={() => setShowImportSkills(true)}>
+                        Import from RHDH
+                      </Button>
+                    </ToolbarItem>
+                  </ToolbarContent>
+                </Toolbar>
+                <Table aria-label="Skills table" variant="compact">
+                  <Thead>
+                    <Tr>
+                      <Th width={25}>Name</Th>
+                      <Th width={35}>Description</Th>
+                      <Th width={15}>Source</Th>
+                      <Th width={15}>Instance</Th>
+                      <Th width={10} screenReaderText="Actions" />
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {skills.map(skill => (
+                      <Tr key={skill.id}>
+                        <Td dataLabel="Name">{skill.name}</Td>
+                        <Td dataLabel="Description">{skill.description}</Td>
+                        <Td dataLabel="Source">
+                          <Label isCompact color={skill.source === 'rhdh' ? 'blue' : 'grey'}>
+                            {skill.source === 'rhdh' ? 'RHDH' : 'Manual'}
+                          </Label>
+                        </Td>
+                        <Td dataLabel="Instance">{skill.rhdhInstance || '—'}</Td>
+                        <Td isActionCell>
+                          <Dropdown
+                            isOpen={skillMenuOpenId === skill.id}
+                            onSelect={() => setSkillMenuOpenId(null)}
+                            onOpenChange={open => { if (!open) setSkillMenuOpenId(null) }}
+                            toggle={(toggleRef) => (
+                              <MenuToggle
+                                ref={toggleRef}
+                                variant="plain"
+                                onClick={() => setSkillMenuOpenId(skillMenuOpenId === skill.id ? null : skill.id)}
+                                isExpanded={skillMenuOpenId === skill.id}
+                                aria-label="Skill actions"
+                              >
+                                <EllipsisVIcon />
+                              </MenuToggle>
+                            )}
+                            popperProps={{ position: 'right' }}
+                          >
+                            <DropdownList>
+                              <DropdownItem key="delete" onClick={() => handleDeleteSkill(skill.id)}>
+                                Delete
+                              </DropdownItem>
+                            </DropdownList>
+                          </Dropdown>
+                        </Td>
+                      </Tr>
+                    ))}
+                  </Tbody>
+                </Table>
+              </>
+            )}
           </div>
         )}
 
@@ -592,6 +752,127 @@ export function UserPreferences() {
               Add
             </Button>
             <Button variant="link" onClick={() => { setShowAddSSHKey(false); resetSSHKeyForm() }}>
+              Cancel
+            </Button>
+          </ModalFooter>
+        </Modal>
+      )}
+
+      {showAddSkill && (
+        <Modal
+          isOpen
+          onClose={() => { setShowAddSkill(false); resetSkillForm() }}
+          variant="medium"
+          aria-label="Add Skill"
+        >
+          <ModalHeader title="Add Skill" />
+          <ModalBody>
+            <FormGroup label="Name" isRequired fieldId="skill-name">
+              <TextInput
+                id="skill-name"
+                value={skillName}
+                onChange={(_e, val) => setSkillName(val)}
+                placeholder="Enter a skill name"
+                isRequired
+              />
+            </FormGroup>
+            <FormGroup label="Description" isRequired fieldId="skill-description" style={{ marginTop: 16 }}>
+              <TextInput
+                id="skill-description"
+                value={skillDescription}
+                onChange={(_e, val) => setSkillDescription(val)}
+                placeholder="Describe what this skill does"
+                isRequired
+              />
+            </FormGroup>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="primary"
+              onClick={handleAddSkill}
+              isDisabled={!skillName || !skillDescription}
+            >
+              Add
+            </Button>
+            <Button variant="link" onClick={() => { setShowAddSkill(false); resetSkillForm() }}>
+              Cancel
+            </Button>
+          </ModalFooter>
+        </Modal>
+      )}
+
+      {showImportSkills && (
+        <Modal
+          isOpen
+          onClose={() => { setShowImportSkills(false); resetRhdhForm() }}
+          variant="medium"
+          aria-label="Import Skills from Red Hat Developer Hub"
+        >
+          <ModalHeader title="Import Skills from Red Hat Developer Hub" />
+          <ModalBody>
+            <FormGroup label="RHDH Instance URL" isRequired fieldId="rhdh-url">
+              <div style={{ display: 'flex', gap: 8 }}>
+                <TextInput
+                  id="rhdh-url"
+                  value={rhdhInstanceUrl}
+                  onChange={(_e, val) => { setRhdhInstanceUrl(val); setRhdhConnected(false) }}
+                  placeholder="https://developer-hub.example.com"
+                  isRequired
+                  isDisabled={rhdhConnected}
+                  style={{ flex: 1 }}
+                />
+                <Button
+                  variant="secondary"
+                  onClick={handleRhdhConnect}
+                  isDisabled={!rhdhInstanceUrl || rhdhConnected}
+                >
+                  {rhdhConnected ? 'Connected' : 'Connect'}
+                </Button>
+              </div>
+            </FormGroup>
+
+            {rhdhConnected && (
+              <div style={{ marginTop: 24 }}>
+                <Title headingLevel="h4" size="md" style={{ marginBottom: 12 }}>
+                  Available Skills
+                </Title>
+                <Table aria-label="Available RHDH skills" variant="compact">
+                  <Thead>
+                    <Tr>
+                      <Th screenReaderText="Select" />
+                      <Th>Name</Th>
+                      <Th>Description</Th>
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {MOCK_RHDH_SKILLS.map((skill, idx) => (
+                      <Tr key={idx}>
+                        <Td>
+                          <Checkbox
+                            id={`rhdh-skill-${idx}`}
+                            isChecked={rhdhSelectedSkills.has(idx)}
+                            onChange={() => handleToggleRhdhSkill(idx)}
+                            aria-label={`Select ${skill.name}`}
+                          />
+                        </Td>
+                        <Td dataLabel="Name">{skill.name}</Td>
+                        <Td dataLabel="Description">{skill.description}</Td>
+                      </Tr>
+                    ))}
+                  </Tbody>
+                </Table>
+              </div>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              variant="primary"
+              onClick={handleImportRhdhSkills}
+              isDisabled={!rhdhConnected || rhdhSelectedSkills.size === 0}
+            >
+              Import Selected ({rhdhSelectedSkills.size})
+            </Button>
+            <Button variant="link" onClick={() => { setShowImportSkills(false); resetRhdhForm() }}>
               Cancel
             </Button>
           </ModalFooter>
