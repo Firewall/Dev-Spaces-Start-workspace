@@ -11,6 +11,7 @@ import {
   MastheadMain,
   MenuToggle,
   Nav,
+  NavGroup,
   NavItem,
   NavList,
   Page,
@@ -21,16 +22,14 @@ import {
   ToggleGroupItem,
 } from '@patternfly/react-core'
 import {
-  ArchiveIcon,
-  CodeIcon,
   DesktopIcon,
   MoonIcon,
   OutlinedQuestionCircleIcon,
+  RunningIcon,
   SunIcon,
   ThLargeIcon,
   UserIcon,
 } from '@patternfly/react-icons'
-import type { ComponentType } from 'react'
 import { CreateWorkspace } from './components/CreateWorkspace'
 import { CreateWorkspacePhase1 } from './components/CreateWorkspacePhase1'
 import { UserPreferences } from './components/UserPreferences'
@@ -40,13 +39,12 @@ type Phase = 'phase1' | 'phase2'
 type ThemeMode = 'light' | 'dark' | 'auto'
 const PHASE_STORAGE_KEY = 'dev-spaces-phase'
 
-const NAV_ITEMS: { label: string; id: string; icon: ComponentType }[] = [
-  { label: 'Workspaces', id: 'workspaces', icon: ThLargeIcon },
-  { label: 'Devfile Creator', id: 'devfile-creator', icon: CodeIcon },
-  { label: 'Backups', id: 'backups', icon: ArchiveIcon },
+const RECENT_WORKSPACES = [
+  { id: '1', name: 'dev-spaces-start-workspace', status: 'running' as const },
+  { id: '2', name: 'dev-spaces-start-workspace', status: 'stopped' as const },
 ]
 
-const VALID_ROUTES = new Set([...NAV_ITEMS.map((item) => item.id), 'create-workspace', 'user-preferences'])
+const VALID_ROUTES = new Set(['workspaces', 'create-workspace', 'user-preferences'])
 
 const THEME_STORAGE_KEY = 'dev-spaces-theme'
 const DARK_THEME_CLASS = 'pf-v6-theme-dark'
@@ -101,9 +99,8 @@ export default function App() {
       document.title = 'Sign In - Dev Spaces'
       return
     }
-    const navItem = NAV_ITEMS.find((item) => item.id === activePage)
-    document.title = navItem
-      ? `${navItem.label} - Dev Spaces`
+    document.title = activePage === 'workspaces'
+      ? 'Workspaces - Dev Spaces'
       : activePage === 'create-workspace'
         ? 'Create Workspace - Dev Spaces'
         : activePage === 'user-preferences'
@@ -217,20 +214,27 @@ export default function App() {
           setActivePage(result.itemId as string)
         }}>
           <NavList>
-            {NAV_ITEMS.map((item) => {
-              const NavIcon = item.icon
-              return (
-                <NavItem
-                  key={item.id}
-                  itemId={item.id}
-                  isActive={activePage === item.id || (item.id === 'workspaces' && activePage === 'create-workspace')}
-                  icon={<NavIcon />}
-                >
-                  {item.label}
-                </NavItem>
-              )
-            })}
+            <NavItem
+              itemId="create-workspace"
+              isActive={activePage === 'create-workspace'}
+              style={{ fontWeight: activePage === 'create-workspace' ? undefined : 400 }}
+            >
+              Create Workspace
+            </NavItem>
+            <NavItem
+              itemId="workspaces"
+              isActive={activePage === 'workspaces'}
+            >
+              Workspaces ({RECENT_WORKSPACES.length})
+            </NavItem>
           </NavList>
+          <NavGroup title="RECENT WORKSPACES">
+            {RECENT_WORKSPACES.map((ws) => (
+              <NavItem key={ws.id} itemId="workspaces" icon={<RunningIcon style={{ color: ws.status === 'running' ? 'var(--pf-t--global--color--status--success--default)' : 'var(--pf-t--global--color--nonstatus--gray--default)' }} />}>
+                {ws.name.length > 24 ? ws.name.substring(0, 24) + '...' : ws.name}
+              </NavItem>
+            ))}
+          </NavGroup>
         </Nav>
       </PageSidebarBody>
     </PageSidebar>
