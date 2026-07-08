@@ -159,10 +159,13 @@ const MCP_STATUS_COLORS: Record<InstalledMcp['status'], 'green' | 'grey' | 'red'
   error: 'red',
 }
 
-function TabHeader({ title, subtitle }: { title: string; subtitle: string }) {
+function TabHeader({ title, subtitle, action }: { title: string; subtitle: string; action?: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 16 }}>
-      <Title headingLevel="h2" size="lg">{title}</Title>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Title headingLevel="h2" size="lg">{title}</Title>
+        {action}
+      </div>
       <div style={{ marginTop: 4, fontSize: 14, color: 'var(--pf-t--global--text--color--subtle)' }}>{subtitle}</div>
     </div>
   )
@@ -662,7 +665,11 @@ export function UserPreferences({ activeTab, onTabChange }: { activeTab: Prefere
 
         {activeTab === 'skills-installed' && (
           <>
-            <TabHeader title="Installed Skills" subtitle="Skills configured here will be available in every AI agent across all your workspaces." />
+            <TabHeader
+              title="Installed Skills"
+              subtitle="Skills configured here will be available in every AI agent across all your workspaces."
+              action={<Button variant="secondary" icon={<PlusCircleIcon />} onClick={() => setShowAddSkill(true)}>Add Skill</Button>}
+            />
             {skills.length === 0 ? (
               <EmptyState headingLevel="h3" icon={AutomationIcon} titleText="No Skills installed">
                 <EmptyStateFooter>
@@ -675,15 +682,6 @@ export function UserPreferences({ activeTab, onTabChange }: { activeTab: Prefere
               </EmptyState>
             ) : (
               <>
-                <Toolbar>
-                  <ToolbarContent>
-                    <ToolbarItem style={{ marginLeft: 'auto' }}>
-                      <Button variant="secondary" icon={<PlusCircleIcon />} onClick={() => setShowAddSkill(true)}>
-                        Add Skill
-                      </Button>
-                    </ToolbarItem>
-                  </ToolbarContent>
-                </Toolbar>
                 <Table aria-label="Installed skills" variant="compact">
                   <Thead>
                     <Tr>
@@ -755,7 +753,11 @@ export function UserPreferences({ activeTab, onTabChange }: { activeTab: Prefere
 
         {activeTab === 'mcps-installed' && (
           <>
-            <TabHeader title="Installed MCPs" subtitle="Connect Model Context Protocol servers to extend AI agent capabilities." />
+            <TabHeader
+              title="Installed MCPs"
+              subtitle="Connect Model Context Protocol servers to extend AI agent capabilities."
+              action={<Button variant="secondary" icon={<PlusCircleIcon />} onClick={() => setShowAddMcp(true)}>Add MCP</Button>}
+            />
             {installedMcps.length === 0 ? (
               <EmptyState headingLevel="h3" icon={PluggedIcon} titleText="No MCPs installed">
                 <EmptyStateFooter>
@@ -768,15 +770,6 @@ export function UserPreferences({ activeTab, onTabChange }: { activeTab: Prefere
               </EmptyState>
             ) : (
               <>
-                <Toolbar>
-                  <ToolbarContent>
-                    <ToolbarItem style={{ marginLeft: 'auto' }}>
-                      <Button variant="secondary" icon={<PlusCircleIcon />} onClick={() => setShowAddMcp(true)}>
-                        Add MCP
-                      </Button>
-                    </ToolbarItem>
-                  </ToolbarContent>
-                </Toolbar>
                 <Table aria-label="Installed MCPs" variant="compact">
                   <Thead>
                     <Tr>
