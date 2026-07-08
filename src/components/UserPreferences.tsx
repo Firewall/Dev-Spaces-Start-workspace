@@ -7,7 +7,10 @@ import {
   EmptyState,
   EmptyStateActions,
   EmptyStateFooter,
+  FileUpload,
   FormGroup,
+  HelperText,
+  HelperTextItem,
   Label,
   MenuToggle,
   Modal,
@@ -20,12 +23,16 @@ import {
   NavItem,
   PageSection,
   Switch,
+  TextArea,
   TextInput,
   Title,
+  ToggleGroup,
+  ToggleGroupItem,
   Toolbar,
   ToolbarContent,
   ToolbarItem,
 } from '@patternfly/react-core'
+import type { DropEvent } from '@patternfly/react-core'
 import {
   AutomationIcon,
   CheckCircleIcon,
@@ -84,9 +91,12 @@ interface Skill {
   id: string
   name: string
   description: string
-  source: 'manual' | 'rhdh' | 'catalog'
+  source: 'manual' | 'rhdh' | 'catalog' | 'url' | 'file'
   rhdhInstance?: string
   registry?: string
+  sourceUrl?: string
+  markdownContent?: string
+  fileName?: string
 }
 
 interface InstalledMcp {
@@ -171,6 +181,27 @@ const MCP_STATUS_CONFIG: Record<InstalledMcp['status'], { icon: React.ReactNode;
   },
 }
 
+function parseMarkdownSkill(md: string): { name: string; description: string } {
+  const lines = md.split('\n')
+  let name = ''
+  let foundHeading = false
+  const descLines: string[] = []
+  for (const line of lines) {
+    const headingMatch = line.match(/^#\s+(.+)/)
+    if (headingMatch && !name) {
+      name = headingMatch[1].trim()
+      foundHeading = true
+      continue
+    }
+    if (foundHeading) {
+      const trimmed = line.trim()
+      if (trimmed === '' && descLines.length > 0) break
+      if (trimmed !== '' && !trimmed.startsWith('#')) descLines.push(trimmed)
+    }
+  }
+  return { name, description: descLines.join(' ') }
+}
+
 function TabHeader({ title, subtitle, action }: { title: string; subtitle: string; action?: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 16 }}>
@@ -211,6 +242,11 @@ export function UserPreferences({ activeTab, onTabChange }: { activeTab: Prefere
   const [skillName, setSkillName] = useState('')
   const [skillDescription, setSkillDescription] = useState('')
   const [skillMenuOpenId, setSkillMenuOpenId] = useState<string | null>(null)
+  const [skillAddMode, setSkillAddMode] = useState<'manual' | 'url' | 'file'>('url')
+  const [skillUrl, setSkillUrl] = useState('')
+  const [skillUrlLoading, setSkillUrlLoading] = useState(false)
+  const [skillFileContent, setSkillFileContent] = useState('')
+  const [skillFileName, setSkillFileName] = useState('')
   const [skillsCatalog, setSkillsCatalog] = useState<CatalogItem[]>(DEFAULT_SKILLS_CATALOG)
   const [skillRegistries, setSkillRegistries] = useState<Registry[]>(DEFAULT_SKILL_REGISTRIES)
 
@@ -308,17 +344,61 @@ export function UserPreferences({ activeTab, onTabChange }: { activeTab: Prefere
   const resetSkillForm = () => {
     setSkillName('')
     setSkillDescription('')
+    setSkillAddMode('url')
+    setSkillUrl('')
+    setSkillUrlLoading(false)
+    setSkillFileContent('')
+    setSkillFileName('')
   }
 
   const handleAddSkill = () => {
-    setSkills(prev => [...prev, {
+    const newSkill: Skill = {
       id: String(Date.now()),
       name: skillName,
       description: skillDescription,
-      source: 'manual',
-    }])
+      source: skillAddMode,
+    }
+    if (skillAddMode === 'url') {
+      newSkill.sourceUrl = skillUrl
+    }
+    if (skillAddMode === 'file') {
+      newSkill.markdownContent = skillFileContent
+      newSkill.fileName = skillFileName
+    }
+    setSkills(prev => [...prev, newSkill])
     setShowAddSkill(false)
     resetSkillForm()
+  }
+
+  const handleFetchSkillUrl = () => {
+    setSkillUrlLoading(true)
+    setTimeout(() => {
+      const urlParts = skillUrl.split('/')
+      const filename = urlParts[urlParts.length - 1] || 'imported-skill'
+      const name = filename.replace(/\.md$/i, '').replace(/[-_]/g, ' ')
+        .replace(/\b\w/g, c => c.toUpperCase())
+      setSkillName(name)
+      setSkillDescription(`Skill imported from ${skillUrl}`)
+      setSkillUrlLoading(false)
+    }, 800)
+  }
+
+  const handleSkillFileInputChange = (_event: DropEvent, file: File) => {
+    setSkillFileName(file.name)
+  }
+
+  const handleSkillFileDataChange = (_event: DropEvent, data: string) => {
+    setSkillFileContent(data)
+    const { name, description } = parseMarkdownSkill(data)
+    if (name) setSkillName(name)
+    if (description) setSkillDescription(description)
+  }
+
+  const handleSkillFileClear = () => {
+    setSkillFileContent('')
+    setSkillFileName('')
+    setSkillName('')
+    setSkillDescription('')
   }
 
   const handleDeleteSkill = (id: string) => {
@@ -710,11 +790,33 @@ export function UserPreferences({ activeTab, onTabChange }: { activeTab: Prefere
                         <Td dataLabel="Name">{skill.name}</Td>
                         <Td dataLabel="Description">{skill.description}</Td>
                         <Td dataLabel="Source">
-                          <Label isCompact color={skill.source === 'rhdh' ? 'blue' : skill.source === 'catalog' ? 'purple' : 'grey'}>
-                            {skill.source === 'rhdh' ? 'RHDH' : skill.source === 'catalog' ? 'Catalog' : 'Manual'}
+                          <Label isCompact color={
+                            skill.source === 'rhdh' ? 'blue' :
+                            skill.source === 'catalog' ? 'purple' :
+                            skill.source === 'url' ? 'orange' :
+                            skill.source === 'file' ? 'green' :
+                            'grey'
+                          }>
+                            {skill.source === 'rhdh' ? 'RHDH' :
+                             skill.source === 'catalog' ? 'Catalog' :
+                             skill.source === 'url' ? 'URL' :
+                             skill.source === 'file' ? 'File' :
+                             'Manual'}
                           </Label>
                         </Td>
-                        <Td dataLabel="Instance">{skill.rhdhInstance || skill.registry || '—'}</Td>
+                        <Td dataLabel="Instance">
+                          {skill.source === 'url' && skill.sourceUrl ? (
+                            <a href={skill.sourceUrl} target="_blank" rel="noopener noreferrer"
+                               style={{ fontFamily: 'monospace', fontSize: 13 }}>
+                              {skill.sourceUrl.length > 40 ? skill.sourceUrl.substring(0, 40) + '...' : skill.sourceUrl}
+                              {' '}<ExternalLinkAltIcon style={{ fontSize: 11 }} />
+                            </a>
+                          ) : skill.source === 'file' && skill.fileName ? (
+                            <span style={{ fontFamily: 'monospace', fontSize: 13 }}>{skill.fileName}</span>
+                          ) : (
+                            skill.rhdhInstance || skill.registry || '—'
+                          )}
+                        </Td>
                         <Td isActionCell>
                           <Dropdown
                             isOpen={skillMenuOpenId === skill.id}
@@ -1041,7 +1143,77 @@ export function UserPreferences({ activeTab, onTabChange }: { activeTab: Prefere
         >
           <ModalHeader title="Add Skill" />
           <ModalBody>
-            <FormGroup label="Name" isRequired fieldId="skill-name">
+            <ToggleGroup aria-label="Skill import method">
+              <ToggleGroupItem
+                text="Manual"
+                buttonId="skill-mode-manual"
+                isSelected={skillAddMode === 'manual'}
+                onChange={() => setSkillAddMode('manual')}
+              />
+              <ToggleGroupItem
+                text="From URL"
+                buttonId="skill-mode-url"
+                isSelected={skillAddMode === 'url'}
+                onChange={() => setSkillAddMode('url')}
+              />
+              <ToggleGroupItem
+                text="From File"
+                buttonId="skill-mode-file"
+                isSelected={skillAddMode === 'file'}
+                onChange={() => setSkillAddMode('file')}
+              />
+            </ToggleGroup>
+
+            {skillAddMode === 'url' && (
+              <FormGroup label="Skill Definition URL" isRequired fieldId="skill-url" style={{ marginTop: 16 }}>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <TextInput
+                    id="skill-url"
+                    value={skillUrl}
+                    onChange={(_e, val) => setSkillUrl(val)}
+                    placeholder="https://raw.githubusercontent.com/org/repo/main/skills/my-skill.md"
+                    isRequired
+                    style={{ flex: 1 }}
+                  />
+                  <Button
+                    variant="secondary"
+                    onClick={handleFetchSkillUrl}
+                    isDisabled={!skillUrl || skillUrlLoading}
+                    isLoading={skillUrlLoading}
+                  >
+                    Fetch
+                  </Button>
+                </div>
+                <HelperText>
+                  <HelperTextItem>Paste a URL to a raw .md skill definition file</HelperTextItem>
+                </HelperText>
+              </FormGroup>
+            )}
+
+            {skillAddMode === 'file' && (
+              <FormGroup label="Skill Definition File" fieldId="skill-file" style={{ marginTop: 16 }}>
+                <FileUpload
+                  id="skill-file"
+                  type="text"
+                  value={skillFileContent}
+                  filename={skillFileName}
+                  onFileInputChange={handleSkillFileInputChange}
+                  onDataChange={handleSkillFileDataChange}
+                  onClearClick={handleSkillFileClear}
+                  browseButtonText="Browse"
+                  dropzoneProps={{
+                    accept: { 'text/markdown': ['.md'] },
+                    maxSize: 1024 * 1024,
+                  }}
+                  filenamePlaceholder="Drag and drop a .md file or browse to upload"
+                />
+                <HelperText>
+                  <HelperTextItem>Drop a Markdown file to auto-populate skill name and description</HelperTextItem>
+                </HelperText>
+              </FormGroup>
+            )}
+
+            <FormGroup label="Name" isRequired fieldId="skill-name" style={{ marginTop: 16 }}>
               <TextInput
                 id="skill-name"
                 value={skillName}
@@ -1051,12 +1223,15 @@ export function UserPreferences({ activeTab, onTabChange }: { activeTab: Prefere
               />
             </FormGroup>
             <FormGroup label="Description" isRequired fieldId="skill-description" style={{ marginTop: 16 }}>
-              <TextInput
+              <TextArea
                 id="skill-description"
                 value={skillDescription}
                 onChange={(_e, val) => setSkillDescription(val)}
                 placeholder="Describe what this skill does"
                 isRequired
+                resizeOrientation="vertical"
+                rows={3}
+                aria-label="Skill description"
               />
             </FormGroup>
           </ModalBody>
