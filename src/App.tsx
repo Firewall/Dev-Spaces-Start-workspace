@@ -9,7 +9,6 @@ import {
   MastheadBrand,
   MastheadContent,
   MastheadMain,
-  MastheadToggle,
   MenuToggle,
   Nav,
   NavGroup,
@@ -19,16 +18,17 @@ import {
   PageSection,
   PageSidebar,
   PageSidebarBody,
-  PageToggleButton,
   ToggleGroup,
   ToggleGroupItem,
 } from '@patternfly/react-core'
 import {
-  BarsIcon,
   DesktopIcon,
   MoonIcon,
+  OutlinedQuestionCircleIcon,
+  RobotIcon,
   RunningIcon,
   SunIcon,
+  ThLargeIcon,
   UserIcon,
 } from '@patternfly/react-icons'
 import { AgentSpace } from './components/AgentSpace'
@@ -59,7 +59,7 @@ const DARK_THEME_CLASS = 'pf-v6-theme-dark'
 
 function getRouteFromHash(): string {
   const route = window.location.hash.replace('#/', '').replace('#', '')
-  if (route === 'workspaces' || route === 'create-workspace') return route
+  if (route === 'workspaces' || route === 'create-workspace' || route === 'agent-space' || route === 'agent-space-v2') return route
   if (route.startsWith('user-preferences')) {
     const tab = route.split('/')[1]
     if (tab && VALID_PREF_TABS.has(tab)) return route
@@ -73,7 +73,6 @@ export default function App() {
   const [username] = useState('jane.doe')
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [activePage, setActivePage] = useState(getRouteFromHash)
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [phase, setPhase] = useState<Phase>(() => {
     const saved = window.localStorage.getItem(PHASE_STORAGE_KEY)
     return saved === 'phase1' || saved === 'phase2' ? saved : 'phase1'
@@ -121,29 +120,24 @@ export default function App() {
   }, [activePage, signedIn])
 
   const masthead = (
-    <Masthead style={{ alignItems: 'center' }}>
+    <Masthead>
       <MastheadMain>
-        <MastheadToggle>
-          <PageToggleButton
-            variant="plain"
-            aria-label="Global navigation"
-            isSidebarOpen={isSidebarOpen}
-            onSidebarToggle={() => setIsSidebarOpen((o) => !o)}
-          >
-            <BarsIcon />
-          </PageToggleButton>
-        </MastheadToggle>
-        <MastheadBrand style={{ alignItems: 'center' }}>
+        <MastheadBrand>
           <img
             src={`${import.meta.env.BASE_URL}icon.png`}
             alt="Dev Spaces"
             style={{ height: 36, borderRadius: 8 }}
           />
-          <span style={{ marginLeft: 12, fontSize: 18, fontWeight: 600 }}>Dev Spaces</span>
         </MastheadBrand>
       </MastheadMain>
       <MastheadContent>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', width: '100%' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto' }}>
+          <Button variant="plain" aria-label="Applications">
+            <ThLargeIcon />
+          </Button>
+          <Button variant="plain" aria-label="Help">
+            <OutlinedQuestionCircleIcon />
+          </Button>
           <Dropdown
             isOpen={profileMenuOpen}
             onSelect={(_event, value) => {
@@ -225,7 +219,7 @@ export default function App() {
   )
 
   const sidebar = (
-    <PageSidebar isSidebarOpen={isSidebarOpen} style={{ '--pf-v6-c-page__sidebar--Width--base': '5rem' } as React.CSSProperties}>
+    <PageSidebar>
       <PageSidebarBody>
         <Nav onSelect={(_event, result) => {
           setActivePage(result.itemId as string)
@@ -252,13 +246,29 @@ export default function App() {
               </NavItem>
             ))}
           </NavGroup>
+          <NavGroup title="AI">
+            <NavItem
+              itemId="agent-space"
+              isActive={activePage === 'agent-space'}
+              icon={<RobotIcon />}
+            >
+              Agent Space
+            </NavItem>
+            <NavItem
+              itemId="agent-space-v2"
+              isActive={activePage === 'agent-space-v2'}
+              icon={<RobotIcon />}
+            >
+              Agent Space v2
+            </NavItem>
+          </NavGroup>
         </Nav>
       </PageSidebarBody>
     </PageSidebar>
   )
 
   return (
-    <Page masthead={masthead} sidebar={sidebar} isContentFilled>
+    <Page masthead={masthead} sidebar={sidebar}>
       {signedIn ? (
         activePage === 'agent-space' ? (
           <AgentSpace />
