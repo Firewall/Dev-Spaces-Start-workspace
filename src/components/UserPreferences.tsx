@@ -10,10 +10,10 @@ import {
   ModalBody,
   ModalFooter,
   ModalHeader,
+  Nav,
+  NavGroup,
+  NavItem,
   PageSection,
-  Tab,
-  Tabs,
-  TabTitleText,
   TextInput,
   Title,
   Toolbar,
@@ -21,14 +21,20 @@ import {
   ToolbarItem,
 } from '@patternfly/react-core'
 import {
+  AutomationIcon,
   CogIcon,
   CubesIcon,
   EllipsisVIcon,
   ExternalLinkAltIcon,
   EyeIcon,
   EyeSlashIcon,
+  GitAltIcon,
   KeyIcon,
+  LockIcon,
+  PluggedIcon,
   PlusCircleIcon,
+  RegistryIcon,
+  RobotIcon,
 } from '@patternfly/react-icons'
 import {
   Table,
@@ -39,7 +45,7 @@ import {
   Td,
 } from '@patternfly/react-table'
 
-type PreferencesTab = 'container-registries' | 'git-services' | 'personal-access-tokens' | 'gitconfig' | 'ssh-keys'
+type PreferencesTab = 'container-registries' | 'git-services' | 'personal-access-tokens' | 'gitconfig' | 'ssh-keys' | 'ai-skills' | 'ai-mcps' | 'ai-agent-configurations'
 
 interface ContainerRegistry {
   id: string
@@ -190,21 +196,28 @@ export function UserPreferences() {
         <Title headingLevel="h1" size="xl">User Preferences</Title>
       </PageSection>
 
-      <PageSection hasBodyWrapper={false} style={{ paddingTop: 8 }}>
-        <Tabs
-          activeKey={activeTab}
-          onSelect={(_event, eventKey) => setActiveTab(eventKey as PreferencesTab)}
-          aria-label="User preferences tabs"
-        >
-          <Tab eventKey="container-registries" title={<TabTitleText>Container Registries</TabTitleText>} />
-          <Tab eventKey="git-services" title={<TabTitleText>Git Services</TabTitleText>} />
-          <Tab eventKey="personal-access-tokens" title={<TabTitleText>Personal Access Tokens</TabTitleText>} />
-          <Tab eventKey="gitconfig" title={<TabTitleText>Gitconfig</TabTitleText>} />
-          <Tab eventKey="ssh-keys" title={<TabTitleText>SSH Keys</TabTitleText>} />
-        </Tabs>
-      </PageSection>
+      <PageSection hasBodyWrapper={false} style={{ paddingTop: 16 }}>
+        <div style={{ display: 'flex', gap: 24 }}>
+          <Nav
+            onSelect={(_event, result) => setActiveTab(result.itemId as PreferencesTab)}
+            aria-label="User preferences navigation"
+            style={{ minWidth: 240, flexShrink: 0 }}
+          >
+            <NavGroup title="General">
+              <NavItem itemId="container-registries" isActive={activeTab === 'container-registries'} icon={<RegistryIcon />}>Container Registries</NavItem>
+              <NavItem itemId="git-services" isActive={activeTab === 'git-services'} icon={<GitAltIcon />}>Git Services</NavItem>
+              <NavItem itemId="personal-access-tokens" isActive={activeTab === 'personal-access-tokens'} icon={<LockIcon />}>Personal Access Tokens</NavItem>
+              <NavItem itemId="gitconfig" isActive={activeTab === 'gitconfig'} icon={<CogIcon />}>Gitconfig</NavItem>
+              <NavItem itemId="ssh-keys" isActive={activeTab === 'ssh-keys'} icon={<KeyIcon />}>SSH Keys</NavItem>
+            </NavGroup>
+            <NavGroup title="AI">
+              <NavItem itemId="ai-skills" isActive={activeTab === 'ai-skills'} icon={<AutomationIcon />}>Skills</NavItem>
+              <NavItem itemId="ai-mcps" isActive={activeTab === 'ai-mcps'} icon={<PluggedIcon />}>MCPs</NavItem>
+              <NavItem itemId="ai-agent-configurations" isActive={activeTab === 'ai-agent-configurations'} icon={<RobotIcon />}>Agent Configurations</NavItem>
+            </NavGroup>
+          </Nav>
 
-      <PageSection hasBodyWrapper={false} style={{ paddingTop: 0 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
         {activeTab === 'container-registries' && (
           <div style={{ background: 'var(--pf-t--global--background--color--secondary--default)', borderRadius: 8, padding: 24 }}>
             {registries.length === 0 ? (
@@ -393,6 +406,26 @@ export function UserPreferences() {
             )}
           </div>
         )}
+
+        {activeTab === 'ai-skills' && (
+          <div style={{ background: 'var(--pf-t--global--background--color--secondary--default)', borderRadius: 8, padding: 24 }}>
+            <EmptyState icon={AutomationIcon} title="No Skills configured" />
+          </div>
+        )}
+
+        {activeTab === 'ai-mcps' && (
+          <div style={{ background: 'var(--pf-t--global--background--color--secondary--default)', borderRadius: 8, padding: 24 }}>
+            <EmptyState icon={PluggedIcon} title="No MCPs configured" />
+          </div>
+        )}
+
+        {activeTab === 'ai-agent-configurations' && (
+          <div style={{ background: 'var(--pf-t--global--background--color--secondary--default)', borderRadius: 8, padding: 24 }}>
+            <EmptyState icon={RobotIcon} title="No Agent Configurations" />
+          </div>
+        )}
+          </div>
+        </div>
       </PageSection>
 
       {showAddRegistry && (
