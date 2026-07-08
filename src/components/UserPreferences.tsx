@@ -15,13 +15,11 @@ import {
   ModalFooter,
   ModalHeader,
   Nav,
+  NavExpandable,
   NavGroup,
   NavItem,
   PageSection,
   Switch,
-  Tab,
-  Tabs,
-  TabTitleText,
   TextInput,
   Title,
   Toolbar,
@@ -53,7 +51,11 @@ import {
   Td,
 } from '@patternfly/react-table'
 
-export type PreferencesTab = 'container-registries' | 'git-services' | 'personal-access-tokens' | 'gitconfig' | 'ssh-keys' | 'skills' | 'mcps' | 'agent-configurations'
+export type PreferencesTab =
+  | 'container-registries' | 'git-services' | 'personal-access-tokens' | 'gitconfig' | 'ssh-keys'
+  | 'skills-installed' | 'skills-catalog' | 'skills-registries'
+  | 'mcps-installed' | 'mcps-catalog' | 'mcps-registries'
+  | 'agent-configurations'
 
 interface ContainerRegistry {
   id: string
@@ -194,12 +196,10 @@ export function UserPreferences({ activeTab, onTabChange }: { activeTab: Prefere
   const [skillName, setSkillName] = useState('')
   const [skillDescription, setSkillDescription] = useState('')
   const [skillMenuOpenId, setSkillMenuOpenId] = useState<string | null>(null)
-  const [skillsSubTab, setSkillsSubTab] = useState<'installed' | 'catalog' | 'registries'>('installed')
   const [skillsCatalog, setSkillsCatalog] = useState<CatalogItem[]>(DEFAULT_SKILLS_CATALOG)
   const [skillRegistries, setSkillRegistries] = useState<Registry[]>(DEFAULT_SKILL_REGISTRIES)
 
   const [installedMcps, setInstalledMcps] = useState<InstalledMcp[]>(DEFAULT_INSTALLED_MCPS)
-  const [mcpsSubTab, setMcpsSubTab] = useState<'installed' | 'catalog' | 'registries'>('installed')
   const [mcpsCatalog, setMcpsCatalog] = useState<CatalogItem[]>(DEFAULT_MCPS_CATALOG)
   const [mcpRegistries, setMcpRegistries] = useState<Registry[]>(DEFAULT_MCP_REGISTRIES)
   const [mcpMenuOpenId, setMcpMenuOpenId] = useState<string | null>(null)
@@ -455,8 +455,16 @@ export function UserPreferences({ activeTab, onTabChange }: { activeTab: Prefere
               <NavItem itemId="ssh-keys" isActive={activeTab === 'ssh-keys'} icon={<KeyIcon />}>SSH Keys</NavItem>
             </NavGroup>
             <NavGroup title="AI">
-              <NavItem itemId="skills" isActive={activeTab === 'skills'} icon={<AutomationIcon />}>Skills</NavItem>
-              <NavItem itemId="mcps" isActive={activeTab === 'mcps'} icon={<PluggedIcon />}>MCPs</NavItem>
+              <NavExpandable title="Skills" isActive={activeTab.startsWith('skills-')} isExpanded={activeTab.startsWith('skills-')}>
+                <NavItem itemId="skills-installed" isActive={activeTab === 'skills-installed'}>Installed ({skills.length})</NavItem>
+                <NavItem itemId="skills-catalog" isActive={activeTab === 'skills-catalog'}>Catalog</NavItem>
+                <NavItem itemId="skills-registries" isActive={activeTab === 'skills-registries'}>Registries</NavItem>
+              </NavExpandable>
+              <NavExpandable title="MCPs" isActive={activeTab.startsWith('mcps-')} isExpanded={activeTab.startsWith('mcps-')}>
+                <NavItem itemId="mcps-installed" isActive={activeTab === 'mcps-installed'}>Installed ({installedMcps.length})</NavItem>
+                <NavItem itemId="mcps-catalog" isActive={activeTab === 'mcps-catalog'}>Catalog</NavItem>
+                <NavItem itemId="mcps-registries" isActive={activeTab === 'mcps-registries'}>Registries</NavItem>
+              </NavExpandable>
               <NavItem itemId="agent-configurations" isActive={activeTab === 'agent-configurations'} icon={<RobotIcon />}>Agent Configurations</NavItem>
             </NavGroup>
           </Nav>
@@ -652,175 +660,189 @@ export function UserPreferences({ activeTab, onTabChange }: { activeTab: Prefere
           </>
         )}
 
-        {activeTab === 'skills' && (
+        {activeTab === 'skills-installed' && (
           <>
-            <TabHeader title="Skills" subtitle="Skills configured here will be available in every AI agent across all your workspaces." />
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <Tabs activeKey={skillsSubTab} onSelect={(_e, key) => setSkillsSubTab(key as typeof skillsSubTab)} style={{ flex: 1 }}>
-                <Tab eventKey="installed" title={<TabTitleText>Installed ({skills.length})</TabTitleText>} />
-                <Tab eventKey="catalog" title={<TabTitleText>Catalog</TabTitleText>} />
-                <Tab eventKey="registries" title={<TabTitleText>Registries</TabTitleText>} />
-              </Tabs>
-              {skillsSubTab === 'installed' && (
-                <Button variant="secondary" icon={<PlusCircleIcon />} onClick={() => setShowAddSkill(true)}>
-                  Add Skill
-                </Button>
-              )}
-            </div>
-            {skillsSubTab === 'installed' && (
-              <div>
-                {skills.length === 0 ? (
-                  <EmptyState headingLevel="h3" icon={AutomationIcon} titleText="No Skills installed" />
-                ) : (
-                  <Table aria-label="Installed skills" variant="compact">
-                        <Thead>
-                          <Tr>
-                            <Th width={25}>Name</Th>
-                            <Th width={35}>Description</Th>
-                            <Th width={15}>Source</Th>
-                            <Th width={15}>Instance</Th>
-                            <Th width={10} screenReaderText="Actions" />
-                          </Tr>
-                        </Thead>
-                        <Tbody>
-                          {skills.map(skill => (
-                            <Tr key={skill.id}>
-                              <Td dataLabel="Name">{skill.name}</Td>
-                              <Td dataLabel="Description">{skill.description}</Td>
-                              <Td dataLabel="Source">
-                                <Label isCompact color={skill.source === 'rhdh' ? 'blue' : skill.source === 'catalog' ? 'purple' : 'grey'}>
-                                  {skill.source === 'rhdh' ? 'RHDH' : skill.source === 'catalog' ? 'Catalog' : 'Manual'}
-                                </Label>
-                              </Td>
-                              <Td dataLabel="Instance">{skill.rhdhInstance || skill.registry || '—'}</Td>
-                              <Td isActionCell>
-                                <Dropdown
-                                  isOpen={skillMenuOpenId === skill.id}
-                                  onSelect={() => setSkillMenuOpenId(null)}
-                                  onOpenChange={open => { if (!open) setSkillMenuOpenId(null) }}
-                                  toggle={(toggleRef) => (
-                                    <MenuToggle
-                                      ref={toggleRef}
-                                      variant="plain"
-                                      onClick={() => setSkillMenuOpenId(skillMenuOpenId === skill.id ? null : skill.id)}
-                                      isExpanded={skillMenuOpenId === skill.id}
-                                      aria-label="Skill actions"
-                                    >
-                                      <EllipsisVIcon />
-                                    </MenuToggle>
-                                  )}
-                                  popperProps={{ position: 'right' }}
-                                >
-                                  <DropdownList>
-                                    <DropdownItem key="delete" onClick={() => handleDeleteSkill(skill.id)}>
-                                      Delete
-                                    </DropdownItem>
-                                  </DropdownList>
-                                </Dropdown>
-                              </Td>
-                            </Tr>
-                          ))}
-                        </Tbody>
-                      </Table>
-                )}
-              </div>
-            )}
-            {skillsSubTab === 'catalog' && (
-              <div>
-                {renderCatalogTable(skillsCatalog, handleInstallSkillFromCatalog, 'Skills')}
-              </div>
-            )}
-            {skillsSubTab === 'registries' && (
-              <div>
-                {renderRegistriesTable(skillRegistries, handleToggleSkillRegistry, 'Skills')}
-              </div>
+            <TabHeader title="Installed Skills" subtitle="Skills configured here will be available in every AI agent across all your workspaces." />
+            {skills.length === 0 ? (
+              <EmptyState headingLevel="h3" icon={AutomationIcon} titleText="No Skills installed">
+                <EmptyStateFooter>
+                  <EmptyStateActions>
+                    <Button variant="link" icon={<PlusCircleIcon />} onClick={() => setShowAddSkill(true)}>
+                      Add Skill
+                    </Button>
+                  </EmptyStateActions>
+                </EmptyStateFooter>
+              </EmptyState>
+            ) : (
+              <>
+                <Toolbar>
+                  <ToolbarContent>
+                    <ToolbarItem style={{ marginLeft: 'auto' }}>
+                      <Button variant="secondary" icon={<PlusCircleIcon />} onClick={() => setShowAddSkill(true)}>
+                        Add Skill
+                      </Button>
+                    </ToolbarItem>
+                  </ToolbarContent>
+                </Toolbar>
+                <Table aria-label="Installed skills" variant="compact">
+                  <Thead>
+                    <Tr>
+                      <Th width={25}>Name</Th>
+                      <Th width={35}>Description</Th>
+                      <Th width={15}>Source</Th>
+                      <Th width={15}>Instance</Th>
+                      <Th width={10} screenReaderText="Actions" />
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {skills.map(skill => (
+                      <Tr key={skill.id}>
+                        <Td dataLabel="Name">{skill.name}</Td>
+                        <Td dataLabel="Description">{skill.description}</Td>
+                        <Td dataLabel="Source">
+                          <Label isCompact color={skill.source === 'rhdh' ? 'blue' : skill.source === 'catalog' ? 'purple' : 'grey'}>
+                            {skill.source === 'rhdh' ? 'RHDH' : skill.source === 'catalog' ? 'Catalog' : 'Manual'}
+                          </Label>
+                        </Td>
+                        <Td dataLabel="Instance">{skill.rhdhInstance || skill.registry || '—'}</Td>
+                        <Td isActionCell>
+                          <Dropdown
+                            isOpen={skillMenuOpenId === skill.id}
+                            onSelect={() => setSkillMenuOpenId(null)}
+                            onOpenChange={open => { if (!open) setSkillMenuOpenId(null) }}
+                            toggle={(toggleRef) => (
+                              <MenuToggle
+                                ref={toggleRef}
+                                variant="plain"
+                                onClick={() => setSkillMenuOpenId(skillMenuOpenId === skill.id ? null : skill.id)}
+                                isExpanded={skillMenuOpenId === skill.id}
+                                aria-label="Skill actions"
+                              >
+                                <EllipsisVIcon />
+                              </MenuToggle>
+                            )}
+                            popperProps={{ position: 'right' }}
+                          >
+                            <DropdownList>
+                              <DropdownItem key="delete" onClick={() => handleDeleteSkill(skill.id)}>
+                                Delete
+                              </DropdownItem>
+                            </DropdownList>
+                          </Dropdown>
+                        </Td>
+                      </Tr>
+                    ))}
+                  </Tbody>
+                </Table>
+              </>
             )}
           </>
         )}
 
-        {activeTab === 'mcps' && (
+        {activeTab === 'skills-catalog' && (
           <>
-            <TabHeader title="MCPs" subtitle="Connect Model Context Protocol servers to extend AI agent capabilities." />
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <Tabs activeKey={mcpsSubTab} onSelect={(_e, key) => setMcpsSubTab(key as typeof mcpsSubTab)} style={{ flex: 1 }}>
-                <Tab eventKey="installed" title={<TabTitleText>Installed ({installedMcps.length})</TabTitleText>} />
-                <Tab eventKey="catalog" title={<TabTitleText>Catalog</TabTitleText>} />
-                <Tab eventKey="registries" title={<TabTitleText>Registries</TabTitleText>} />
-              </Tabs>
-              {mcpsSubTab === 'installed' && (
-                <Button variant="secondary" icon={<PlusCircleIcon />} onClick={() => setShowAddMcp(true)}>
-                  Add MCP
-                </Button>
-              )}
-            </div>
-            {mcpsSubTab === 'installed' && (
-              <div>
-                {installedMcps.length === 0 ? (
-                  <EmptyState headingLevel="h3" icon={PluggedIcon} titleText="No MCPs installed" />
-                ) : (
-                  <Table aria-label="Installed MCPs" variant="compact">
-                    <Thead>
-                      <Tr>
-                        <Th width={20}>Name</Th>
-                        <Th width={40}>Description</Th>
-                        <Th width={15}>Status</Th>
-                        <Th width={15}>Registry</Th>
-                        <Th width={10} screenReaderText="Actions" />
+            <TabHeader title="Skills Catalog" subtitle="Browse and install skills from configured registries." />
+            {renderCatalogTable(skillsCatalog, handleInstallSkillFromCatalog, 'Skills')}
+          </>
+        )}
+
+        {activeTab === 'skills-registries' && (
+          <>
+            <TabHeader title="Skills Registries" subtitle="Manage registries that provide skills for your workspaces." />
+            {renderRegistriesTable(skillRegistries, handleToggleSkillRegistry, 'Skills')}
+          </>
+        )}
+
+        {activeTab === 'mcps-installed' && (
+          <>
+            <TabHeader title="Installed MCPs" subtitle="Connect Model Context Protocol servers to extend AI agent capabilities." />
+            {installedMcps.length === 0 ? (
+              <EmptyState headingLevel="h3" icon={PluggedIcon} titleText="No MCPs installed">
+                <EmptyStateFooter>
+                  <EmptyStateActions>
+                    <Button variant="link" icon={<PlusCircleIcon />} onClick={() => setShowAddMcp(true)}>
+                      Add MCP
+                    </Button>
+                  </EmptyStateActions>
+                </EmptyStateFooter>
+              </EmptyState>
+            ) : (
+              <>
+                <Toolbar>
+                  <ToolbarContent>
+                    <ToolbarItem style={{ marginLeft: 'auto' }}>
+                      <Button variant="secondary" icon={<PlusCircleIcon />} onClick={() => setShowAddMcp(true)}>
+                        Add MCP
+                      </Button>
+                    </ToolbarItem>
+                  </ToolbarContent>
+                </Toolbar>
+                <Table aria-label="Installed MCPs" variant="compact">
+                  <Thead>
+                    <Tr>
+                      <Th width={20}>Name</Th>
+                      <Th width={40}>Description</Th>
+                      <Th width={15}>Status</Th>
+                      <Th width={15}>Registry</Th>
+                      <Th width={10} screenReaderText="Actions" />
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {installedMcps.map(mcp => (
+                      <Tr key={mcp.id}>
+                        <Td dataLabel="Name">{mcp.name}</Td>
+                        <Td dataLabel="Description">{mcp.description}</Td>
+                        <Td dataLabel="Status">
+                          <Label isCompact color={MCP_STATUS_COLORS[mcp.status]}>
+                            {mcp.status.charAt(0).toUpperCase() + mcp.status.slice(1)}
+                          </Label>
+                        </Td>
+                        <Td dataLabel="Registry">{mcp.registry || '—'}</Td>
+                        <Td isActionCell>
+                          <Dropdown
+                            isOpen={mcpMenuOpenId === mcp.id}
+                            onSelect={() => setMcpMenuOpenId(null)}
+                            onOpenChange={open => { if (!open) setMcpMenuOpenId(null) }}
+                            toggle={(toggleRef) => (
+                              <MenuToggle
+                                ref={toggleRef}
+                                variant="plain"
+                                onClick={() => setMcpMenuOpenId(mcpMenuOpenId === mcp.id ? null : mcp.id)}
+                                isExpanded={mcpMenuOpenId === mcp.id}
+                                aria-label="MCP actions"
+                              >
+                                <EllipsisVIcon />
+                              </MenuToggle>
+                            )}
+                            popperProps={{ position: 'right' }}
+                          >
+                            <DropdownList>
+                              <DropdownItem key="delete" onClick={() => handleDeleteMcp(mcp.id)}>
+                                Remove
+                              </DropdownItem>
+                            </DropdownList>
+                          </Dropdown>
+                        </Td>
                       </Tr>
-                    </Thead>
-                    <Tbody>
-                      {installedMcps.map(mcp => (
-                        <Tr key={mcp.id}>
-                          <Td dataLabel="Name">{mcp.name}</Td>
-                          <Td dataLabel="Description">{mcp.description}</Td>
-                          <Td dataLabel="Status">
-                            <Label isCompact color={MCP_STATUS_COLORS[mcp.status]}>
-                              {mcp.status.charAt(0).toUpperCase() + mcp.status.slice(1)}
-                            </Label>
-                          </Td>
-                          <Td dataLabel="Registry">{mcp.registry || '—'}</Td>
-                          <Td isActionCell>
-                            <Dropdown
-                              isOpen={mcpMenuOpenId === mcp.id}
-                              onSelect={() => setMcpMenuOpenId(null)}
-                              onOpenChange={open => { if (!open) setMcpMenuOpenId(null) }}
-                              toggle={(toggleRef) => (
-                                <MenuToggle
-                                  ref={toggleRef}
-                                  variant="plain"
-                                  onClick={() => setMcpMenuOpenId(mcpMenuOpenId === mcp.id ? null : mcp.id)}
-                                  isExpanded={mcpMenuOpenId === mcp.id}
-                                  aria-label="MCP actions"
-                                >
-                                  <EllipsisVIcon />
-                                </MenuToggle>
-                              )}
-                              popperProps={{ position: 'right' }}
-                            >
-                              <DropdownList>
-                                <DropdownItem key="delete" onClick={() => handleDeleteMcp(mcp.id)}>
-                                  Remove
-                                </DropdownItem>
-                              </DropdownList>
-                            </Dropdown>
-                          </Td>
-                        </Tr>
-                      ))}
-                    </Tbody>
-                  </Table>
-                )}
-              </div>
+                    ))}
+                  </Tbody>
+                </Table>
+              </>
             )}
-            {mcpsSubTab === 'catalog' && (
-              <div>
-                {renderCatalogTable(mcpsCatalog, handleInstallMcpFromCatalog, 'MCPs')}
-              </div>
-            )}
-            {mcpsSubTab === 'registries' && (
-              <div>
-                {renderRegistriesTable(mcpRegistries, handleToggleMcpRegistry, 'MCPs')}
-              </div>
-            )}
+          </>
+        )}
+
+        {activeTab === 'mcps-catalog' && (
+          <>
+            <TabHeader title="MCPs Catalog" subtitle="Browse and install MCP servers from configured registries." />
+            {renderCatalogTable(mcpsCatalog, handleInstallMcpFromCatalog, 'MCPs')}
+          </>
+        )}
+
+        {activeTab === 'mcps-registries' && (
+          <>
+            <TabHeader title="MCPs Registries" subtitle="Manage registries that provide MCP servers." />
+            {renderRegistriesTable(mcpRegistries, handleToggleMcpRegistry, 'MCPs')}
           </>
         )}
 
