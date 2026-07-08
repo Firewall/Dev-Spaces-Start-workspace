@@ -19,6 +19,10 @@ import {
   NavGroup,
   NavItem,
   PageSection,
+  Switch,
+  Tab,
+  Tabs,
+  TabTitleText,
   TextInput,
   Title,
   Toolbar,
@@ -50,7 +54,7 @@ import {
   Td,
 } from '@patternfly/react-table'
 
-type PreferencesTab = 'container-registries' | 'git-services' | 'personal-access-tokens' | 'gitconfig' | 'ssh-keys' | 'ai-skills' | 'ai-mcps' | 'ai-agent-configurations'
+export type PreferencesTab = 'container-registries' | 'git-services' | 'personal-access-tokens' | 'gitconfig' | 'ssh-keys' | 'skills' | 'mcps' | 'agent-configurations'
 
 interface ContainerRegistry {
   id: string
@@ -76,8 +80,33 @@ interface Skill {
   id: string
   name: string
   description: string
-  source: 'manual' | 'rhdh'
+  source: 'manual' | 'rhdh' | 'catalog'
   rhdhInstance?: string
+  registry?: string
+}
+
+interface InstalledMcp {
+  id: string
+  name: string
+  description: string
+  status: 'connected' | 'disconnected' | 'error'
+  registry?: string
+}
+
+interface CatalogItem {
+  id: string
+  name: string
+  description: string
+  registry: string
+  installed: boolean
+}
+
+interface Registry {
+  id: string
+  name: string
+  url: string
+  itemCount: number
+  enabled: boolean
 }
 
 const INITIAL_TOKENS: PersonalAccessToken[] = [
@@ -92,6 +121,51 @@ const MOCK_RHDH_SKILLS: Omit<Skill, 'id' | 'rhdhInstance'>[] = [
   { name: 'Security Scanning', description: 'Integrates SAST and DAST security scans into workflows', source: 'rhdh' },
 ]
 
+const DEFAULT_INSTALLED_SKILLS: Skill[] = [
+  { id: 'sk-1', name: 'Code Review', description: 'Analyzes code changes and provides review feedback with suggestions', source: 'manual' },
+  { id: 'sk-2', name: 'Unit Test Generator', description: 'Generates unit tests for functions and classes using project conventions', source: 'rhdh', rhdhInstance: 'https://developer-hub.example.com' },
+  { id: 'sk-3', name: 'Documentation Writer', description: 'Generates API documentation and README files from source code', source: 'catalog', registry: 'Red Hat Developer Hub' },
+]
+
+const DEFAULT_SKILLS_CATALOG: CatalogItem[] = [
+  { id: 'sc-1', name: 'Kubernetes Deployment', description: 'Automates Kubernetes manifest generation and deployment', registry: 'Red Hat Developer Hub', installed: false },
+  { id: 'sc-2', name: 'CI/CD Pipeline Setup', description: 'Creates and configures CI/CD pipelines using Tekton', registry: 'Red Hat Developer Hub', installed: false },
+  { id: 'sc-3', name: 'API Scaffolding', description: 'Generates REST API boilerplate with OpenAPI spec', registry: 'Red Hat Developer Hub', installed: false },
+  { id: 'sc-4', name: 'Database Migration', description: 'Manages database schema migrations with Flyway or Liquibase', registry: 'Community Skills', installed: false },
+  { id: 'sc-5', name: 'Security Scanning', description: 'Integrates SAST and DAST security scans into workflows', registry: 'Community Skills', installed: false },
+  { id: 'sc-6', name: 'Log Analyzer', description: 'Parses and summarizes application logs to identify issues', registry: 'Community Skills', installed: false },
+]
+
+const DEFAULT_SKILL_REGISTRIES: Registry[] = [
+  { id: 'sr-1', name: 'Red Hat Developer Hub', url: 'https://developer-hub.example.com/skills', itemCount: 24, enabled: true },
+  { id: 'sr-2', name: 'Community Skills Registry', url: 'https://skills.community.example.com', itemCount: 156, enabled: true },
+]
+
+const DEFAULT_INSTALLED_MCPS: InstalledMcp[] = [
+  { id: 'mcp-1', name: 'Filesystem', description: 'Read, write, and manage files in the workspace', status: 'connected' },
+  { id: 'mcp-2', name: 'GitHub', description: 'Interact with GitHub repositories, issues, and pull requests', status: 'connected' },
+  { id: 'mcp-3', name: 'PostgreSQL', description: 'Query and manage PostgreSQL databases', status: 'disconnected' },
+]
+
+const DEFAULT_MCPS_CATALOG: CatalogItem[] = [
+  { id: 'mc-1', name: 'Slack', description: 'Send messages and interact with Slack workspaces', registry: 'Official MCP Registry', installed: false },
+  { id: 'mc-2', name: 'Jira', description: 'Create and manage Jira issues and sprints', registry: 'Official MCP Registry', installed: false },
+  { id: 'mc-3', name: 'Kubernetes', description: 'Manage Kubernetes clusters, pods, and deployments', registry: 'Official MCP Registry', installed: false },
+  { id: 'mc-4', name: 'Redis', description: 'Interact with Redis caches and data stores', registry: 'Community MCP Registry', installed: false },
+  { id: 'mc-5', name: 'Elasticsearch', description: 'Search and manage Elasticsearch indices', registry: 'Community MCP Registry', installed: false },
+]
+
+const DEFAULT_MCP_REGISTRIES: Registry[] = [
+  { id: 'mr-1', name: 'Official MCP Registry', url: 'https://registry.modelcontextprotocol.io', itemCount: 42, enabled: true },
+  { id: 'mr-2', name: 'Community MCP Registry', url: 'https://mcp-community.example.com', itemCount: 89, enabled: true },
+]
+
+const MCP_STATUS_COLORS: Record<InstalledMcp['status'], 'green' | 'grey' | 'red'> = {
+  connected: 'green',
+  disconnected: 'grey',
+  error: 'red',
+}
+
 function TabHeader({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <div style={{ marginBottom: 16 }}>
@@ -101,8 +175,7 @@ function TabHeader({ title, subtitle }: { title: string; subtitle: string }) {
   )
 }
 
-export function UserPreferences() {
-  const [activeTab, setActiveTab] = useState<PreferencesTab>('container-registries')
+export function UserPreferences({ activeTab, onTabChange }: { activeTab: PreferencesTab; onTabChange: (tab: PreferencesTab) => void }) {
 
   const [registries, setRegistries] = useState<ContainerRegistry[]>([])
   const [showAddRegistry, setShowAddRegistry] = useState(false)
@@ -125,7 +198,7 @@ export function UserPreferences() {
   const [sshKeyName, setSSHKeyName] = useState('')
   const [sshKeyValue, setSSHKeyValue] = useState('')
 
-  const [skills, setSkills] = useState<Skill[]>([])
+  const [skills, setSkills] = useState<Skill[]>(DEFAULT_INSTALLED_SKILLS)
   const [showAddSkill, setShowAddSkill] = useState(false)
   const [showImportSkills, setShowImportSkills] = useState(false)
   const [skillName, setSkillName] = useState('')
@@ -134,6 +207,15 @@ export function UserPreferences() {
   const [rhdhInstanceUrl, setRhdhInstanceUrl] = useState('')
   const [rhdhConnected, setRhdhConnected] = useState(false)
   const [rhdhSelectedSkills, setRhdhSelectedSkills] = useState<Set<number>>(new Set())
+  const [skillsSubTab, setSkillsSubTab] = useState<'installed' | 'catalog' | 'registries'>('installed')
+  const [skillsCatalog, setSkillsCatalog] = useState<CatalogItem[]>(DEFAULT_SKILLS_CATALOG)
+  const [skillRegistries, setSkillRegistries] = useState<Registry[]>(DEFAULT_SKILL_REGISTRIES)
+
+  const [installedMcps, setInstalledMcps] = useState<InstalledMcp[]>(DEFAULT_INSTALLED_MCPS)
+  const [mcpsSubTab, setMcpsSubTab] = useState<'installed' | 'catalog' | 'registries'>('installed')
+  const [mcpsCatalog, setMcpsCatalog] = useState<CatalogItem[]>(DEFAULT_MCPS_CATALOG)
+  const [mcpRegistries, setMcpRegistries] = useState<Registry[]>(DEFAULT_MCP_REGISTRIES)
+  const [mcpMenuOpenId, setMcpMenuOpenId] = useState<string | null>(null)
 
   const resetRegistryForm = () => {
     setRegRegistry('')
@@ -238,6 +320,40 @@ export function UserPreferences() {
     setSkills(prev => prev.filter(s => s.id !== id))
   }
 
+  const handleInstallSkillFromCatalog = (item: CatalogItem) => {
+    setSkills(prev => [...prev, {
+      id: String(Date.now()),
+      name: item.name,
+      description: item.description,
+      source: 'catalog',
+      registry: item.registry,
+    }])
+    setSkillsCatalog(prev => prev.map(c => c.id === item.id ? { ...c, installed: true } : c))
+  }
+
+  const handleToggleSkillRegistry = (id: string, enabled: boolean) => {
+    setSkillRegistries(prev => prev.map(r => r.id === id ? { ...r, enabled } : r))
+  }
+
+  const handleInstallMcpFromCatalog = (item: CatalogItem) => {
+    setInstalledMcps(prev => [...prev, {
+      id: String(Date.now()),
+      name: item.name,
+      description: item.description,
+      status: 'connected',
+      registry: item.registry,
+    }])
+    setMcpsCatalog(prev => prev.map(c => c.id === item.id ? { ...c, installed: true } : c))
+  }
+
+  const handleDeleteMcp = (id: string) => {
+    setInstalledMcps(prev => prev.filter(m => m.id !== id))
+  }
+
+  const handleToggleMcpRegistry = (id: string, enabled: boolean) => {
+    setMcpRegistries(prev => prev.map(r => r.id === id ? { ...r, enabled } : r))
+  }
+
   const resetRhdhForm = () => {
     setRhdhInstanceUrl('')
     setRhdhConnected(false)
@@ -270,6 +386,78 @@ export function UserPreferences() {
 
   const allTokensSelected = tokens.length > 0 && selectedTokenIds.size === tokens.length
 
+  const renderCatalogTable = (
+    catalog: CatalogItem[],
+    onInstall: (item: CatalogItem) => void,
+    label: string,
+  ) => (
+    <Table aria-label={`${label} catalog`} variant="compact">
+      <Thead>
+        <Tr>
+          <Th width={25}>Name</Th>
+          <Th width={35}>Description</Th>
+          <Th width={20}>Registry</Th>
+          <Th width={20} screenReaderText="Actions" />
+        </Tr>
+      </Thead>
+      <Tbody>
+        {catalog.map(item => (
+          <Tr key={item.id}>
+            <Td dataLabel="Name">{item.name}</Td>
+            <Td dataLabel="Description">{item.description}</Td>
+            <Td dataLabel="Registry">
+              <Label isCompact color="blue">{item.registry}</Label>
+            </Td>
+            <Td isActionCell>
+              <Button
+                variant={item.installed ? 'secondary' : 'primary'}
+                size="sm"
+                isDisabled={item.installed}
+                onClick={() => onInstall(item)}
+              >
+                {item.installed ? 'Installed' : 'Install'}
+              </Button>
+            </Td>
+          </Tr>
+        ))}
+      </Tbody>
+    </Table>
+  )
+
+  const renderRegistriesTable = (
+    regs: Registry[],
+    onToggle: (id: string, enabled: boolean) => void,
+    label: string,
+  ) => (
+    <Table aria-label={`${label} registries`} variant="compact">
+      <Thead>
+        <Tr>
+          <Th width={25}>Name</Th>
+          <Th width={35}>URL</Th>
+          <Th width={20}>Items</Th>
+          <Th width={20}>Enabled</Th>
+        </Tr>
+      </Thead>
+      <Tbody>
+        {regs.map(reg => (
+          <Tr key={reg.id}>
+            <Td dataLabel="Name">{reg.name}</Td>
+            <Td dataLabel="URL" style={{ fontFamily: 'monospace', fontSize: 13 }}>{reg.url}</Td>
+            <Td dataLabel="Items">{reg.itemCount}</Td>
+            <Td dataLabel="Enabled">
+              <Switch
+                id={`registry-switch-${reg.id}`}
+                isChecked={reg.enabled}
+                onChange={(_e, checked) => onToggle(reg.id, checked)}
+                aria-label={`Toggle ${reg.name}`}
+              />
+            </Td>
+          </Tr>
+        ))}
+      </Tbody>
+    </Table>
+  )
+
   return (
     <>
       <PageSection hasBodyWrapper={false} style={{ paddingBottom: 0 }}>
@@ -279,7 +467,7 @@ export function UserPreferences() {
       <PageSection hasBodyWrapper={false} style={{ paddingTop: 16 }}>
         <div style={{ display: 'flex', gap: 24 }}>
           <Nav
-            onSelect={(_event, result) => setActiveTab(result.itemId as PreferencesTab)}
+            onSelect={(_event, result) => onTabChange(result.itemId as PreferencesTab)}
             aria-label="User preferences navigation"
             style={{ minWidth: 240, flexShrink: 0 }}
           >
@@ -291,9 +479,9 @@ export function UserPreferences() {
               <NavItem itemId="ssh-keys" isActive={activeTab === 'ssh-keys'} icon={<KeyIcon />}>SSH Keys</NavItem>
             </NavGroup>
             <NavGroup title="AI">
-              <NavItem itemId="ai-skills" isActive={activeTab === 'ai-skills'} icon={<AutomationIcon />}>Skills</NavItem>
-              <NavItem itemId="ai-mcps" isActive={activeTab === 'ai-mcps'} icon={<PluggedIcon />}>MCPs</NavItem>
-              <NavItem itemId="ai-agent-configurations" isActive={activeTab === 'ai-agent-configurations'} icon={<RobotIcon />}>Agent Configurations</NavItem>
+              <NavItem itemId="skills" isActive={activeTab === 'skills'} icon={<AutomationIcon />}>Skills</NavItem>
+              <NavItem itemId="mcps" isActive={activeTab === 'mcps'} icon={<PluggedIcon />}>MCPs</NavItem>
+              <NavItem itemId="agent-configurations" isActive={activeTab === 'agent-configurations'} icon={<RobotIcon />}>Agent Configurations</NavItem>
             </NavGroup>
           </Nav>
 
@@ -488,101 +676,186 @@ export function UserPreferences() {
           </>
         )}
 
-        {activeTab === 'ai-skills' && (
+        {activeTab === 'skills' && (
           <>
             <TabHeader title="Skills" subtitle="Skills configured here will be available in every AI agent across all your workspaces." />
-              {skills.length === 0 ? (
-                <EmptyState headingLevel="h3" icon={AutomationIcon} titleText="No Skills configured">
-                  <EmptyStateFooter>
-                    <EmptyStateActions>
-                      <Button variant="link" icon={<PlusCircleIcon />} onClick={() => setShowAddSkill(true)}>
-                        Add Skill
-                      </Button>
-                      <Button variant="link" onClick={() => setShowImportSkills(true)}>
-                        Import from Red Hat Developer Hub
-                      </Button>
-                    </EmptyStateActions>
-                  </EmptyStateFooter>
-                </EmptyState>
-              ) : (
-                <>
-                  <Toolbar>
-                    <ToolbarContent>
-                      <ToolbarItem style={{ marginLeft: 'auto' }}>
-                        <Button variant="link" icon={<PlusCircleIcon />} onClick={() => setShowAddSkill(true)}>
-                          Add Skill
-                        </Button>
-                      </ToolbarItem>
-                      <ToolbarItem>
-                        <Button variant="link" onClick={() => setShowImportSkills(true)}>
-                          Import from RHDH
-                        </Button>
-                      </ToolbarItem>
-                    </ToolbarContent>
-                  </Toolbar>
-                  <Table aria-label="Skills table" variant="compact">
-                    <Thead>
-                      <Tr>
-                        <Th width={25}>Name</Th>
-                        <Th width={35}>Description</Th>
-                        <Th width={15}>Source</Th>
-                        <Th width={15}>Instance</Th>
-                        <Th width={10} screenReaderText="Actions" />
-                      </Tr>
-                    </Thead>
-                    <Tbody>
-                      {skills.map(skill => (
-                        <Tr key={skill.id}>
-                          <Td dataLabel="Name">{skill.name}</Td>
-                          <Td dataLabel="Description">{skill.description}</Td>
-                          <Td dataLabel="Source">
-                            <Label isCompact color={skill.source === 'rhdh' ? 'blue' : 'grey'}>
-                              {skill.source === 'rhdh' ? 'RHDH' : 'Manual'}
-                            </Label>
-                          </Td>
-                          <Td dataLabel="Instance">{skill.rhdhInstance || '—'}</Td>
-                          <Td isActionCell>
-                            <Dropdown
-                              isOpen={skillMenuOpenId === skill.id}
-                              onSelect={() => setSkillMenuOpenId(null)}
-                              onOpenChange={open => { if (!open) setSkillMenuOpenId(null) }}
-                              toggle={(toggleRef) => (
-                                <MenuToggle
-                                  ref={toggleRef}
-                                  variant="plain"
-                                  onClick={() => setSkillMenuOpenId(skillMenuOpenId === skill.id ? null : skill.id)}
-                                  isExpanded={skillMenuOpenId === skill.id}
-                                  aria-label="Skill actions"
+            <Tabs activeKey={skillsSubTab} onSelect={(_e, key) => setSkillsSubTab(key as typeof skillsSubTab)} style={{ marginBottom: 16 }}>
+              <Tab eventKey="installed" title={<TabTitleText>Installed ({skills.length})</TabTitleText>}>
+                <div style={{ paddingTop: 16 }}>
+                  {skills.length === 0 ? (
+                    <EmptyState headingLevel="h3" icon={AutomationIcon} titleText="No Skills installed">
+                      <EmptyStateFooter>
+                        <EmptyStateActions>
+                          <Button variant="link" icon={<PlusCircleIcon />} onClick={() => setShowAddSkill(true)}>
+                            Add Skill
+                          </Button>
+                          <Button variant="link" onClick={() => setShowImportSkills(true)}>
+                            Import from Red Hat Developer Hub
+                          </Button>
+                        </EmptyStateActions>
+                      </EmptyStateFooter>
+                    </EmptyState>
+                  ) : (
+                    <>
+                      <Toolbar>
+                        <ToolbarContent>
+                          <ToolbarItem style={{ marginLeft: 'auto' }}>
+                            <Button variant="link" icon={<PlusCircleIcon />} onClick={() => setShowAddSkill(true)}>
+                              Add Skill
+                            </Button>
+                          </ToolbarItem>
+                          <ToolbarItem>
+                            <Button variant="link" onClick={() => setShowImportSkills(true)}>
+                              Import from RHDH
+                            </Button>
+                          </ToolbarItem>
+                        </ToolbarContent>
+                      </Toolbar>
+                      <Table aria-label="Installed skills" variant="compact">
+                        <Thead>
+                          <Tr>
+                            <Th width={25}>Name</Th>
+                            <Th width={35}>Description</Th>
+                            <Th width={15}>Source</Th>
+                            <Th width={15}>Instance</Th>
+                            <Th width={10} screenReaderText="Actions" />
+                          </Tr>
+                        </Thead>
+                        <Tbody>
+                          {skills.map(skill => (
+                            <Tr key={skill.id}>
+                              <Td dataLabel="Name">{skill.name}</Td>
+                              <Td dataLabel="Description">{skill.description}</Td>
+                              <Td dataLabel="Source">
+                                <Label isCompact color={skill.source === 'rhdh' ? 'blue' : skill.source === 'catalog' ? 'purple' : 'grey'}>
+                                  {skill.source === 'rhdh' ? 'RHDH' : skill.source === 'catalog' ? 'Catalog' : 'Manual'}
+                                </Label>
+                              </Td>
+                              <Td dataLabel="Instance">{skill.rhdhInstance || skill.registry || '—'}</Td>
+                              <Td isActionCell>
+                                <Dropdown
+                                  isOpen={skillMenuOpenId === skill.id}
+                                  onSelect={() => setSkillMenuOpenId(null)}
+                                  onOpenChange={open => { if (!open) setSkillMenuOpenId(null) }}
+                                  toggle={(toggleRef) => (
+                                    <MenuToggle
+                                      ref={toggleRef}
+                                      variant="plain"
+                                      onClick={() => setSkillMenuOpenId(skillMenuOpenId === skill.id ? null : skill.id)}
+                                      isExpanded={skillMenuOpenId === skill.id}
+                                      aria-label="Skill actions"
+                                    >
+                                      <EllipsisVIcon />
+                                    </MenuToggle>
+                                  )}
+                                  popperProps={{ position: 'right' }}
                                 >
-                                  <EllipsisVIcon />
-                                </MenuToggle>
-                              )}
-                              popperProps={{ position: 'right' }}
-                            >
-                              <DropdownList>
-                                <DropdownItem key="delete" onClick={() => handleDeleteSkill(skill.id)}>
-                                  Delete
-                                </DropdownItem>
-                              </DropdownList>
-                            </Dropdown>
-                          </Td>
-                        </Tr>
-                      ))}
-                    </Tbody>
-                  </Table>
-                </>
-              )}
+                                  <DropdownList>
+                                    <DropdownItem key="delete" onClick={() => handleDeleteSkill(skill.id)}>
+                                      Delete
+                                    </DropdownItem>
+                                  </DropdownList>
+                                </Dropdown>
+                              </Td>
+                            </Tr>
+                          ))}
+                        </Tbody>
+                      </Table>
+                    </>
+                  )}
+                </div>
+              </Tab>
+              <Tab eventKey="catalog" title={<TabTitleText>Catalog</TabTitleText>}>
+                <div style={{ paddingTop: 16 }}>
+                  {renderCatalogTable(skillsCatalog, handleInstallSkillFromCatalog, 'Skills')}
+                </div>
+              </Tab>
+              <Tab eventKey="registries" title={<TabTitleText>Registries</TabTitleText>}>
+                <div style={{ paddingTop: 16 }}>
+                  {renderRegistriesTable(skillRegistries, handleToggleSkillRegistry, 'Skills')}
+                </div>
+              </Tab>
+            </Tabs>
           </>
         )}
 
-        {activeTab === 'ai-mcps' && (
+        {activeTab === 'mcps' && (
           <>
-          <TabHeader title="MCPs" subtitle="Connect Model Context Protocol servers to extend AI agent capabilities." />
-          <EmptyState headingLevel="h3" icon={PluggedIcon} titleText="No MCPs configured" />
+            <TabHeader title="MCPs" subtitle="Connect Model Context Protocol servers to extend AI agent capabilities." />
+            <Tabs activeKey={mcpsSubTab} onSelect={(_e, key) => setMcpsSubTab(key as typeof mcpsSubTab)} style={{ marginBottom: 16 }}>
+              <Tab eventKey="installed" title={<TabTitleText>Installed ({installedMcps.length})</TabTitleText>}>
+                <div style={{ paddingTop: 16 }}>
+                  {installedMcps.length === 0 ? (
+                    <EmptyState headingLevel="h3" icon={PluggedIcon} titleText="No MCPs installed" />
+                  ) : (
+                    <Table aria-label="Installed MCPs" variant="compact">
+                      <Thead>
+                        <Tr>
+                          <Th width={20}>Name</Th>
+                          <Th width={40}>Description</Th>
+                          <Th width={15}>Status</Th>
+                          <Th width={15}>Registry</Th>
+                          <Th width={10} screenReaderText="Actions" />
+                        </Tr>
+                      </Thead>
+                      <Tbody>
+                        {installedMcps.map(mcp => (
+                          <Tr key={mcp.id}>
+                            <Td dataLabel="Name">{mcp.name}</Td>
+                            <Td dataLabel="Description">{mcp.description}</Td>
+                            <Td dataLabel="Status">
+                              <Label isCompact color={MCP_STATUS_COLORS[mcp.status]}>
+                                {mcp.status.charAt(0).toUpperCase() + mcp.status.slice(1)}
+                              </Label>
+                            </Td>
+                            <Td dataLabel="Registry">{mcp.registry || '—'}</Td>
+                            <Td isActionCell>
+                              <Dropdown
+                                isOpen={mcpMenuOpenId === mcp.id}
+                                onSelect={() => setMcpMenuOpenId(null)}
+                                onOpenChange={open => { if (!open) setMcpMenuOpenId(null) }}
+                                toggle={(toggleRef) => (
+                                  <MenuToggle
+                                    ref={toggleRef}
+                                    variant="plain"
+                                    onClick={() => setMcpMenuOpenId(mcpMenuOpenId === mcp.id ? null : mcp.id)}
+                                    isExpanded={mcpMenuOpenId === mcp.id}
+                                    aria-label="MCP actions"
+                                  >
+                                    <EllipsisVIcon />
+                                  </MenuToggle>
+                                )}
+                                popperProps={{ position: 'right' }}
+                              >
+                                <DropdownList>
+                                  <DropdownItem key="delete" onClick={() => handleDeleteMcp(mcp.id)}>
+                                    Remove
+                                  </DropdownItem>
+                                </DropdownList>
+                              </Dropdown>
+                            </Td>
+                          </Tr>
+                        ))}
+                      </Tbody>
+                    </Table>
+                  )}
+                </div>
+              </Tab>
+              <Tab eventKey="catalog" title={<TabTitleText>Catalog</TabTitleText>}>
+                <div style={{ paddingTop: 16 }}>
+                  {renderCatalogTable(mcpsCatalog, handleInstallMcpFromCatalog, 'MCPs')}
+                </div>
+              </Tab>
+              <Tab eventKey="registries" title={<TabTitleText>Registries</TabTitleText>}>
+                <div style={{ paddingTop: 16 }}>
+                  {renderRegistriesTable(mcpRegistries, handleToggleMcpRegistry, 'MCPs')}
+                </div>
+              </Tab>
+            </Tabs>
           </>
         )}
 
-        {activeTab === 'ai-agent-configurations' && (
+        {activeTab === 'agent-configurations' && (
           <>
           <TabHeader title="Agent Configurations" subtitle="Define and manage AI agent configurations for your workspaces." />
           <EmptyState headingLevel="h3" icon={RobotIcon} titleText="No Agent Configurations" />
