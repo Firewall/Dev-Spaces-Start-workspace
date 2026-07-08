@@ -44,14 +44,23 @@ const RECENT_WORKSPACES = [
   { id: '2', name: 'dev-spaces-start-workspace', status: 'stopped' as const },
 ]
 
-const VALID_ROUTES = new Set(['workspaces', 'create-workspace', 'user-preferences'])
+const VALID_PREF_TABS = new Set([
+  'container-registries', 'git-services', 'personal-access-tokens',
+  'gitconfig', 'ssh-keys', 'skills', 'mcps', 'agent-configurations',
+])
 
 const THEME_STORAGE_KEY = 'dev-spaces-theme'
 const DARK_THEME_CLASS = 'pf-v6-theme-dark'
 
 function getRouteFromHash(): string {
   const route = window.location.hash.replace('#/', '').replace('#', '')
-  return VALID_ROUTES.has(route) ? route : 'workspaces'
+  if (route === 'workspaces' || route === 'create-workspace') return route
+  if (route.startsWith('user-preferences')) {
+    const tab = route.split('/')[1]
+    if (tab && VALID_PREF_TABS.has(tab)) return route
+    return 'user-preferences/container-registries'
+  }
+  return 'workspaces'
 }
 
 export default function App() {
@@ -99,13 +108,10 @@ export default function App() {
       document.title = 'Sign In - Dev Spaces'
       return
     }
-    document.title = activePage === 'workspaces'
-      ? 'Workspaces - Dev Spaces'
-      : activePage === 'create-workspace'
-        ? 'Create Workspace - Dev Spaces'
-        : activePage === 'user-preferences'
-          ? 'User Preferences - Dev Spaces'
-          : 'Dev Spaces'
+    if (activePage === 'workspaces') document.title = 'Workspaces - Dev Spaces'
+    else if (activePage === 'create-workspace') document.title = 'Create Workspace - Dev Spaces'
+    else if (activePage.startsWith('user-preferences')) document.title = 'User Preferences - Dev Spaces'
+    else document.title = 'Dev Spaces'
   }, [activePage, signedIn])
 
   const masthead = (
@@ -131,7 +137,7 @@ export default function App() {
             isOpen={profileMenuOpen}
             onSelect={(_event, value) => {
               setProfileMenuOpen(false)
-              if (value === 'user-prefs') setActivePage('user-preferences')
+              if (value === 'user-prefs') setActivePage('user-preferences/container-registries')
               if (value === 'logout') setSignedIn(false)
             }}
             onOpenChange={setProfileMenuOpen}
@@ -243,8 +249,11 @@ export default function App() {
   return (
     <Page masthead={masthead} sidebar={sidebar}>
       {signedIn ? (
-        activePage === 'user-preferences' ? (
-          <UserPreferences />
+        activePage.startsWith('user-preferences') ? (
+          <UserPreferences
+            activeTab={(activePage.split('/')[1] || 'container-registries') as import('./components/UserPreferences').PreferencesTab}
+            onTabChange={(tab) => setActivePage(`user-preferences/${tab}`)}
+          />
         ) : activePage === 'create-workspace' ? (
           phase === 'phase1' ? (
             <CreateWorkspacePhase1 phase={phase} onPhaseChange={setPhase} />
