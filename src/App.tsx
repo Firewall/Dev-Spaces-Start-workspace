@@ -9,6 +9,7 @@ import {
   MastheadBrand,
   MastheadContent,
   MastheadMain,
+  MastheadToggle,
   MenuToggle,
   Nav,
   NavGroup,
@@ -18,18 +19,20 @@ import {
   PageSection,
   PageSidebar,
   PageSidebarBody,
+  PageToggleButton,
   ToggleGroup,
   ToggleGroupItem,
 } from '@patternfly/react-core'
 import {
+  BarsIcon,
   DesktopIcon,
   MoonIcon,
-  OutlinedQuestionCircleIcon,
   RunningIcon,
   SunIcon,
-  ThLargeIcon,
   UserIcon,
 } from '@patternfly/react-icons'
+import { AgentSpace } from './components/AgentSpace'
+import { AgentSpaceV2 } from './components/AgentSpaceV2'
 import { CreateWorkspaceSplitTab } from './components/CreateWorkspaceSplitTab'
 import { UserPreferences } from './components/UserPreferences'
 import { WorkspaceList } from './components/WorkspaceList'
@@ -70,6 +73,7 @@ export default function App() {
   const [username] = useState('jane.doe')
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [activePage, setActivePage] = useState(getRouteFromHash)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [phase, setPhase] = useState<Phase>(() => {
     const saved = window.localStorage.getItem(PHASE_STORAGE_KEY)
     return saved === 'phase1' || saved === 'phase2' ? saved : 'phase1'
@@ -117,24 +121,29 @@ export default function App() {
   }, [activePage, signedIn])
 
   const masthead = (
-    <Masthead>
+    <Masthead style={{ alignItems: 'center' }}>
       <MastheadMain>
-        <MastheadBrand>
+        <MastheadToggle>
+          <PageToggleButton
+            variant="plain"
+            aria-label="Global navigation"
+            isSidebarOpen={isSidebarOpen}
+            onSidebarToggle={() => setIsSidebarOpen((o) => !o)}
+          >
+            <BarsIcon />
+          </PageToggleButton>
+        </MastheadToggle>
+        <MastheadBrand style={{ alignItems: 'center' }}>
           <img
             src={`${import.meta.env.BASE_URL}icon.png`}
             alt="Dev Spaces"
             style={{ height: 36, borderRadius: 8 }}
           />
+          <span style={{ marginLeft: 12, fontSize: 18, fontWeight: 600 }}>Dev Spaces</span>
         </MastheadBrand>
       </MastheadMain>
       <MastheadContent>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto' }}>
-          <Button variant="plain" aria-label="Applications">
-            <ThLargeIcon />
-          </Button>
-          <Button variant="plain" aria-label="Help">
-            <OutlinedQuestionCircleIcon />
-          </Button>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', width: '100%' }}>
           <Dropdown
             isOpen={profileMenuOpen}
             onSelect={(_event, value) => {
@@ -216,7 +225,7 @@ export default function App() {
   )
 
   const sidebar = (
-    <PageSidebar>
+    <PageSidebar isSidebarOpen={isSidebarOpen} style={{ '--pf-v6-c-page__sidebar--Width--base': '5rem' } as React.CSSProperties}>
       <PageSidebarBody>
         <Nav onSelect={(_event, result) => {
           setActivePage(result.itemId as string)
@@ -249,9 +258,13 @@ export default function App() {
   )
 
   return (
-    <Page masthead={masthead} sidebar={sidebar}>
+    <Page masthead={masthead} sidebar={sidebar} isContentFilled>
       {signedIn ? (
-        activePage.startsWith('user-preferences') ? (
+        activePage === 'agent-space' ? (
+          <AgentSpace />
+        ) : activePage === 'agent-space-v2' ? (
+          <AgentSpaceV2 />
+        ) : activePage.startsWith('user-preferences') ? (
           <UserPreferences
             activeTab={(activePage.split('/')[1] || 'container-registries') as import('./components/UserPreferences').PreferencesTab}
             onTabChange={(tab) => setActivePage(`user-preferences/${tab}`)}
