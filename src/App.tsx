@@ -30,8 +30,7 @@ import {
   ThLargeIcon,
   UserIcon,
 } from '@patternfly/react-icons'
-import { CreateWorkspace } from './components/CreateWorkspace'
-import { CreateWorkspacePhase1 } from './components/CreateWorkspacePhase1'
+import { CreateWorkspaceSplitTab } from './components/CreateWorkspaceSplitTab'
 import { UserPreferences } from './components/UserPreferences'
 import { WorkspaceList } from './components/WorkspaceList'
 
@@ -258,11 +257,7 @@ export default function App() {
             onTabChange={(tab) => setActivePage(`user-preferences/${tab}`)}
           />
         ) : activePage === 'create-workspace' ? (
-          phase === 'phase1' ? (
-            <CreateWorkspacePhase1 phase={phase} onPhaseChange={setPhase} />
-          ) : (
-            <CreateWorkspace phase={phase} onPhaseChange={setPhase} />
-          )
+          <CreateWorkspaceSplitTab phase={phase} onPhaseChange={setPhase} />
         ) : (
           <WorkspaceList
             onCreateWorkspace={() => setActivePage('create-workspace')}
