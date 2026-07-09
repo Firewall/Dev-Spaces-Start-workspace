@@ -714,7 +714,7 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
         )}
 
         {mode === 'repo' && (
-          <div style={{ maxWidth: 900, overflowY: 'auto', padding: 'var(--pf-t--global--spacer--lg)' }}>
+          <div style={{ width: 600, overflowY: 'auto', padding: 'var(--pf-t--global--spacer--lg)' }}>
             <Form onSubmit={handleSubmit}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--pf-t--global--spacer--lg)' }}>
                 {isPhase2 && (

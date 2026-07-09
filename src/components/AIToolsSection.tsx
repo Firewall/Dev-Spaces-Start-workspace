@@ -1,15 +1,21 @@
 import { useState } from 'react'
 import {
   MenuToggle,
+  Popover,
   Select,
   SelectList,
   SelectOption,
+  Switch,
   Label,
+  TextInput,
 } from '@patternfly/react-core'
 import {
   CheckIcon,
+  CogIcon,
+  ExternalLinkAltIcon,
   PlusCircleIcon,
   StarIcon,
+  TimesCircleIcon,
 } from '@patternfly/react-icons'
 import { BrandIcon } from './BrandIcons'
 import { hasBrandIcon } from './brandIconData'
@@ -20,6 +26,13 @@ interface AITool {
   description: string
   authenticated: boolean
 }
+
+export interface AIToolConfig {
+  autoStart: boolean
+  args: string
+}
+
+const DEFAULT_CONFIG: AIToolConfig = { autoStart: true, args: '' }
 
 const AVAILABLE_TOOLS: AITool[] = [
   { id: 'claude-code', name: 'Claude Code', description: 'Anthropic AI coding agent', authenticated: true },
@@ -36,6 +49,15 @@ interface AIToolsSectionProps {
 
 export function AIToolsSection({ selected, onChange }: AIToolsSectionProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [configs, setConfigs] = useState<Record<string, AIToolConfig>>({})
+
+  function getConfig(id: string): AIToolConfig {
+    return configs[id] ?? DEFAULT_CONFIG
+  }
+
+  function updateConfig(id: string, patch: Partial<AIToolConfig>) {
+    setConfigs((prev) => ({ ...prev, [id]: { ...getConfig(id), ...patch } }))
+  }
 
   function toggle(id: string) {
     onChange(
@@ -51,16 +73,81 @@ export function AIToolsSection({ selected, onChange }: AIToolsSectionProps) {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-      {selectedTools.map((tool) => (
-        <Label
-          key={tool.id}
-          onClose={() => remove(tool.id)}
-          icon={hasBrandIcon(tool.id) ? <BrandIcon id={tool.id} size={14} /> : <StarIcon />}
-          style={{ height: 36, display: 'inline-flex', alignItems: 'center', padding: '0 12px', fontSize: '14px' }}
-        >
-          {tool.name}
-        </Label>
-      ))}
+      {selectedTools.map((tool) => {
+        const cfg = getConfig(tool.id)
+        return (
+          <Label
+            key={tool.id}
+            onClose={() => remove(tool.id)}
+            icon={hasBrandIcon(tool.id) ? <BrandIcon id={tool.id} size={14} /> : <StarIcon />}
+            style={{ height: 36, display: 'inline-flex', alignItems: 'center', padding: '0 12px', fontSize: '14px' }}
+          >
+            {tool.name}
+            <Popover
+              headerContent={`Configure ${tool.name}`}
+              bodyContent={
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 240 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
+                      {tool.authenticated ? (
+                        <>
+                          <CheckIcon color="var(--pf-v6-global--success-color--100, green)" />
+                          Authenticated
+                        </>
+                      ) : (
+                        <>
+                          <TimesCircleIcon color="var(--pf-v6-global--danger-color--100, #c9190b)" />
+                          Not authenticated
+                        </>
+                      )}
+                    </span>
+                    <a
+                      href="#/user-preferences/agent-configurations"
+                      style={{ fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                    >
+                      Manage <ExternalLinkAltIcon style={{ fontSize: 11 }} />
+                    </a>
+                  </div>
+                  <Switch
+                    id={`${tool.id}-autostart`}
+                    label="Auto-start with workspace"
+                    isChecked={cfg.autoStart}
+                    onChange={(_e, checked) => updateConfig(tool.id, { autoStart: checked })}
+                  />
+                  <div>
+                    <label htmlFor={`${tool.id}-args`} style={{ display: 'block', marginBottom: 4, fontSize: 13 }}>
+                      Custom arguments
+                    </label>
+                    <TextInput
+                      id={`${tool.id}-args`}
+                      value={cfg.args}
+                      onChange={(_e, val) => updateConfig(tool.id, { args: val })}
+                      placeholder="e.g. --flag=value"
+                    />
+                  </div>
+                </div>
+              }
+            >
+              <button
+                type="button"
+                aria-label={`Configure ${tool.name}`}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '0 0 0 6px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  color: 'var(--pf-v6-global--Color--200, #6a6e73)',
+                }}
+              >
+                <CogIcon style={{ fontSize: 12 }} />
+              </button>
+            </Popover>
+          </Label>
+        )
+      })}
 
       <Select
         isOpen={isOpen}
