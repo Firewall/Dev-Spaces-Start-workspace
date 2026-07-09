@@ -714,7 +714,7 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
         )}
 
         {mode === 'repo' && (
-          <div style={{ maxWidth: 700, overflowY: 'auto', padding: 'var(--pf-t--global--spacer--lg)' }}>
+          <div style={{ maxWidth: 900, overflowY: 'auto', padding: 'var(--pf-t--global--spacer--lg)' }}>
             <Form onSubmit={handleSubmit}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--pf-t--global--spacer--lg)' }}>
                 {isPhase2 && (
@@ -733,7 +733,6 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
                 )}
 
                 <FormGroup fieldId="repo-url" label="Git Repository URL" isRequired>
-                  {isPhase2 ? (
                     <Split hasGutter>
                       <SplitItem isFilled>
                         <TextInput
@@ -752,15 +751,6 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
                         />
                       </SplitItem>
                     </Split>
-                  ) : (
-                    <TextInput
-                      id="repo-url"
-                      aria-label="HTTPS or SSH URL"
-                      placeholder="Enter HTTPS or SSH URL"
-                      value={repoUrl}
-                      onChange={handleRepoChange}
-                    />
-                  )}
                   {isDuplicate && (
                     <Alert
                       variant="warning"
