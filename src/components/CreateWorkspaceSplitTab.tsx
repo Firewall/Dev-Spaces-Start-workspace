@@ -353,20 +353,18 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
             >
               <Form onSubmit={handleSubmit}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--pf-t--global--spacer--lg)' }}>
-                  {isPhase2 && (
-                    <FormGroup
-                      label="Workspace Name"
-                      fieldId="workspace-name"
-                      labelHelp={<FieldHelp text="A human-readable name for your workspace. Auto-generated from the template if left blank." />}
-                    >
-                      <TextInput
-                        id="workspace-name"
-                        value={name}
-                        onChange={handleNameChange}
-                        placeholder="my-project"
-                      />
-                    </FormGroup>
-                  )}
+                  <FormGroup
+                    label="Workspace Name"
+                    fieldId="workspace-name"
+                    labelHelp={<FieldHelp text="A human-readable name for your workspace. Auto-generated from the template if left blank." />}
+                  >
+                    <TextInput
+                      id="workspace-name"
+                      value={name}
+                      onChange={handleNameChange}
+                      placeholder="my-project"
+                    />
+                  </FormGroup>
 
                   <FormGroup label="Template" fieldId="select-template">
                     {selectedTemplateObj ? (
