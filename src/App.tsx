@@ -46,8 +46,7 @@ const RECENT_WORKSPACES = [
 const VALID_PREF_TABS = new Set([
   'container-registries', 'git-services', 'personal-access-tokens',
   'gitconfig', 'ssh-keys',
-  'skills-installed', 'skills-catalog', 'skills-registries',
-  'mcps-installed', 'mcps-catalog', 'mcps-registries',
+  'skills', 'mcps',
   'agent-configurations',
 ])
 

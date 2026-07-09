@@ -18,11 +18,13 @@ import {
   ModalFooter,
   ModalHeader,
   Nav,
-  NavExpandable,
   NavGroup,
   NavItem,
   PageSection,
   Switch,
+  Tab,
+  Tabs,
+  TabTitleText,
   TextArea,
   TextInput,
   Title,
@@ -63,8 +65,7 @@ import {
 
 export type PreferencesTab =
   | 'container-registries' | 'git-services' | 'personal-access-tokens' | 'gitconfig' | 'ssh-keys'
-  | 'skills-installed' | 'skills-catalog' | 'skills-registries'
-  | 'mcps-installed' | 'mcps-catalog' | 'mcps-registries'
+  | 'skills' | 'mcps'
   | 'agent-configurations'
 
 interface ContainerRegistry {
@@ -214,7 +215,13 @@ function TabHeader({ title, subtitle, action }: { title: string; subtitle: strin
   )
 }
 
+type SkillsSubTab = 'installed' | 'catalog' | 'registries'
+type McpsSubTab = 'installed' | 'catalog' | 'registries'
+
 export function UserPreferences({ activeTab, onTabChange }: { activeTab: PreferencesTab; onTabChange: (tab: PreferencesTab) => void }) {
+
+  const [skillsSubTab, setSkillsSubTab] = useState<SkillsSubTab>('installed')
+  const [mcpsSubTab, setMcpsSubTab] = useState<McpsSubTab>('installed')
 
   const [registries, setRegistries] = useState<ContainerRegistry[]>([])
   const [showAddRegistry, setShowAddRegistry] = useState(false)
@@ -550,16 +557,8 @@ export function UserPreferences({ activeTab, onTabChange }: { activeTab: Prefere
               <NavItem itemId="ssh-keys" isActive={activeTab === 'ssh-keys'} icon={<KeyIcon />}>SSH Keys</NavItem>
             </NavGroup>
             <NavGroup title="AI">
-              <NavExpandable title={<><AutomationIcon style={{ marginRight: 8 }} />Skills</>} isActive={activeTab.startsWith('skills-')} isExpanded>
-                <NavItem itemId="skills-installed" isActive={activeTab === 'skills-installed'}>Installed ({skills.length})</NavItem>
-                <NavItem itemId="skills-catalog" isActive={activeTab === 'skills-catalog'}>Catalog</NavItem>
-                <NavItem itemId="skills-registries" isActive={activeTab === 'skills-registries'}>Registries</NavItem>
-              </NavExpandable>
-              <NavExpandable title={<><PluggedIcon style={{ marginRight: 8 }} />MCPs</>} isActive={activeTab.startsWith('mcps-')} isExpanded>
-                <NavItem itemId="mcps-installed" isActive={activeTab === 'mcps-installed'}>Installed ({installedMcps.length})</NavItem>
-                <NavItem itemId="mcps-catalog" isActive={activeTab === 'mcps-catalog'}>Catalog</NavItem>
-                <NavItem itemId="mcps-registries" isActive={activeTab === 'mcps-registries'}>Registries</NavItem>
-              </NavExpandable>
+              <NavItem itemId="skills" isActive={activeTab === 'skills'} icon={<AutomationIcon />}>Skills</NavItem>
+              <NavItem itemId="mcps" isActive={activeTab === 'mcps'} icon={<PluggedIcon />}>MCPs</NavItem>
               <NavItem itemId="agent-configurations" isActive={activeTab === 'agent-configurations'} icon={<RobotIcon />}>Agent Configurations</NavItem>
             </NavGroup>
           </Nav>
@@ -755,25 +754,31 @@ export function UserPreferences({ activeTab, onTabChange }: { activeTab: Prefere
           </>
         )}
 
-        {activeTab === 'skills-installed' && (
+        {activeTab === 'skills' && (
           <>
             <TabHeader
-              title="Installed Skills"
+              title="Skills"
               subtitle="Skills configured here will be available in every AI agent across all your workspaces."
-              action={<Button variant="secondary" icon={<PlusCircleIcon />} onClick={() => setShowAddSkill(true)}>Add Skill</Button>}
+              action={skillsSubTab === 'installed' ? <Button variant="secondary" icon={<PlusCircleIcon />} onClick={() => setShowAddSkill(true)}>Add Skill</Button> : undefined}
             />
-            {skills.length === 0 ? (
-              <EmptyState headingLevel="h3" icon={AutomationIcon} titleText="No Skills installed">
-                <EmptyStateFooter>
-                  <EmptyStateActions>
-                    <Button variant="link" icon={<PlusCircleIcon />} onClick={() => setShowAddSkill(true)}>
-                      Add Skill
-                    </Button>
-                  </EmptyStateActions>
-                </EmptyStateFooter>
-              </EmptyState>
-            ) : (
-              <>
+            <Tabs activeKey={skillsSubTab} onSelect={(_e, key) => setSkillsSubTab(key as SkillsSubTab)} aria-label="Skills tabs" style={{ marginBottom: 16 }}>
+              <Tab eventKey="installed" title={<TabTitleText>Installed ({skills.length})</TabTitleText>} />
+              <Tab eventKey="catalog" title={<TabTitleText>Catalog</TabTitleText>} />
+              <Tab eventKey="registries" title={<TabTitleText>Registries</TabTitleText>} />
+            </Tabs>
+
+            {skillsSubTab === 'installed' && (
+              skills.length === 0 ? (
+                <EmptyState headingLevel="h3" icon={AutomationIcon} titleText="No Skills installed">
+                  <EmptyStateFooter>
+                    <EmptyStateActions>
+                      <Button variant="link" icon={<PlusCircleIcon />} onClick={() => setShowAddSkill(true)}>
+                        Add Skill
+                      </Button>
+                    </EmptyStateActions>
+                  </EmptyStateFooter>
+                </EmptyState>
+              ) : (
                 <Table aria-label="Installed skills" variant="compact">
                   <Thead>
                     <Tr>
@@ -846,44 +851,40 @@ export function UserPreferences({ activeTab, onTabChange }: { activeTab: Prefere
                     ))}
                   </Tbody>
                 </Table>
-              </>
+              )
             )}
+
+            {skillsSubTab === 'catalog' && renderCatalogTable(skillsCatalog, handleInstallSkillFromCatalog, 'Skills')}
+
+            {skillsSubTab === 'registries' && renderRegistriesTable(skillRegistries, handleToggleSkillRegistry, 'Skills')}
           </>
         )}
 
-        {activeTab === 'skills-catalog' && (
-          <>
-            <TabHeader title="Skills Catalog" subtitle="Browse and install skills from configured registries." />
-            {renderCatalogTable(skillsCatalog, handleInstallSkillFromCatalog, 'Skills')}
-          </>
-        )}
-
-        {activeTab === 'skills-registries' && (
-          <>
-            <TabHeader title="Skills Registries" subtitle="Manage registries that provide skills for your workspaces." />
-            {renderRegistriesTable(skillRegistries, handleToggleSkillRegistry, 'Skills')}
-          </>
-        )}
-
-        {activeTab === 'mcps-installed' && (
+        {activeTab === 'mcps' && (
           <>
             <TabHeader
-              title="Installed MCPs"
+              title="MCPs"
               subtitle="Connect Model Context Protocol servers to extend AI agent capabilities."
-              action={<Button variant="secondary" icon={<PlusCircleIcon />} onClick={() => setShowAddMcp(true)}>Add MCP</Button>}
+              action={mcpsSubTab === 'installed' ? <Button variant="secondary" icon={<PlusCircleIcon />} onClick={() => setShowAddMcp(true)}>Add MCP</Button> : undefined}
             />
-            {installedMcps.length === 0 ? (
-              <EmptyState headingLevel="h3" icon={PluggedIcon} titleText="No MCPs installed">
-                <EmptyStateFooter>
-                  <EmptyStateActions>
-                    <Button variant="link" icon={<PlusCircleIcon />} onClick={() => setShowAddMcp(true)}>
-                      Add MCP
-                    </Button>
-                  </EmptyStateActions>
-                </EmptyStateFooter>
-              </EmptyState>
-            ) : (
-              <>
+            <Tabs activeKey={mcpsSubTab} onSelect={(_e, key) => setMcpsSubTab(key as McpsSubTab)} aria-label="MCPs tabs" style={{ marginBottom: 16 }}>
+              <Tab eventKey="installed" title={<TabTitleText>Installed ({installedMcps.length})</TabTitleText>} />
+              <Tab eventKey="catalog" title={<TabTitleText>Catalog</TabTitleText>} />
+              <Tab eventKey="registries" title={<TabTitleText>Registries</TabTitleText>} />
+            </Tabs>
+
+            {mcpsSubTab === 'installed' && (
+              installedMcps.length === 0 ? (
+                <EmptyState headingLevel="h3" icon={PluggedIcon} titleText="No MCPs installed">
+                  <EmptyStateFooter>
+                    <EmptyStateActions>
+                      <Button variant="link" icon={<PlusCircleIcon />} onClick={() => setShowAddMcp(true)}>
+                        Add MCP
+                      </Button>
+                    </EmptyStateActions>
+                  </EmptyStateFooter>
+                </EmptyState>
+              ) : (
                 <Table aria-label="Installed MCPs" variant="compact">
                   <Thead>
                     <Tr>
@@ -935,22 +936,12 @@ export function UserPreferences({ activeTab, onTabChange }: { activeTab: Prefere
                     ))}
                   </Tbody>
                 </Table>
-              </>
+              )
             )}
-          </>
-        )}
 
-        {activeTab === 'mcps-catalog' && (
-          <>
-            <TabHeader title="MCPs Catalog" subtitle="Browse and install MCP servers from configured registries." />
-            {renderCatalogTable(mcpsCatalog, handleInstallMcpFromCatalog, 'MCPs')}
-          </>
-        )}
+            {mcpsSubTab === 'catalog' && renderCatalogTable(mcpsCatalog, handleInstallMcpFromCatalog, 'MCPs')}
 
-        {activeTab === 'mcps-registries' && (
-          <>
-            <TabHeader title="MCPs Registries" subtitle="Manage registries that provide MCP servers." />
-            {renderRegistriesTable(mcpRegistries, handleToggleMcpRegistry, 'MCPs')}
+            {mcpsSubTab === 'registries' && renderRegistriesTable(mcpRegistries, handleToggleMcpRegistry, 'MCPs')}
           </>
         )}
 
