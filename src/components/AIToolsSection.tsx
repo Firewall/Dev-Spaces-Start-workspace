@@ -38,7 +38,7 @@ const AVAILABLE_TOOLS: AITool[] = [
   { id: 'claude-code', name: 'Claude Code', description: 'Anthropic AI coding agent', authenticated: true },
   { id: 'cursor-ai', name: 'Cursor Agent', description: 'AI-first code editor agent', authenticated: false },
   { id: 'codex', name: 'Codex Agent', description: 'OpenAI autonomous coding agent', authenticated: true },
-  { id: 'opencode', name: 'OpenCode', description: 'Open-source AI coding CLI', authenticated: false },
+  { id: 'opencode', name: 'OpenCode on OpenShift AI', description: 'AI coding CLI on OpenShift AI', authenticated: false },
   { id: 'kiro', name: 'Kiro CLI', description: 'AWS AI-powered development CLI', authenticated: true },
 ]
 
