@@ -40,6 +40,7 @@ import {
 import {
   CheckIcon,
   CubeIcon,
+  DesktopIcon,
   FilterIcon,
   HelpIcon,
   MinusIcon,
@@ -48,6 +49,8 @@ import {
 import { DependencyBrandIcon } from './DependencyBrandIcon'
 import { getDependencyBrandIcon } from './dependencySimpleIcons'
 import { BranchDropdown } from './BranchDropdown'
+import { BrandIcon } from './BrandIcons'
+import { hasBrandIcon } from './brandIconData'
 import { EditorDropdown, EDITORS } from './EditorDropdown'
 import { EnvironmentComponentsSection } from './EnvironmentComponentsSection'
 import { AIToolsSection } from './AIToolsSection'
@@ -183,6 +186,7 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
   const [tagSearch, setTagSearch] = useState('')
   const [templatePanelOpen, setTemplatePanelOpen] = useState(false)
   const [templateModalOpen, setTemplateModalOpen] = useState(false)
+  const [editorModalOpen, setEditorModalOpen] = useState(false)
 
   const normalizedTemplateSearch = templateSearch.trim().toLowerCase()
   const filteredTemplates = useMemo(() => {
@@ -351,11 +355,11 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
             {/* LEFT COLUMN: config form */}
             <div
               style={{
-                width: 440,
+                width: isDialogPhase ? 600 : 440,
                 flexShrink: 0,
                 overflowY: 'auto',
                 overflowX: 'hidden',
-                borderRight: templatePanelOpen ? '1px solid var(--pf-t--global--border--color--default)' : 'none',
+                borderRight: templatePanelOpen && !isDialogPhase ? '1px solid var(--pf-t--global--border--color--default)' : 'none',
                 padding: 'var(--pf-t--global--spacer--lg)',
                 paddingRight: 'var(--pf-t--global--spacer--xl)',
                 display: 'flex',
@@ -429,7 +433,31 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
                     label="Select an Editor"
                     labelHelp={<FieldHelp text="Choose the IDE that will be launched in your workspace." />}
                   >
-                    <EditorDropdown value={editor} onChange={setEditor} />
+                    {isDialogPhase ? (
+                      <div
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          padding: '6px 12px',
+                          border: '1px solid var(--pf-t--global--border--color--default)',
+                          borderRadius: 'var(--pf-t--global--border--radius--small)',
+                          background: 'var(--pf-t--global--background--color--primary--default)',
+                        }}
+                      >
+                        {hasBrandIcon(editor) ? <BrandIcon id={editor} size={16} /> : <DesktopIcon style={{ fontSize: 16 }} />}
+                        <span style={{ fontSize: 13, fontWeight: 500 }}>{EDITORS.find((e) => e.id === editor)?.label ?? editor}</span>
+                        <Button
+                          variant="link"
+                          onClick={() => setEditorModalOpen(true)}
+                          style={{ padding: 0, fontSize: 13 }}
+                        >
+                          Change
+                        </Button>
+                      </div>
+                    ) : (
+                      <EditorDropdown value={editor} onChange={setEditor} />
+                    )}
                   </FormGroup>
 
                   <FormGroup
@@ -704,27 +732,21 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
                                   {tpl.description}
                                 </div>
                               </div>
-                              <span
-                                style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: 4,
-                                  fontSize: 12,
-                                  flexShrink: 0,
-                                  color: isSelected
-                                    ? 'var(--pf-t--global--color--brand--default)'
-                                    : 'var(--pf-t--global--text--color--subtle)',
-                                }}
-                              >
-                                {isSelected ? (
-                                  <>
-                                    <CheckIcon />
-                                    Selected
-                                  </>
-                                ) : (
-                                  'Select'
-                                )}
-                              </span>
+                              {isSelected && (
+                                <span
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 4,
+                                    fontSize: 12,
+                                    flexShrink: 0,
+                                    color: 'var(--pf-t--global--color--brand--default)',
+                                  }}
+                                >
+                                  <CheckIcon />
+                                  Selected
+                                </span>
+                              )}
                             </div>
                           </CardBody>
                         </Card>
@@ -903,27 +925,21 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
                                   {tpl.description}
                                 </div>
                               </div>
-                              <span
-                                style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: 4,
-                                  fontSize: 12,
-                                  flexShrink: 0,
-                                  color: isSelected
-                                    ? 'var(--pf-t--global--color--brand--default)'
-                                    : 'var(--pf-t--global--text--color--subtle)',
-                                }}
-                              >
-                                {isSelected ? (
-                                  <>
-                                    <CheckIcon />
-                                    Selected
-                                  </>
-                                ) : (
-                                  'Select'
-                                )}
-                              </span>
+                              {isSelected && (
+                                <span
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 4,
+                                    fontSize: 12,
+                                    flexShrink: 0,
+                                    color: 'var(--pf-t--global--color--brand--default)',
+                                  }}
+                                >
+                                  <CheckIcon />
+                                  Selected
+                                </span>
+                              )}
                             </div>
                           </CardBody>
                         </Card>
@@ -954,6 +970,7 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
                 </div>
               </ModalFooter>
             </Modal>
+
           </>
         )}
 
@@ -1017,7 +1034,31 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
                   label="Select an Editor"
                   labelHelp={<FieldHelp text="Choose the IDE that will be launched in your workspace." />}
                 >
-                  <EditorDropdown value={editor} onChange={setEditor} />
+                  {isDialogPhase ? (
+                    <div
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        padding: '6px 12px',
+                        border: '1px solid var(--pf-t--global--border--color--default)',
+                        borderRadius: 'var(--pf-t--global--border--radius--small)',
+                        background: 'var(--pf-t--global--background--color--primary--default)',
+                      }}
+                    >
+                      {hasBrandIcon(editor) ? <BrandIcon id={editor} size={16} /> : <DesktopIcon style={{ fontSize: 16 }} />}
+                      <span style={{ fontSize: 13, fontWeight: 500 }}>{EDITORS.find((e) => e.id === editor)?.label ?? editor}</span>
+                      <Button
+                        variant="link"
+                        onClick={() => setEditorModalOpen(true)}
+                        style={{ padding: 0, fontSize: 13 }}
+                      >
+                        Change
+                      </Button>
+                    </div>
+                  ) : (
+                    <EditorDropdown value={editor} onChange={setEditor} />
+                  )}
                 </FormGroup>
 
                 {isPhase2 && (
@@ -1220,6 +1261,84 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
           </div>
         )}
       </div>
+
+      {/* Editor Selector Modal (dialog phase) */}
+      <Modal
+        isOpen={editorModalOpen}
+        onClose={() => setEditorModalOpen(false)}
+        variant="medium"
+        aria-label="Select an editor"
+      >
+        <ModalHeader
+          title="Select an Editor"
+          description="Choose the IDE that will be launched in your workspace."
+        />
+        <ModalBody>
+          <Gallery hasGutter minWidths={{ default: '240px' }}>
+            {EDITORS.filter((e) => !e.isCustom).map((e) => {
+              const isSelected = editor === e.id
+              return (
+                <Card
+                  key={e.id}
+                  isSelectable
+                  isSelected={isSelected}
+                  onClick={() => {
+                    setEditor(e.id)
+                    setEditorModalOpen(false)
+                  }}
+                  style={{
+                    borderRadius: 12,
+                    border: isSelected
+                      ? '1px solid var(--pf-t--global--color--brand--default)'
+                      : '1px solid var(--pf-t--global--border--color--default)',
+                    boxShadow: isSelected
+                      ? '0 0 0 1px color-mix(in srgb, var(--pf-t--global--color--brand--default) 20%, transparent)'
+                      : '0 1px 2px rgba(3, 3, 3, 0.08)',
+                    background: 'var(--pf-t--global--background--color--primary--default)',
+                  }}
+                >
+                  <CardBody style={{ padding: '12px 14px' }}>
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 32,
+                          height: 32,
+                          borderRadius: 8,
+                          background: 'var(--pf-t--global--background--color--secondary--default)',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {hasBrandIcon(e.id) ? <BrandIcon id={e.id} size={20} /> : <DesktopIcon style={{ fontSize: 20, opacity: 0.5 }} />}
+                      </div>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontWeight: 600, fontSize: 14, lineHeight: 1.2 }}>{e.label}</div>
+                      </div>
+                      {isSelected && (
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            fontSize: 12,
+                            flexShrink: 0,
+                            color: 'var(--pf-t--global--color--brand--default)',
+                          }}
+                        >
+                          <CheckIcon />
+                          Selected
+                        </span>
+                      )}
+                    </div>
+                  </CardBody>
+                </Card>
+              )
+            })}
+          </Gallery>
+        </ModalBody>
+      </Modal>
 
       {/* FOOTER */}
       <div style={{
