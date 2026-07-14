@@ -16,6 +16,10 @@ import {
   MenuSearch,
   MenuSearchInput,
   MenuToggle,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
   NumberInput,
   PageSection,
   Popover,
@@ -134,7 +138,7 @@ const EXISTING_WORKSPACES = [
 
 interface CreateWorkspaceSplitTabProps {
   phase: string
-  onPhaseChange: (phase: 'phase1' | 'phase2') => void
+  onPhaseChange: (phase: 'phase1' | 'phase2' | 'dialog') => void
 }
 
 function nameFromTemplate(templateId: string): string {
@@ -151,6 +155,7 @@ function TemplateIcon({ icon, size }: { icon: string; size: number }) {
 
 export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspaceSplitTabProps) {
   const isPhase2 = phase === 'phase2'
+  const isDialogPhase = phase === 'dialog'
   const [mode, setMode] = useState<CreationMode>('repo')
   const [name, setName] = useState('')
   const [repoUrl, setRepoUrl] = useState('')
@@ -177,6 +182,7 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
   const [tagDropdownOpen, setTagDropdownOpen] = useState(false)
   const [tagSearch, setTagSearch] = useState('')
   const [templatePanelOpen, setTemplatePanelOpen] = useState(false)
+  const [templateModalOpen, setTemplateModalOpen] = useState(false)
 
   const normalizedTemplateSearch = templateSearch.trim().toLowerCase()
   const filteredTemplates = useMemo(() => {
@@ -294,6 +300,12 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
         isSelected={phase === 'phase2'}
         onChange={() => onPhaseChange('phase2')}
       />
+      <ToggleGroupItem
+        text="Dialog"
+        buttonId="dialog"
+        isSelected={phase === 'dialog'}
+        onChange={() => onPhaseChange('dialog')}
+      />
     </ToggleGroup>
   )
 
@@ -383,7 +395,13 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
                         <span style={{ fontSize: 13, fontWeight: 500 }}>{selectedTemplateObj.name}</span>
                         <Button
                           variant="link"
-                          onClick={() => setTemplatePanelOpen((o) => !o)}
+                          onClick={() => {
+                            if (isDialogPhase) {
+                              setTemplateModalOpen(true)
+                            } else {
+                              setTemplatePanelOpen((o) => !o)
+                            }
+                          }}
                           style={{ padding: 0, fontSize: 13 }}
                         >
                           Change
@@ -393,7 +411,13 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
                       <Button
                         variant="link"
                         icon={<PlusCircleIcon />}
-                        onClick={() => setTemplatePanelOpen(true)}
+                        onClick={() => {
+                          if (isDialogPhase) {
+                            setTemplateModalOpen(true)
+                          } else {
+                            setTemplatePanelOpen(true)
+                          }
+                        }}
                         style={{ borderRadius: 'var(--pf-t--global--border--radius--small)' }}
                       >
                         Select a Template
@@ -521,8 +545,8 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
               </Form>
             </div>
 
-            {/* RIGHT PANEL: template gallery (shown when templatePanelOpen) */}
-            {templatePanelOpen && (
+            {/* RIGHT PANEL: template gallery (shown when templatePanelOpen, hidden in dialog mode) */}
+            {templatePanelOpen && !isDialogPhase && (
               <div
                 style={{
                   flex: 1,
@@ -710,6 +734,226 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
                 )}
               </div>
             )}
+
+            {/* Template Selector Modal (dialog phase) */}
+            <Modal
+              isOpen={templateModalOpen}
+              onClose={() => setTemplateModalOpen(false)}
+              variant="large"
+              aria-label="Select a template"
+            >
+              <ModalHeader
+                title="Select a Template"
+                description="Choose a template to start your workspace from."
+              />
+              <ModalBody>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: 12,
+                    alignItems: 'center',
+                    paddingBottom: 16,
+                    marginBottom: 16,
+                    borderBottom: '1px solid var(--pf-t--global--border--color--default)',
+                  }}
+                >
+                  <div style={{ flex: '1 1 280px' }}>
+                    <TextInput
+                      value={templateSearch}
+                      onChange={(_e, val) => setTemplateSearch(val)}
+                      aria-label="Search templates"
+                      placeholder="Search templates…"
+                    />
+                  </div>
+                  <Select
+                    isOpen={tagDropdownOpen}
+                    onOpenChange={(open) => {
+                      setTagDropdownOpen(open)
+                      if (!open) setTagSearch('')
+                    }}
+                    onSelect={(_e, val) => {
+                      setTemplateTag(val as string)
+                      setTagDropdownOpen(false)
+                      setTagSearch('')
+                    }}
+                    selected={templateTag}
+                    toggle={(toggleRef) => (
+                      <MenuToggle
+                        ref={toggleRef}
+                        onClick={() => setTagDropdownOpen((o) => !o)}
+                        isExpanded={tagDropdownOpen}
+                        icon={<FilterIcon />}
+                        style={{ minWidth: 160 }}
+                      >
+                        {templateTag === 'All' ? 'All Tags' : templateTag}
+                      </MenuToggle>
+                    )}
+                  >
+                    <MenuSearch>
+                      <MenuSearchInput>
+                        <TextInput
+                          value={tagSearch}
+                          onChange={(_e, val) => setTagSearch(val)}
+                          aria-label="Filter tags"
+                          placeholder="Filter tags…"
+                        />
+                      </MenuSearchInput>
+                    </MenuSearch>
+                    <SelectList style={{ maxHeight: 400, overflowY: 'auto' }}>
+                      {tagSearch.trim() === '' && (
+                        <SelectOption value="All" isSelected={templateTag === 'All'}>
+                          All Tags
+                        </SelectOption>
+                      )}
+                      {ALL_TAGS
+                        .filter((tag) =>
+                          tagSearch.trim() === '' ||
+                          tag.toLowerCase().includes(tagSearch.trim().toLowerCase()),
+                        )
+                        .map((tag) => (
+                          <SelectOption key={tag} value={tag} isSelected={templateTag === tag}>
+                            {tag}
+                          </SelectOption>
+                        ))}
+                    </SelectList>
+                  </Select>
+                  <span style={{ fontSize: 12, color: 'var(--pf-t--global--text--color--subtle)' }}>
+                    {filteredTemplates.length} shown
+                  </span>
+                  {hasActiveTemplateFilters && (
+                    <Button
+                      variant="link"
+                      onClick={() => {
+                        setTemplateSearch('')
+                        setTemplateTag('All')
+                      }}
+                      style={{ padding: 0 }}
+                    >
+                      Reset filters
+                    </Button>
+                  )}
+                </div>
+
+                {filteredTemplates.length === 0 ? (
+                  <div
+                    style={{
+                      padding: '24px 0',
+                      textAlign: 'center',
+                      color: 'var(--pf-t--global--text--color--subtle)',
+                    }}
+                  >
+                    No templates match your search and filter.
+                  </div>
+                ) : (
+                  <Gallery hasGutter minWidths={{ default: '260px' }}>
+                    {filteredTemplates.map((tpl) => {
+                      const isSelected = selectedTemplate === tpl.id
+                      return (
+                        <Card
+                          key={tpl.id}
+                          isSelectable
+                          isSelected={isSelected}
+                          onClick={() => {
+                            setSelectedTemplate((prev) => {
+                              const next = prev === tpl.id ? null : tpl.id
+                              if (!nameManuallyEdited.current) {
+                                setName(next ? nameFromTemplate(next) : '')
+                              }
+                              return next
+                            })
+                          }}
+                          style={{
+                            borderRadius: 12,
+                            border: isSelected
+                              ? '1px solid var(--pf-t--global--color--brand--default)'
+                              : '1px solid var(--pf-t--global--border--color--default)',
+                            boxShadow: isSelected
+                              ? '0 0 0 1px color-mix(in srgb, var(--pf-t--global--color--brand--default) 20%, transparent)'
+                              : '0 1px 2px rgba(3, 3, 3, 0.08)',
+                            background: 'var(--pf-t--global--background--color--primary--default)',
+                          }}
+                        >
+                          <CardBody style={{ padding: '12px 14px' }}>
+                            <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  width: 32,
+                                  height: 32,
+                                  borderRadius: 8,
+                                  background: 'var(--pf-t--global--background--color--secondary--default)',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                <TemplateIcon icon={tpl.icon} size={20} />
+                              </div>
+                              <div style={{ minWidth: 0, flex: 1 }}>
+                                <div style={{ fontWeight: 600, fontSize: 14, lineHeight: 1.2 }}>{tpl.name}</div>
+                                <div
+                                  style={{
+                                    marginTop: 2,
+                                    fontSize: 12,
+                                    lineHeight: 1.3,
+                                    color: 'var(--pf-t--global--text--color--subtle)',
+                                  }}
+                                >
+                                  {tpl.description}
+                                </div>
+                              </div>
+                              <span
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: 4,
+                                  fontSize: 12,
+                                  flexShrink: 0,
+                                  color: isSelected
+                                    ? 'var(--pf-t--global--color--brand--default)'
+                                    : 'var(--pf-t--global--text--color--subtle)',
+                                }}
+                              >
+                                {isSelected ? (
+                                  <>
+                                    <CheckIcon />
+                                    Selected
+                                  </>
+                                ) : (
+                                  'Select'
+                                )}
+                              </span>
+                            </div>
+                          </CardBody>
+                        </Card>
+                      )
+                    })}
+                  </Gallery>
+                )}
+              </ModalBody>
+              <ModalFooter>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, width: '100%' }}>
+                  <span style={{ fontSize: 13, color: 'var(--pf-t--global--text--color--subtle)' }}>
+                    {selectedTemplateObj
+                      ? `Selected: ${selectedTemplateObj.name}`
+                      : 'Click a template card to select it.'}
+                  </span>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <Button variant="link" onClick={() => setTemplateModalOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="primary"
+                      isDisabled={!selectedTemplate}
+                      onClick={() => setTemplateModalOpen(false)}
+                    >
+                      Done
+                    </Button>
+                  </div>
+                </div>
+              </ModalFooter>
+            </Modal>
           </>
         )}
 
