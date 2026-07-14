@@ -39,6 +39,7 @@ import {
 } from '@patternfly/react-core'
 import {
   CheckIcon,
+  CogIcon,
   CubeIcon,
   DesktopIcon,
   FilterIcon,
@@ -1275,7 +1276,7 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
         />
         <ModalBody>
           <Gallery hasGutter minWidths={{ default: '240px' }}>
-            {EDITORS.filter((e) => !e.isCustom).map((e) => {
+            {EDITORS.map((e) => {
               const isSelected = editor === e.id
               return (
                 <Card
@@ -1311,7 +1312,7 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
                           flexShrink: 0,
                         }}
                       >
-                        {hasBrandIcon(e.id) ? <BrandIcon id={e.id} size={20} /> : <DesktopIcon style={{ fontSize: 20, opacity: 0.5 }} />}
+                        {e.isCustom ? <CogIcon style={{ fontSize: 20, opacity: 0.5 }} /> : hasBrandIcon(e.id) ? <BrandIcon id={e.id} size={20} /> : <DesktopIcon style={{ fontSize: 20, opacity: 0.5 }} />}
                       </div>
                       <div style={{ minWidth: 0, flex: 1 }}>
                         <div style={{ fontWeight: 600, fontSize: 14, lineHeight: 1.2 }}>{e.label}</div>
