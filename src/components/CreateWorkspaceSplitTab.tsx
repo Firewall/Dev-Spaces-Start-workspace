@@ -356,7 +356,8 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
             {/* LEFT COLUMN: config form */}
             <div
               style={{
-                width: isDialogPhase ? 600 : 440,
+                width: isDialogPhase ? undefined : 440,
+                flex: isDialogPhase ? 1 : undefined,
                 flexShrink: 0,
                 overflowY: 'auto',
                 overflowX: 'hidden',
@@ -370,96 +371,98 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
             >
               <Form onSubmit={handleSubmit}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--pf-t--global--spacer--lg)' }}>
-                  <FormGroup
-                    label="Workspace Name"
-                    fieldId="workspace-name"
-                    labelHelp={<FieldHelp text="A human-readable name for your workspace. Auto-generated from the template if left blank." />}
-                  >
-                    <TextInput
-                      id="workspace-name"
-                      value={name}
-                      onChange={handleNameChange}
-                      placeholder="my-project"
-                    />
-                  </FormGroup>
+                  <div style={{ maxWidth: isDialogPhase ? 600 : undefined, display: 'flex', flexDirection: 'column', gap: 'var(--pf-t--global--spacer--lg)' }}>
+                    <FormGroup
+                      label="Workspace Name"
+                      fieldId="workspace-name"
+                      labelHelp={<FieldHelp text="A human-readable name for your workspace. Auto-generated from the template if left blank." />}
+                    >
+                      <TextInput
+                        id="workspace-name"
+                        value={name}
+                        onChange={handleNameChange}
+                        placeholder="my-project"
+                      />
+                    </FormGroup>
 
-                  <FormGroup label="Template" fieldId="select-template">
-                    {selectedTemplateObj ? (
-                      <div
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 8,
-                          padding: '6px 12px',
-                          border: '1px solid var(--pf-t--global--border--color--default)',
-                          borderRadius: 'var(--pf-t--global--border--radius--small)',
-                          background: 'var(--pf-t--global--background--color--primary--default)',
-                        }}
-                      >
-                        <TemplateIcon icon={selectedTemplateObj.icon} size={16} />
-                        <span style={{ fontSize: 13, fontWeight: 500 }}>{selectedTemplateObj.name}</span>
+                    <FormGroup label="Template" fieldId="select-template">
+                      {selectedTemplateObj ? (
+                        <div
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            padding: '6px 12px',
+                            border: '1px solid var(--pf-t--global--border--color--default)',
+                            borderRadius: 'var(--pf-t--global--border--radius--small)',
+                            background: 'var(--pf-t--global--background--color--primary--default)',
+                          }}
+                        >
+                          <TemplateIcon icon={selectedTemplateObj.icon} size={16} />
+                          <span style={{ fontSize: 13, fontWeight: 500 }}>{selectedTemplateObj.name}</span>
+                          <Button
+                            variant="link"
+                            onClick={() => {
+                              if (isDialogPhase) {
+                                setTemplateModalOpen(true)
+                              } else {
+                                setTemplatePanelOpen((o) => !o)
+                              }
+                            }}
+                            style={{ padding: 0, fontSize: 13 }}
+                          >
+                            Change
+                          </Button>
+                        </div>
+                      ) : (
                         <Button
                           variant="link"
+                          icon={<PlusCircleIcon />}
                           onClick={() => {
                             if (isDialogPhase) {
                               setTemplateModalOpen(true)
                             } else {
-                              setTemplatePanelOpen((o) => !o)
+                              setTemplatePanelOpen(true)
                             }
                           }}
-                          style={{ padding: 0, fontSize: 13 }}
+                          style={{ borderRadius: 'var(--pf-t--global--border--radius--small)' }}
                         >
-                          Change
+                          Select a Template
                         </Button>
-                      </div>
-                    ) : (
-                      <Button
-                        variant="link"
-                        icon={<PlusCircleIcon />}
-                        onClick={() => {
-                          if (isDialogPhase) {
-                            setTemplateModalOpen(true)
-                          } else {
-                            setTemplatePanelOpen(true)
-                          }
-                        }}
-                        style={{ borderRadius: 'var(--pf-t--global--border--radius--small)' }}
-                      >
-                        Select a Template
-                      </Button>
-                    )}
-                  </FormGroup>
+                      )}
+                    </FormGroup>
 
-                  <FormGroup
-                    label="Select an Editor"
-                    labelHelp={<FieldHelp text="Choose the IDE that will be launched in your workspace." />}
-                  >
-                    {isDialogPhase ? (
-                      <div
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 8,
-                          padding: '6px 12px',
-                          border: '1px solid var(--pf-t--global--border--color--default)',
-                          borderRadius: 'var(--pf-t--global--border--radius--small)',
-                          background: 'var(--pf-t--global--background--color--primary--default)',
-                        }}
-                      >
-                        {hasBrandIcon(editor) ? <BrandIcon id={editor} size={16} /> : <DesktopIcon style={{ fontSize: 16 }} />}
-                        <span style={{ fontSize: 13, fontWeight: 500 }}>{EDITORS.find((e) => e.id === editor)?.label ?? editor}</span>
-                        <Button
-                          variant="link"
-                          onClick={() => setEditorModalOpen(true)}
-                          style={{ padding: 0, fontSize: 13 }}
+                    <FormGroup
+                      label="Select an Editor"
+                      labelHelp={<FieldHelp text="Choose the IDE that will be launched in your workspace." />}
+                    >
+                      {isDialogPhase ? (
+                        <div
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            padding: '6px 12px',
+                            border: '1px solid var(--pf-t--global--border--color--default)',
+                            borderRadius: 'var(--pf-t--global--border--radius--small)',
+                            background: 'var(--pf-t--global--background--color--primary--default)',
+                          }}
                         >
-                          Change
-                        </Button>
-                      </div>
-                    ) : (
-                      <EditorDropdown value={editor} onChange={setEditor} />
-                    )}
-                  </FormGroup>
+                          {hasBrandIcon(editor) ? <BrandIcon id={editor} size={16} /> : <DesktopIcon style={{ fontSize: 16 }} />}
+                          <span style={{ fontSize: 13, fontWeight: 500 }}>{EDITORS.find((e) => e.id === editor)?.label ?? editor}</span>
+                          <Button
+                            variant="link"
+                            onClick={() => setEditorModalOpen(true)}
+                            style={{ padding: 0, fontSize: 13 }}
+                          >
+                            Change
+                          </Button>
+                        </div>
+                      ) : (
+                        <EditorDropdown value={editor} onChange={setEditor} />
+                      )}
+                    </FormGroup>
+                  </div>
 
                   <FormGroup
                     label="Add AI Tools"
@@ -976,91 +979,93 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
         )}
 
         {mode === 'repo' && (
-          <div style={{ width: 600, overflowY: 'auto', padding: 'var(--pf-t--global--spacer--lg)' }}>
+          <div style={{ width: isDialogPhase ? undefined : 600, flex: isDialogPhase ? 1 : undefined, overflowY: 'auto', padding: 'var(--pf-t--global--spacer--lg)' }}>
             <Form onSubmit={handleSubmit}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--pf-t--global--spacer--lg)' }}>
-                {isPhase2 && (
-                  <FormGroup
-                    label="Workspace Name"
-                    fieldId="workspace-name-repo"
-                    labelHelp={<FieldHelp text="A human-readable name for your workspace. Auto-generated from the repo URL if left blank." />}
-                  >
-                    <TextInput
-                      id="workspace-name-repo"
-                      value={name}
-                      onChange={handleNameChange}
-                      placeholder="my-project"
-                    />
-                  </FormGroup>
-                )}
-
-                <FormGroup fieldId="repo-url" label="Git Repository URL" isRequired>
-                    <Split hasGutter>
-                      <SplitItem isFilled>
-                        <TextInput
-                          id="repo-url"
-                          aria-label="HTTPS or SSH URL"
-                          placeholder="Enter HTTPS or SSH URL"
-                          value={repoUrl}
-                          onChange={handleRepoChange}
-                        />
-                      </SplitItem>
-                      <SplitItem>
-                        <BranchDropdown
-                          value={branch}
-                          onChange={setBranch}
-                          disabled={!hasRepoInput}
-                        />
-                      </SplitItem>
-                    </Split>
-                  {isDuplicate && (
-                    <Alert
-                      variant="warning"
-                      isInline
-                      isPlain
-                      title="A workspace using this repository already exists. You can still create a new one."
-                      style={{ marginTop: 8 }}
-                    />
-                  )}
-                  <FormHelperText>
-                    <HelperText>
-                      <HelperTextItem>
-                        Import from a Git repository to launch a Cloud Development Environment.
-                      </HelperTextItem>
-                    </HelperText>
-                  </FormHelperText>
-                </FormGroup>
-
-                <FormGroup
-                  label="Select an Editor"
-                  labelHelp={<FieldHelp text="Choose the IDE that will be launched in your workspace." />}
-                >
-                  {isDialogPhase ? (
-                    <div
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 8,
-                        padding: '6px 12px',
-                        border: '1px solid var(--pf-t--global--border--color--default)',
-                        borderRadius: 'var(--pf-t--global--border--radius--small)',
-                        background: 'var(--pf-t--global--background--color--primary--default)',
-                      }}
+                <div style={{ maxWidth: isDialogPhase ? 600 : undefined, display: 'flex', flexDirection: 'column', gap: 'var(--pf-t--global--spacer--lg)' }}>
+                  {isPhase2 && (
+                    <FormGroup
+                      label="Workspace Name"
+                      fieldId="workspace-name-repo"
+                      labelHelp={<FieldHelp text="A human-readable name for your workspace. Auto-generated from the repo URL if left blank." />}
                     >
-                      {hasBrandIcon(editor) ? <BrandIcon id={editor} size={16} /> : <DesktopIcon style={{ fontSize: 16 }} />}
-                      <span style={{ fontSize: 13, fontWeight: 500 }}>{EDITORS.find((e) => e.id === editor)?.label ?? editor}</span>
-                      <Button
-                        variant="link"
-                        onClick={() => setEditorModalOpen(true)}
-                        style={{ padding: 0, fontSize: 13 }}
-                      >
-                        Change
-                      </Button>
-                    </div>
-                  ) : (
-                    <EditorDropdown value={editor} onChange={setEditor} />
+                      <TextInput
+                        id="workspace-name-repo"
+                        value={name}
+                        onChange={handleNameChange}
+                        placeholder="my-project"
+                      />
+                    </FormGroup>
                   )}
-                </FormGroup>
+
+                  <FormGroup fieldId="repo-url" label="Git Repository URL" isRequired>
+                      <Split hasGutter>
+                        <SplitItem isFilled>
+                          <TextInput
+                            id="repo-url"
+                            aria-label="HTTPS or SSH URL"
+                            placeholder="Enter HTTPS or SSH URL"
+                            value={repoUrl}
+                            onChange={handleRepoChange}
+                          />
+                        </SplitItem>
+                        <SplitItem>
+                          <BranchDropdown
+                            value={branch}
+                            onChange={setBranch}
+                            disabled={!hasRepoInput}
+                          />
+                        </SplitItem>
+                      </Split>
+                    {isDuplicate && (
+                      <Alert
+                        variant="warning"
+                        isInline
+                        isPlain
+                        title="A workspace using this repository already exists. You can still create a new one."
+                        style={{ marginTop: 8 }}
+                      />
+                    )}
+                    <FormHelperText>
+                      <HelperText>
+                        <HelperTextItem>
+                          Import from a Git repository to launch a Cloud Development Environment.
+                        </HelperTextItem>
+                      </HelperText>
+                    </FormHelperText>
+                  </FormGroup>
+
+                  <FormGroup
+                    label="Select an Editor"
+                    labelHelp={<FieldHelp text="Choose the IDE that will be launched in your workspace." />}
+                  >
+                    {isDialogPhase ? (
+                      <div
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          padding: '6px 12px',
+                          border: '1px solid var(--pf-t--global--border--color--default)',
+                          borderRadius: 'var(--pf-t--global--border--radius--small)',
+                          background: 'var(--pf-t--global--background--color--primary--default)',
+                        }}
+                      >
+                        {hasBrandIcon(editor) ? <BrandIcon id={editor} size={16} /> : <DesktopIcon style={{ fontSize: 16 }} />}
+                        <span style={{ fontSize: 13, fontWeight: 500 }}>{EDITORS.find((e) => e.id === editor)?.label ?? editor}</span>
+                        <Button
+                          variant="link"
+                          onClick={() => setEditorModalOpen(true)}
+                          style={{ padding: 0, fontSize: 13 }}
+                        >
+                          Change
+                        </Button>
+                      </div>
+                    ) : (
+                      <EditorDropdown value={editor} onChange={setEditor} />
+                    )}
+                  </FormGroup>
+                </div>
 
                 {isPhase2 && (
                   <FormGroup
