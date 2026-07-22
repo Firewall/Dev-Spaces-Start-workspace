@@ -450,9 +450,7 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
                         />
                       </FormGroup>
 
-                      {isPhase2 && (
-                        <>
-                          <FormGroup
+                      <FormGroup
                             label={`CPU Limit (${envSettings.cpuLimit ? `${envSettings.cpuLimit} cores` : 'default'})`}
                             fieldId="cpu-limit"
                           >
@@ -513,8 +511,6 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
                               inputProps={{ step: 0.01 }}
                             />
                           </FormGroup>
-                        </>
-                      )}
                     </div>
                   </ExpandableSection>
                 </div>
@@ -856,9 +852,7 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
                       />
                     </FormGroup>
 
-                    {isPhase2 && (
-                      <>
-                        <FormGroup
+                    <FormGroup
                           label={`CPU Limit (${envSettings.cpuLimit ? `${envSettings.cpuLimit} cores` : 'default'})`}
                           fieldId="cpu-limit-repo"
                         >
@@ -919,8 +913,6 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
                             inputProps={{ step: 0.01 }}
                           />
                         </FormGroup>
-                      </>
-                    )}
 
                     <FormGroup label="Additional Git Remotes" fieldId="git-remotes">
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
