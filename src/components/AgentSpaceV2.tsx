@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Button,
-  Divider,
   Dropdown,
   DropdownItem,
   DropdownList,
@@ -11,32 +10,30 @@ import {
   EmptyStateFooter,
   Flex,
   FlexItem,
-  Label,
   MenuToggle,
   MenuToggleAction,
   PageSection,
   Title,
-  Tooltip,
+  ToggleGroup,
+  ToggleGroupItem,
 } from '@patternfly/react-core'
 import {
   ArrowLeftIcon,
-  CloudUploadAltIcon,
+  ChatIcon,
   CodeBranchIcon,
   CodeIcon,
   CogIcon,
   CubesIcon,
   DesktopIcon,
   WrenchIcon,
-  ExternalLinkAltIcon,
-  GithubIcon,
+  PencilAltIcon,
   PlusCircleIcon,
   PluggedIcon,
   TerminalIcon,
-  TimesIcon,
 } from '@patternfly/react-icons'
 import type { Agent, AgentSettings, AgentToolId, Project, ToolAuth } from './agentSpaceTypes'
 import type { ChatMessage as ChatMessageType } from './agentSpaceV2Types'
-import { AGENT_TOOLS, DEFAULT_AGENT_SETTINGS, INITIAL_AUTH, MOCK_AGENTS, MOCK_PROJECTS, PROVIDER_MODELS, MOCK_TERMINAL_OUTPUT } from './agentSpaceMockData'
+import { AGENT_TOOLS, DEFAULT_AGENT_SETTINGS, INITIAL_AUTH, MOCK_AGENTS, MOCK_PROJECTS, MOCK_TERMINAL_OUTPUT, PROVIDER_MODELS } from './agentSpaceMockData'
 import { MOCK_STREAMING_RESPONSES, MOCK_THINKING, MOCK_TOOL_CALLS } from './agentSpaceV2MockData'
 import { AgentSidebar } from './AgentSidebar'
 import { AgentDetail } from './AgentDetail'
@@ -48,9 +45,11 @@ import { EDITORS } from './EditorDropdown'
 import { AgentProviderDropdown } from './AgentProviderDropdown'
 import { ChatMessage } from './ChatMessage'
 import { ChatInput } from './ChatInput'
+import { DiffPanel } from './DiffPanel'
+import { GitPanel } from './GitPanel'
+import { EditorPanel } from './EditorPanel'
 import { GlobalSettingsPanel, type SettingsView } from './GlobalSettingsPanel'
 
-const AUTH_STORAGE_KEY = 'agent-space-v2-auth'
 let nextProjectId = 200
 let nextAgentId = 200
 let nextMsgId = 200
@@ -67,22 +66,18 @@ const AUTO_SUMMARIES = [
   'Writing tests',
 ]
 
-export function AgentSpaceV2() {
-  // --- Agent/project state (same as v1) ---
+type ViewMode = 'chat' | 'terminal'
+
+export function AgentSpace() {
+  // --- View mode ---
+  const [viewMode, setViewMode] = useState<ViewMode>('chat')
+
+  // --- Agent/project state ---
   const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS)
   const [agents, setAgents] = useState<Agent[]>(MOCK_AGENTS)
-  const [toolAuth, setToolAuth] = useState<ToolAuth[]>(() => {
-    const saved = window.localStorage.getItem(AUTH_STORAGE_KEY)
-    if (saved) {
-      try { return JSON.parse(saved) as ToolAuth[] } catch { /* ignore */ }
-    }
-    return INITIAL_AUTH
-  })
+  const [toolAuth, setToolAuth] = useState<ToolAuth[]>(INITIAL_AUTH)
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(
-    () => MOCK_AGENTS.find(a => a.status === 'running')?.id ?? null,
-  )
-  const [connectedAgentIds, setConnectedAgentIds] = useState<Set<string>>(
-    () => new Set(MOCK_AGENTS.filter(a => a.status === 'running').map(a => a.id)),
+    () => MOCK_AGENTS[0]?.id ?? null,
   )
   const [addProjectModalOpen, setAddProjectModalOpen] = useState(false)
   const [addAgentModalOpen, setAddAgentModalOpen] = useState(false)
@@ -106,13 +101,14 @@ export function AgentSpaceV2() {
 
   // --- Toolbar state ---
   const [openInOpen, setOpenInOpen] = useState(false)
-  const [commitOpen, setCommitOpen] = useState(false)
-  const [terminalPanelOpen, setTerminalPanelOpen] = useState(false)
-  const [diffPanelOpen, setDiffPanelOpen] = useState(false)
+  type RightPanelView = 'changes' | 'git' | 'editor' | 'terminal'
+  const [rightPanelView, setRightPanelView] = useState<RightPanelView | null>(null)
+  const toggleRightPanel = useCallback((view: RightPanelView) => {
+    setRightPanelView(prev => prev === view ? null : view)
+  }, [])
 
-  useEffect(() => {
-    window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(toolAuth))
-  }, [toolAuth])
+  const [terminalLineCount, setTerminalLineCount] = useState(0)
+  const terminalGenRef = useRef(0)
 
   useEffect(() => {
     return () => { if (streamingRef.current !== null) clearInterval(streamingRef.current) }
@@ -133,9 +129,8 @@ export function AgentSpaceV2() {
   const selectAgent = useCallback((id: string | null) => {
     setSelectedAgentId(id)
     setOpenInOpen(false)
-    setCommitOpen(false)
-    setTerminalPanelOpen(false)
-    setDiffPanelOpen(false)
+    setRightPanelView(null)
+    setTerminalLineCount(0)
   }, [])
 
   // --- Derived values ---
@@ -150,29 +145,35 @@ export function AgentSpaceV2() {
     return agentSettingsMap[selectedAgentId] ?? DEFAULT_AGENT_SETTINGS
   }, [selectedAgentId, agentSettingsMap])
   const addAgentProjectName = useMemo(() => projects.find(p => p.id === addAgentProjectId)?.name ?? '', [projects, addAgentProjectId])
-  const isConnected = selectedAgentId != null && connectedAgentIds.has(selectedAgentId)
 
-  // --- Agent/project handlers (same as v1) ---
+  // --- Terminal mode: increment line count via interval, derive visible lines ---
+  const terminalAllLines = useMemo(
+    () => selectedAgent ? MOCK_TERMINAL_OUTPUT[selectedAgent.tool] : [],
+    [selectedAgent],
+  )
+  const terminalLines = useMemo(
+    () => terminalAllLines.slice(0, terminalLineCount),
+    [terminalAllLines, terminalLineCount],
+  )
+
+  useEffect(() => {
+    const gen = ++terminalGenRef.current
+    if (viewMode !== 'terminal' || !selectedAgent || !isSelectedAuthenticated) return
+    const total = MOCK_TERMINAL_OUTPUT[selectedAgent.tool].length
+    let count = 0
+    const interval = setInterval(() => {
+      if (gen !== terminalGenRef.current) { clearInterval(interval); return }
+      count++
+      setTerminalLineCount(count)
+      if (count >= total) clearInterval(interval)
+    }, 400)
+    return () => clearInterval(interval)
+  }, [viewMode, selectedAgent, isSelectedAuthenticated])
+
+  // --- Agent/project handlers ---
   const handleAuthenticate = useCallback((toolId: AgentToolId) => {
     setToolAuth(prev => prev.map(a => (a.toolId === toolId ? { ...a, authenticated: true } : a)))
   }, [])
-
-  const handleConnect = useCallback(() => {
-    if (!selectedAgentId) return
-    setAgents(prev => prev.map(a => (a.id === selectedAgentId ? { ...a, status: 'connecting' as const } : a)))
-    setTimeout(() => {
-      setAgents(prev => prev.map(a => (a.id === selectedAgentId ? { ...a, status: 'running' as const } : a)))
-      setConnectedAgentIds(prev => new Set(prev).add(selectedAgentId))
-    }, 1500)
-  }, [selectedAgentId])
-
-  const handleDisconnect = useCallback(() => {
-    if (!selectedAgentId) return
-    if (streamingRef.current !== null) { clearInterval(streamingRef.current); streamingRef.current = null }
-    setIsStreaming(false)
-    setAgents(prev => prev.map(a => (a.id === selectedAgentId ? { ...a, status: 'stopped' as const } : a)))
-    setConnectedAgentIds(prev => { const next = new Set(prev); next.delete(selectedAgentId); return next })
-  }, [selectedAgentId])
 
   const handleAddProject = useCallback((name: string, repoUrl: string) => {
     setProjects(prev => [...prev, { id: `proj-${nextProjectId++}`, name, repoUrl }])
@@ -183,8 +184,6 @@ export function AgentSpaceV2() {
     setAgents(prev => {
       const removed = prev.filter(a => a.projectId === projectId)
       if (removed.some(a => a.id === selectedAgentId)) selectAgent(null)
-      const removedIds = removed.map(a => a.id)
-      setConnectedAgentIds(prev => { const next = new Set(prev); removedIds.forEach(id => next.delete(id)); return next })
       return prev.filter(a => a.projectId !== projectId)
     })
   }, [selectedAgentId, selectAgent])
@@ -196,7 +195,7 @@ export function AgentSpaceV2() {
     const name = `${toolName} - ${summary}`
     const models = PROVIDER_MODELS[tool]
     setAgentSettingsMap(prev => ({ ...prev, [id]: { ...DEFAULT_AGENT_SETTINGS, model: models?.[0]?.id ?? DEFAULT_AGENT_SETTINGS.model } }))
-    setAgents(prev => [...prev, { id, name, tool, status: 'stopped', projectId, summary, lastActivity: Date.now() }])
+    setAgents(prev => [...prev, { id, name, tool, status: 'running', projectId, summary, lastActivity: Date.now() }])
     selectAgent(id)
   }, [selectAgent])
 
@@ -220,7 +219,6 @@ export function AgentSpaceV2() {
   }, [])
 
   const handleDeleteAgent = useCallback((agentId: string) => {
-    setConnectedAgentIds(prev => { const next = new Set(prev); next.delete(agentId); return next })
     if (agentId === selectedAgentId) selectAgent(null)
     setAgents(prev => prev.filter(a => a.id !== agentId))
   }, [selectedAgentId, selectAgent])
@@ -240,20 +238,6 @@ export function AgentSpaceV2() {
     if (!selectedAgentId) return
     setAgentSettingsMap(prev => ({ ...prev, [selectedAgentId]: newSettings }))
   }, [selectedAgentId])
-
-  // Auto-connect on select
-  const shouldAutoConnect = useMemo(() => {
-    if (!selectedAgentId) return false
-    if (connectedAgentIds.has(selectedAgentId)) return false
-    const agent = agents.find(a => a.id === selectedAgentId)
-    if (!agent || agent.status === 'connecting') return false
-    return toolAuth.find(a => a.toolId === agent.tool)?.authenticated ?? false
-  }, [selectedAgentId, connectedAgentIds, agents, toolAuth])
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- handleConnect simulates async connection
-    if (shouldAutoConnect) handleConnect()
-  }, [shouldAutoConnect, handleConnect])
 
   // --- Chat handler ---
   const handleSendMessage = useCallback((content: string) => {
@@ -298,25 +282,28 @@ export function AgentSpaceV2() {
     return () => { clearTimeout(thinkingDelay); if (streamingRef.current !== null) clearInterval(streamingRef.current) }
   }, [isStreaming, selectedAgentId])
 
-  // --- Terminal lines for the terminal panel ---
-  const [terminalLines, setTerminalLines] = useState<string[]>([])
-  const terminalTool = selectedAgent?.tool
-  const terminalKey = selectedAgent?.id
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- synchronizing mock terminal output with component state
-    if (!terminalTool || !isConnected) { setTerminalLines([]); return }
-    const allLines = MOCK_TERMINAL_OUTPUT[terminalTool]
-    setTerminalLines([])
-    let index = 0
-    const interval = setInterval(() => {
-      if (index < allLines.length) { setTerminalLines(prev => [...prev, allLines[index]]); index++ }
-      else clearInterval(interval)
-    }, 400)
-    return () => clearInterval(interval)
-  }, [terminalKey, terminalTool, isConnected])
+  const handleStopStreaming = useCallback(() => {
+    if (streamingRef.current !== null) {
+      clearInterval(streamingRef.current)
+      streamingRef.current = null
+    }
+    if (selectedAgentId) {
+      setChatMessages(prev => ({
+        ...prev,
+        [selectedAgentId]: (prev[selectedAgentId] ?? []).map(m =>
+          m.isStreaming ? { ...m, isStreaming: false } : m
+        ),
+      }))
+    }
+    setIsStreaming(false)
+  }, [selectedAgentId])
 
   return (
     <>
+      <style>{`
+        .pf-v6-c-page__main-container { display: flex; flex-direction: column; }
+        .pf-v6-c-page__main { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+      `}</style>
       <div style={{ display: 'flex', flex: 1, minHeight: 0, height: '100%' }}>
         {/* Left sidebar — identical to v1 */}
         <div style={{
@@ -338,7 +325,6 @@ export function AgentSpaceV2() {
                 projects={projects}
                 agents={agents}
                 selectedAgentId={selectedAgentId}
-                connectedAgentIds={connectedAgentIds}
                 onSelectAgent={selectAgent}
                 onAddAgent={handleAddAgent}
                 onDeleteAgent={handleDeleteAgent}
@@ -398,10 +384,10 @@ export function AgentSpaceV2() {
         {/* Main content area */}
         <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           {activeSettingsView ? (
-            <GlobalSettingsPanel view={activeSettingsView} onBack={() => setActiveSettingsView(null)} />
-          ) : isConnected && selectedAgent ? (
-            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-              {/* Toolbar — same as v1 AgentTerminal */}
+            <GlobalSettingsPanel view={activeSettingsView} />
+          ) : isSelectedAuthenticated && selectedAgent ? (
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+              {/* Toolbar */}
               <div style={{ containerType: 'inline-size', borderBottom: '1px solid var(--pf-t--global--border--color--default)' }}>
               <Flex
                 alignItems={{ default: 'alignItemsCenter' }}
@@ -428,18 +414,58 @@ export function AgentSpaceV2() {
                       })()}
                     </FlexItem>
                     <FlexItem>
-                      <Tooltip content="Connected">
-                        <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-                          <Label color="green" isCompact className="toolbar-connected-label">connected</Label>
-                          <span className="toolbar-connected-dot" />
-                        </span>
-                      </Tooltip>
+                      <ToggleGroup aria-label="View mode" isCompact>
+                        <ToggleGroupItem
+                          icon={<ChatIcon />}
+                          text="Chat"
+                          buttonId="mode-chat"
+                          isSelected={viewMode === 'chat'}
+                          onChange={() => setViewMode('chat')}
+                        />
+                        <ToggleGroupItem
+                          icon={<TerminalIcon />}
+                          text="Terminal"
+                          buttonId="mode-terminal"
+                          isSelected={viewMode === 'terminal'}
+                          onChange={() => setViewMode('terminal')}
+                        />
+                      </ToggleGroup>
                     </FlexItem>
                   </Flex>
                 </FlexItem>
 
                 <FlexItem>
-                  <Flex alignItems={{ default: 'alignItemsCenter' }} gap={{ default: 'gapXs' }}>
+                  <Flex alignItems={{ default: 'alignItemsCenter' }} gap={{ default: 'gapSm' }}>
+                    <FlexItem className="agent-toolbar-v2">
+                      <Dropdown isOpen={openInOpen} onSelect={() => setOpenInOpen(false)} onOpenChange={setOpenInOpen} popperProps={{ position: 'right' }}
+                        toggle={(toggleRef) => (
+                          <MenuToggle
+                            ref={toggleRef}
+                            isExpanded={openInOpen}
+                            splitButtonItems={[
+                              <MenuToggleAction
+                                key="open-vscode"
+                                onClick={() => { /* open in VS Code */ }}
+                              >
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                                  <BrandIcon id="vscode" size={16} />
+                                  Open in VS Code
+                                </span>
+                              </MenuToggleAction>,
+                            ]}
+                            onClick={() => setOpenInOpen(o => !o)}
+                          />
+                        )}
+                      >
+                        <DropdownList>
+                          {EDITORS.filter(e => !('isCustom' in e) && e.id !== 'vscode').map(editor => (
+                            <DropdownItem key={editor.id} icon={hasBrandIcon(editor.id) ? <BrandIcon id={editor.id} size={18} /> : <DesktopIcon />}>
+                              {editor.label}
+                            </DropdownItem>
+                          ))}
+                        </DropdownList>
+                      </Dropdown>
+                    </FlexItem>
                     <style>{`
                       .agent-toolbar-v2 .pf-v6-c-menu-toggle,
                       .agent-toolbar-v2 .pf-v6-c-button {
@@ -469,97 +495,78 @@ export function AgentSpaceV2() {
                       .agent-toolbar-v2 .pf-v6-c-menu-toggle.pf-m-split-button .pf-v6-c-menu-toggle__controls .pf-v6-c-menu-toggle__toggle-icon {
                         display: inline-flex; align-items: center; min-width: 12px;
                       }
-                      .toolbar-commit-icon { margin-right: 0; }
-                      .toolbar-connected-dot {
-                        display: none;
-                        width: 10px; height: 10px; border-radius: 50%;
-                        background-color: #3e8635; cursor: default;
-                      }
                       @container (max-width: 1240px) {
                         .toolbar-provider-name { display: none !important; }
                       }
-                      @container (max-width: 1140px) {
-                        .toolbar-connected-label { display: none !important; }
-                        .toolbar-connected-dot { display: inline-block !important; }
-                      }
-                      @container (max-width: 1040px) {
-                        .toolbar-commit-text { display: none !important; }
-                        .toolbar-commit-icon { margin-right: 0 !important; }
-                      }
-                      @container (max-width: 890px) {
-                        .toolbar-disconnect-text { display: none !important; }
-                      }
                     `}</style>
 
-                    <FlexItem className="agent-toolbar-v2">
-                      <Dropdown isOpen={openInOpen} onSelect={() => setOpenInOpen(false)} onOpenChange={setOpenInOpen} popperProps={{ position: 'right' }}
-                        toggle={(toggleRef) => (
-                          <MenuToggle ref={toggleRef} onClick={() => setOpenInOpen(o => !o)} isExpanded={openInOpen} icon={<ExternalLinkAltIcon />}>
-                            Open in
-                          </MenuToggle>
-                        )}
-                      >
-                        <DropdownList>
-                          {EDITORS.filter(e => !('isCustom' in e)).map(editor => (
-                            <DropdownItem key={editor.id} icon={hasBrandIcon(editor.id) ? <BrandIcon id={editor.id} size={18} /> : <DesktopIcon />}>
-                              {editor.label}
-                            </DropdownItem>
+                    {viewMode === 'chat' && (
+                      <>
+                        <FlexItem style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          {([
+                            { key: 'changes' as const, label: 'Changes', icon: <CodeIcon style={{ fontSize: 12 }} /> },
+                            { key: 'git' as const, label: 'Git', icon: <CodeBranchIcon style={{ fontSize: 12 }} /> },
+                            { key: 'editor' as const, label: 'Editor', icon: <PencilAltIcon style={{ fontSize: 12 }} /> },
+                            { key: 'terminal' as const, label: 'Terminal', icon: <TerminalIcon style={{ fontSize: 12 }} /> },
+                          ]).map(tab => (
+                            <button
+                              key={tab.key}
+                              onClick={() => toggleRightPanel(tab.key)}
+                              style={{
+                                display: 'inline-flex', alignItems: 'center', gap: 5,
+                                padding: '4px 10px', fontSize: 12, fontWeight: 500,
+                                height: 28, border: 'none', cursor: 'pointer', borderRadius: 4,
+                                background: rightPanelView === tab.key
+                                  ? 'var(--pf-t--global--background--color--action--plain--clicked)'
+                                  : 'transparent',
+                                color: rightPanelView === tab.key
+                                  ? 'var(--pf-t--global--text--color--regular)'
+                                  : 'var(--pf-t--global--text--color--subtle)',
+                              }}
+                            >
+                              {tab.icon} {tab.label}
+                            </button>
                           ))}
-                        </DropdownList>
-                      </Dropdown>
-                    </FlexItem>
+                        </FlexItem>
+                      </>
+                    )}
 
-                    <FlexItem className="agent-toolbar-v2">
-                      <Tooltip content={terminalPanelOpen ? 'Hide terminal' : 'Show terminal'}>
-                        <Button variant="control" icon={<TerminalIcon />} aria-label="Toggle terminal panel"
-                          onClick={() => setTerminalPanelOpen(prev => !prev)}
-                          style={{ width: 28, justifyContent: 'center', ...(terminalPanelOpen ? { background: 'var(--pf-t--global--background--color--action--plain--clicked)' } : {}) }}
-                        />
-                      </Tooltip>
-                    </FlexItem>
-
-                    <FlexItem className="agent-toolbar-v2">
-                      <Tooltip content={diffPanelOpen ? 'Hide diff' : 'Show diff'}>
-                        <Button variant="control" icon={<CodeIcon />} aria-label="Toggle diff panel"
-                          onClick={() => setDiffPanelOpen(prev => !prev)}
-                          style={{ width: 28, justifyContent: 'center', ...(diffPanelOpen ? { background: 'var(--pf-t--global--background--color--action--plain--clicked)' } : {}) }}
-                        />
-                      </Tooltip>
-                    </FlexItem>
-
-                    <FlexItem className="agent-toolbar-v2">
-                      <Dropdown isOpen={commitOpen} onSelect={() => setCommitOpen(false)} onOpenChange={setCommitOpen} popperProps={{ position: 'right' }}
-                        toggle={(toggleRef) => (
-                          <MenuToggle ref={toggleRef} isExpanded={commitOpen} onClick={() => setCommitOpen(o => !o)} variant="primary"
-                            splitButtonItems={[<MenuToggleAction key="commit-push-action"><CloudUploadAltIcon className="toolbar-commit-icon" /><span className="toolbar-commit-text">Commit &amp; push</span></MenuToggleAction>]}
-                          />
-                        )}
-                      >
-                        <DropdownList>
-                          <DropdownItem key="commit" icon={<CodeBranchIcon />}>Commit</DropdownItem>
-                          <DropdownItem key="push" icon={<CloudUploadAltIcon />}>Push</DropdownItem>
-                          <Divider key="separator" />
-                          <DropdownItem key="create-pr" icon={<GithubIcon />}>Create PR</DropdownItem>
-                        </DropdownList>
-                      </Dropdown>
-                    </FlexItem>
-
-                    <FlexItem className="agent-toolbar-v2">
-                      <Tooltip content="Disconnect"><Button variant="secondary" icon={<TimesIcon />} onClick={handleDisconnect}><span className="toolbar-disconnect-text">Disconnect</span></Button></Tooltip>
-                    </FlexItem>
                   </Flex>
                 </FlexItem>
               </Flex>
               </div>
 
-              {/* Chat area + panels */}
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'row', minHeight: 0 }}>
+              {/* Content area — terminal or chat */}
+              {viewMode === 'terminal' ? (
+                <div
+                  style={{
+                    flex: 1,
+                    background: '#1e1e1e',
+                    color: '#d4d4d4',
+                    fontFamily: '"SF Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+                    fontSize: 13,
+                    lineHeight: '22px',
+                    padding: '12px 16px',
+                    overflowY: 'auto',
+                  }}
+                >
+                  {terminalLines.map((line, i) => (
+                    <div key={i}>{line}</div>
+                  ))}
+                  {terminalLines.length >= terminalAllLines.length && (
+                    <span style={{ animation: 'blink 1s step-end infinite', color: '#cccccc' }}>&#9612;</span>
+                  )}
+                  <style>{`@keyframes blink { 50% { opacity: 0; } }`}</style>
+                </div>
+              ) : (
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'row', minHeight: 0, overflow: 'hidden' }}>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                   {/* Chat messages */}
-                  <div ref={messagesContainerRef} style={{ flex: 1, overflowY: 'auto', padding: '16px 0' }}>
+                  <div ref={messagesContainerRef} style={{ flex: 1, overflowY: 'auto' }}>
                     {currentMessages.length === 0 ? (
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--pf-t--global--text--color--subtle)', fontSize: 14 }}>
-                        Connected. Send a message to start chatting.
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 8, color: 'var(--pf-t--global--text--color--subtle)' }}>
+                        <TerminalIcon style={{ fontSize: 24, opacity: 0.5 }} />
+                        <span style={{ fontSize: 13 }}>Ask anything to get started</span>
                       </div>
                     ) : (
                       <>
@@ -569,47 +576,46 @@ export function AgentSpaceV2() {
                     )}
                   </div>
 
-                  <ChatInput onSend={handleSendMessage} isStreaming={isStreaming} />
-
-                  {/* Terminal panel (below chat, same as v1) */}
-                  {terminalPanelOpen && (
-                    <div style={{
-                      height: 200, borderTop: '2px solid var(--pf-t--global--border--color--default)',
-                      background: '#1e1e1e', color: '#aaaaaa', fontFamily: 'monospace', fontSize: 13, padding: 12, overflowY: 'auto',
-                    }}>
-                      <div style={{ color: '#888', marginBottom: 8 }}>Terminal</div>
-                      {terminalLines.map((line, i) => <div key={i} style={{ color: '#33cc33' }}>{line}</div>)}
-                      <div>$ <span style={{ animation: 'blink 1s step-end infinite' }}>_</span></div>
-                      <style>{`@keyframes blink { 50% { opacity: 0; } }`}</style>
-                    </div>
-                  )}
+                  <ChatInput onSend={handleSendMessage} isStreaming={isStreaming} onStop={handleStopStreaming} />
                 </div>
 
-                {/* Diff panel (right side, same as v1) */}
-                {diffPanelOpen && (
-                  <div style={{
-                    width: 400, borderLeft: '2px solid var(--pf-t--global--border--color--default)',
-                    background: '#1e1e1e', color: '#aaaaaa', fontFamily: 'monospace', fontSize: 13, padding: 12, overflowY: 'auto',
-                  }}>
-                    <div style={{ color: '#888', marginBottom: 8 }}>Diff</div>
-                    <div style={{ color: '#33cc33' }}>+ Added line example</div>
-                    <div style={{ color: '#ff4444' }}>- Removed line example</div>
-                    <div>  Unchanged context line</div>
+                {/* Right panel with tab views */}
+                {rightPanelView !== null && (
+                  <div style={{ width: 560, minWidth: 560, minHeight: 0, borderLeft: '1px solid var(--pf-t--global--border--color--default)' }}>
+                      {rightPanelView === 'changes' && <DiffPanel />}
+                      {rightPanelView === 'git' && <GitPanel />}
+                      {rightPanelView === 'editor' && <EditorPanel />}
+                      {rightPanelView === 'terminal' && (
+                        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#1e1e1e' }}>
+                          <div style={{
+                            flex: 1, overflowY: 'auto', padding: '12px 16px',
+                            fontFamily: '"SF Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+                            fontSize: 13, lineHeight: '22px',
+                          }}>
+                            <div>
+                              <span style={{ color: '#b0b0b0' }}>~/{selectedProject?.name ?? 'workspace'}</span>
+                              <span style={{ color: '#808080' }}> $ </span>
+                              <span style={{ animation: 'blink 1s step-end infinite', color: '#cccccc' }}>&#9612;</span>
+                            </div>
+                            <style>{`@keyframes blink { 50% { opacity: 0; } }`}</style>
+                          </div>
+                        </div>
+                      )}
                   </div>
                 )}
               </div>
+              )}
             </div>
           ) : selectedAgent ? (
             <AgentDetail
               agent={selectedAgent}
               project={selectedProject}
               isAuthenticated={isSelectedAuthenticated}
-              onConnect={handleConnect}
               onAuthenticate={handleAuthenticate}
             />
           ) : (
             <PageSection style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-              <EmptyState icon={PluggedIcon} titleText="Agent Space v2" headingLevel="h2">
+              <EmptyState icon={PluggedIcon} titleText="Agent Space" headingLevel="h2">
                 <EmptyStateBody>
                   Select an agent from the sidebar to view details and connect, or add a new project to get started.
                 </EmptyStateBody>

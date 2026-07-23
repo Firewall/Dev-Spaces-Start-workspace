@@ -18,7 +18,6 @@ interface AgentSidebarProps {
   projects: Project[]
   agents: Agent[]
   selectedAgentId: string | null
-  connectedAgentIds: ReadonlySet<string>
   onSelectAgent: (agentId: string) => void
   onAddAgent: (projectId: string) => void
   onDeleteAgent: (agentId: string) => void
@@ -43,7 +42,6 @@ export function AgentSidebar({
   projects,
   agents,
   selectedAgentId,
-  connectedAgentIds,
   onSelectAgent,
   onAddAgent,
   onDeleteAgent,
@@ -190,9 +188,7 @@ export function AgentSidebar({
 
               {!isCollapsed && (
                 <div>
-                  {visibleAgents.map((agent) => {
-                    const isConnected = connectedAgentIds.has(agent.id)
-                    return (
+                  {visibleAgents.map((agent) => (
                     <div
                       key={agent.id}
                       className="agent-sidebar-item"
@@ -209,17 +205,6 @@ export function AgentSidebar({
                             : undefined,
                       }}
                     >
-                      {isConnected && (
-                        <span
-                          style={{
-                            width: 6,
-                            height: 6,
-                            borderRadius: '50%',
-                            background: 'var(--pf-t--global--color--status--success--default)',
-                            flexShrink: 0,
-                          }}
-                        />
-                      )}
                       <span
                         style={{
                           flex: 1,
@@ -258,8 +243,7 @@ export function AgentSidebar({
                         />
                       </span>
                     </div>
-                    )
-                  })}
+                  ))}
                   {hasMore && !isExpanded && (
                     <div
                       style={{
