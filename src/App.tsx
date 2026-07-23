@@ -9,6 +9,8 @@ import {
   MastheadBrand,
   MastheadContent,
   MastheadMain,
+  MastheadToggle,
+  PageToggleButton,
   MenuToggle,
   Nav,
   NavGroup,
@@ -22,7 +24,9 @@ import {
   ToggleGroupItem,
 } from '@patternfly/react-core'
 import {
+  BarsIcon,
   DesktopIcon,
+  ExternalLinkAltIcon,
   MoonIcon,
   OutlinedQuestionCircleIcon,
   RunningIcon,
@@ -30,6 +34,7 @@ import {
   ThLargeIcon,
   UserIcon,
 } from '@patternfly/react-icons'
+import { AgentSpace } from './components/AgentSpaceV2'
 import { CreateWorkspaceSplitTab } from './components/CreateWorkspaceSplitTab'
 import { UserPreferences } from './components/UserPreferences'
 import { WorkspaceList } from './components/WorkspaceList'
@@ -55,7 +60,7 @@ const DARK_THEME_CLASS = 'pf-v6-theme-dark'
 
 function getRouteFromHash(): string {
   const route = window.location.hash.replace('#/', '').replace('#', '')
-  if (route === 'workspaces' || route === 'create-workspace') return route
+  if (route === 'workspaces' || route === 'create-workspace' || route === 'agent-space') return route
   if (route.startsWith('user-preferences')) {
     const tab = route.split('/')[1]
     if (tab && VALID_PREF_TABS.has(tab)) return route
@@ -115,19 +120,38 @@ export default function App() {
     else document.title = 'Dev Spaces'
   }, [activePage, signedIn])
 
+  const isAgentSpace = activePage === 'agent-space'
+
   const masthead = (
-    <Masthead>
+    <Masthead style={isAgentSpace ? { background: 'var(--agent-sidebar-bg)' } : undefined}>
       <MastheadMain>
-        <MastheadBrand>
+        {!isAgentSpace && (
+          <MastheadToggle>
+            <PageToggleButton variant="plain" aria-label="Global navigation">
+              <BarsIcon />
+            </PageToggleButton>
+          </MastheadToggle>
+        )}
+        <MastheadBrand style={{ display: 'flex', alignItems: 'center' }}>
           <img
             src={`${import.meta.env.BASE_URL}icon.png`}
-            alt="Dev Spaces"
+            alt="Red Hat Dev Spaces"
             style={{ height: 36, borderRadius: 8 }}
           />
+          <span style={{ fontSize: 14, marginLeft: 10 }}>Red Hat Dev Spaces</span>
         </MastheadBrand>
       </MastheadMain>
       <MastheadContent>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto' }}>
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={<ExternalLinkAltIcon />}
+            iconPosition="end"
+            onClick={() => setActivePage(activePage === 'agent-space' ? 'workspaces' : 'agent-space')}
+          >
+            {activePage === 'agent-space' ? 'Workspaces' : 'Agent Space'}
+          </Button>
           <Button variant="plain" aria-label="Applications">
             <ThLargeIcon />
           </Button>
@@ -247,8 +271,20 @@ export default function App() {
     </PageSidebar>
   )
 
+  if (isAgentSpace && signedIn) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--agent-content-bg)' }}>
+        {masthead}
+
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+          <AgentSpace />
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <Page masthead={masthead} sidebar={sidebar}>
+    <Page masthead={masthead} sidebar={sidebar} isManagedSidebar>
       {signedIn ? (
         activePage.startsWith('user-preferences') ? (
           <UserPreferences
