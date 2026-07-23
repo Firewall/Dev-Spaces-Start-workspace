@@ -14,12 +14,9 @@ import {
   MenuToggleAction,
   PageSection,
   Title,
-  ToggleGroup,
-  ToggleGroupItem,
 } from '@patternfly/react-core'
 import {
   ArrowLeftIcon,
-  ChatIcon,
   CodeBranchIcon,
   CodeIcon,
   CogIcon,
@@ -42,7 +39,8 @@ import { AddAgentModal } from './AddAgentModal'
 import { BrandIcon } from './BrandIcons'
 import { hasBrandIcon } from './brandIconData'
 import { EDITORS } from './EditorDropdown'
-import { AgentProviderDropdown } from './AgentProviderDropdown'
+import { AgentProviderDropdown, type ViewMode } from './AgentProviderDropdown'
+import { OpenShellBadge } from './OpenShellBadge'
 import { ChatMessage } from './ChatMessage'
 import { ChatInput } from './ChatInput'
 import { DiffPanel } from './DiffPanel'
@@ -65,8 +63,6 @@ const AUTO_SUMMARIES = [
   'Refactoring code',
   'Writing tests',
 ]
-
-type ViewMode = 'chat' | 'terminal'
 
 export function AgentSpace() {
   // --- View mode ---
@@ -420,6 +416,8 @@ export function AgentSpace() {
                         settings={selectedAgentSettings}
                         onToolChange={handleToolChange}
                         onSettingsChange={handleSettingsChange}
+                        viewMode={viewMode}
+                        onViewModeChange={setViewMode}
                       />
                     </FlexItem>
                     <FlexItem style={{ color: 'var(--pf-t--global--text--color--regular)', fontSize: 13 }}>/</FlexItem>
@@ -431,22 +429,7 @@ export function AgentSpace() {
                       })()}
                     </FlexItem>
                     <FlexItem>
-                      <ToggleGroup aria-label="View mode" isCompact>
-                        <ToggleGroupItem
-                          icon={<ChatIcon />}
-                          text="Chat"
-                          buttonId="mode-chat"
-                          isSelected={viewMode === 'chat'}
-                          onChange={() => setViewMode('chat')}
-                        />
-                        <ToggleGroupItem
-                          icon={<TerminalIcon />}
-                          text="Terminal"
-                          buttonId="mode-terminal"
-                          isSelected={viewMode === 'terminal'}
-                          onChange={() => setViewMode('terminal')}
-                        />
-                      </ToggleGroup>
+                      <OpenShellBadge />
                     </FlexItem>
                   </Flex>
                 </FlexItem>

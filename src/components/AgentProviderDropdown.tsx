@@ -15,11 +15,15 @@ import type { AccessMode, AgentMode, AgentSettings, AgentToolId, ContextWindowSi
 import { AGENT_TOOLS, CONTEXT_WINDOW_OPTIONS, PROVIDER_MODELS } from './agentSpaceMockData'
 import { BrandIcon } from './BrandIcons'
 
+export type ViewMode = 'chat' | 'terminal'
+
 interface AgentProviderDropdownProps {
   tool: AgentToolId
   settings: AgentSettings
   onToolChange: (tool: AgentToolId) => void
   onSettingsChange: (settings: AgentSettings) => void
+  viewMode?: ViewMode
+  onViewModeChange?: (mode: ViewMode) => void
 }
 
 const ACCESS_OPTIONS: { id: AccessMode; label: string }[] = [
@@ -33,6 +37,8 @@ export function AgentProviderDropdown({
   settings,
   onToolChange,
   onSettingsChange,
+  viewMode = 'chat',
+  onViewModeChange,
 }: AgentProviderDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
   const toggleRef = useRef<HTMLButtonElement>(null)
@@ -53,6 +59,7 @@ export function AgentProviderDropdown({
       <div><strong>Fast mode:</strong> {settings.fastMode ? 'On' : 'Off'}</div>
       <div><strong>Mode:</strong> {settings.agentMode === 'build' ? 'Build' : 'Plan'}</div>
       <div><strong>Access:</strong> {currentAccessLabel}</div>
+      <div><strong>View:</strong> {viewMode === 'chat' ? 'Chat' : 'Terminal'}</div>
     </div>
   )
 
@@ -127,6 +134,17 @@ export function AgentProviderDropdown({
         <MenuList>
           <MenuItem itemId="build" isSelected={settings.agentMode === 'build'}>Build</MenuItem>
           <MenuItem itemId="plan" isSelected={settings.agentMode === 'plan'}>Plan</MenuItem>
+        </MenuList>
+      </MenuContent>
+    </Menu>
+  )
+
+  const viewModeMenu = (
+    <Menu onSelect={(_e, itemId) => { onViewModeChange?.(String(itemId) as ViewMode); setIsOpen(false) }}>
+      <MenuContent>
+        <MenuList>
+          <MenuItem itemId="chat" isSelected={viewMode === 'chat'}>Chat</MenuItem>
+          <MenuItem itemId="terminal" isSelected={viewMode === 'terminal'}>Terminal</MenuItem>
         </MenuList>
       </MenuContent>
     </Menu>
@@ -248,6 +266,13 @@ export function AgentProviderDropdown({
                 itemId="access-group"
               >
                 Access
+              </MenuItem>
+              <MenuItem
+                flyoutMenu={viewModeMenu}
+                description={viewMode === 'chat' ? 'Chat' : 'Terminal'}
+                itemId="view-group"
+              >
+                View
               </MenuItem>
             </MenuList>
           </MenuContent>
