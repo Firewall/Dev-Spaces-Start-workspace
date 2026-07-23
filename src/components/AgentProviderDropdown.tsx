@@ -168,7 +168,7 @@ export function AgentProviderDropdown({
             onClick={() => setIsOpen((o) => !o)}
             isExpanded={isOpen}
             variant="plainText"
-            style={{ fontWeight: 600, fontSize: 14, padding: '4px 8px' }}
+            style={{ fontWeight: 400, fontSize: 13, padding: '4px 8px' }}
           >
             <Flex alignItems={{ default: 'alignItemsCenter' }} gap={{ default: 'gapSm' }}>
               <FlexItem>

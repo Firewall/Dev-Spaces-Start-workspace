@@ -9,6 +9,8 @@ import {
   MastheadBrand,
   MastheadContent,
   MastheadMain,
+  MastheadToggle,
+  PageToggleButton,
   MenuToggle,
   Nav,
   NavGroup,
@@ -22,6 +24,7 @@ import {
   ToggleGroupItem,
 } from '@patternfly/react-core'
 import {
+  BarsIcon,
   DesktopIcon,
   ExternalLinkAltIcon,
   MoonIcon,
@@ -118,15 +121,25 @@ export default function App() {
     else document.title = 'Dev Spaces'
   }, [activePage, signedIn])
 
+  const isAgentSpace = activePage === 'agent-space'
+
   const masthead = (
-    <Masthead>
+    <Masthead style={isAgentSpace ? { background: 'var(--agent-sidebar-bg)' } : undefined}>
       <MastheadMain>
-        <MastheadBrand>
+        {!isAgentSpace && (
+          <MastheadToggle>
+            <PageToggleButton variant="plain" aria-label="Global navigation">
+              <BarsIcon />
+            </PageToggleButton>
+          </MastheadToggle>
+        )}
+        <MastheadBrand style={{ display: 'flex', alignItems: 'center' }}>
           <img
             src={`${import.meta.env.BASE_URL}icon.png`}
-            alt="Dev Spaces"
+            alt="Red Hat Dev Spaces"
             style={{ height: 36, borderRadius: 8 }}
           />
+          <span style={{ fontSize: 14, marginLeft: 10 }}>Red Hat Dev Spaces</span>
         </MastheadBrand>
       </MastheadMain>
       <MastheadContent>
@@ -259,12 +272,22 @@ export default function App() {
     </PageSidebar>
   )
 
-  return (
-    <Page masthead={masthead} sidebar={activePage === 'agent-space' ? undefined : sidebar} isContentFilled={activePage === 'agent-space'}>
-      {signedIn ? (
-        activePage === 'agent-space' ? (
+  if (isAgentSpace && signedIn) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--agent-content-bg)' }}>
+        {masthead}
+
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           <AgentSpace />
-        ) : activePage.startsWith('user-preferences') ? (
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <Page masthead={masthead} sidebar={sidebar} isManagedSidebar>
+      {signedIn ? (
+        activePage.startsWith('user-preferences') ? (
           <UserPreferences
             activeTab={(activePage.split('/')[1] || 'container-registries') as import('./components/UserPreferences').PreferencesTab}
             onTabChange={(tab) => setActivePage(`user-preferences/${tab}`)}

@@ -118,8 +118,8 @@ export function AgentSidebar({
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 6,
-                  padding: '8px 8px',
+                  gap: 8,
+                  padding: '6px 8px 6px 8px',
                   cursor: 'pointer',
                   userSelect: 'none',
                 }}
@@ -173,17 +173,19 @@ export function AgentSidebar({
                     {project.name}
                   </span>
                 )}
-                <Button
-                  variant="plain"
-                  size="sm"
-                  icon={<PlusCircleIcon />}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onAddAgent(project.id)
-                  }}
-                  aria-label={`Add agent to ${project.name}`}
-                  style={{ padding: 2 }}
-                />
+                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', width: 50, flexShrink: 0 }}>
+                  <Button
+                    variant="plain"
+                    size="sm"
+                    icon={<PlusCircleIcon style={{ fontSize: 12 }} />}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onAddAgent(project.id)
+                    }}
+                    aria-label={`Add agent to ${project.name}`}
+                    style={{ padding: 0, display: 'inline-flex', alignItems: 'center' }}
+                  />
+                </span>
               </div>
 
               {!isCollapsed && (

@@ -107,7 +107,7 @@ export function AgentSpace() {
     setRightPanelView(prev => prev === view ? null : view)
   }, [])
 
-  const [terminalLineCount, setTerminalLineCount] = useState(0)
+  const [terminalLineCounts, setTerminalLineCounts] = useState<Record<string, number>>({})
   const terminalGenRef = useRef(0)
 
   useEffect(() => {
@@ -130,7 +130,6 @@ export function AgentSpace() {
     setSelectedAgentId(id)
     setOpenInOpen(false)
     setRightPanelView(null)
-    setTerminalLineCount(0)
   }, [])
 
   // --- Derived values ---
@@ -151,6 +150,7 @@ export function AgentSpace() {
     () => selectedAgent ? MOCK_TERMINAL_OUTPUT[selectedAgent.tool] : [],
     [selectedAgent],
   )
+  const terminalLineCount = selectedAgentId ? (terminalLineCounts[selectedAgentId] ?? 0) : 0
   const terminalLines = useMemo(
     () => terminalAllLines.slice(0, terminalLineCount),
     [terminalAllLines, terminalLineCount],
@@ -158,17 +158,19 @@ export function AgentSpace() {
 
   useEffect(() => {
     const gen = ++terminalGenRef.current
-    if (viewMode !== 'terminal' || !selectedAgent || !isSelectedAuthenticated) return
+    if (viewMode !== 'terminal' || !selectedAgent || !isSelectedAuthenticated || !selectedAgentId) return
     const total = MOCK_TERMINAL_OUTPUT[selectedAgent.tool].length
-    let count = 0
+    const existing = terminalLineCounts[selectedAgentId] ?? 0
+    if (existing >= total) return
+    let count = existing
     const interval = setInterval(() => {
       if (gen !== terminalGenRef.current) { clearInterval(interval); return }
       count++
-      setTerminalLineCount(count)
+      setTerminalLineCounts(prev => ({ ...prev, [selectedAgentId]: count }))
       if (count >= total) clearInterval(interval)
     }, 400)
     return () => clearInterval(interval)
-  }, [viewMode, selectedAgent, isSelectedAuthenticated])
+  }, [viewMode, selectedAgent, isSelectedAuthenticated, selectedAgentId])
 
   // --- Agent/project handlers ---
   const handleAuthenticate = useCallback((toolId: AgentToolId) => {
@@ -301,88 +303,103 @@ export function AgentSpace() {
   return (
     <>
       <style>{`
-        .pf-v6-c-page__main-container { display: flex; flex-direction: column; }
-        .pf-v6-c-page__main { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+        :root {
+          --agent-sidebar-bg: #f0f0f0;
+          --agent-content-bg: #ffffff;
+        }
+        .pf-v6-theme-dark {
+          --agent-sidebar-bg: #0f0f0f;
+          --agent-content-bg: #1a1a1a;
+        }
       `}</style>
       <div style={{ display: 'flex', flex: 1, minHeight: 0, height: '100%' }}>
-        {/* Left sidebar — identical to v1 */}
+        {/* Left sidebar */}
         <div style={{
-          width: 260, minWidth: 260,
-          borderRight: '1px solid var(--pf-t--global--border--color--default)',
+          width: 260,
+          minWidth: 260,
+          background: 'var(--agent-sidebar-bg)',
           display: 'flex', flexDirection: 'column', outline: 'none',
+          paddingLeft: 8,
         }}>
-          {!activeSettingsView && (
             <>
-              <div style={{
-                padding: '10px 12px',
-                borderBottom: '1px solid var(--pf-t--global--border--color--default)',
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              }}>
-                <Title headingLevel="h2" size="lg" style={{ margin: 0 }}>Projects</Title>
-                <Button variant="plain" size="sm" icon={<PlusCircleIcon />} onClick={() => setAddProjectModalOpen(true)} aria-label="Add project" style={{ padding: 4 }} />
-              </div>
-              <AgentSidebar
-                projects={projects}
-                agents={agents}
-                selectedAgentId={selectedAgentId}
-                onSelectAgent={selectAgent}
-                onAddAgent={handleAddAgent}
-                onDeleteAgent={handleDeleteAgent}
-                onDeleteProject={handleDeleteProject}
-                onRenameProject={handleRenameProject}
-              />
-            </>
-          )}
-          <div
-            style={{
-              borderTop: '1px solid var(--pf-t--global--border--color--default)',
-              padding: '4px 0',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
-            {activeSettingsView && (
-              <div style={{
-                padding: '10px 12px',
-                borderBottom: '1px solid var(--pf-t--global--border--color--default)',
-                marginBottom: 4,
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              }}>
-                <Title headingLevel="h2" size="lg" style={{ margin: 0 }}>Settings</Title>
-                <Button variant="plain" size="sm" icon={<ArrowLeftIcon />} onClick={() => setActiveSettingsView(null)} aria-label="Back" style={{ padding: 4 }} />
-              </div>
-            )}
-            {([
-              { key: 'providers' as const, label: 'Providers', icon: <CubesIcon /> },
-              { key: 'mcps' as const, label: 'MCPs', icon: <PluggedIcon /> },
-              { key: 'skills' as const, label: 'Skills', icon: <WrenchIcon /> },
-              { key: 'settings' as const, label: 'Settings', icon: <CogIcon /> },
-            ]).map(item => (
-              <Button
-                key={item.key}
-                variant="plain"
-                icon={item.icon}
-                onClick={() => setActiveSettingsView(item.key)}
+              {!activeSettingsView && (
+                <>
+                  <div style={{
+                    padding: '6px 8px',
+                    borderBottom: '1px solid rgba(255,255,255,0.04)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  }}>
+                    <Title headingLevel="h2" size="lg" style={{ margin: 0, flex: 1 }}>Projects</Title>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', width: 50, flexShrink: 0 }}>
+                      <Button variant="plain" size="sm" icon={<PlusCircleIcon style={{ fontSize: 12 }} />} onClick={() => setAddProjectModalOpen(true)} aria-label="Add project" style={{ padding: 0, display: 'inline-flex', alignItems: 'center' }} />
+                    </span>
+                  </div>
+                  <AgentSidebar
+                    projects={projects}
+                    agents={agents}
+                    selectedAgentId={selectedAgentId}
+                    onSelectAgent={selectAgent}
+                    onAddAgent={handleAddAgent}
+                    onDeleteAgent={handleDeleteAgent}
+                    onDeleteProject={handleDeleteProject}
+                    onRenameProject={handleRenameProject}
+                  />
+                </>
+              )}
+              <div
                 style={{
-                  fontSize: 13,
-                  width: '100%',
-                  justifyContent: 'flex-start',
-                  gap: 8,
-                  padding: '6px 16px',
-                  borderRadius: 0,
-                  background: activeSettingsView === item.key
-                    ? 'var(--pf-t--global--background--color--action--plain--clicked)'
-                    : undefined,
+                  borderTop: '1px solid rgba(255,255,255,0.04)',
+                  padding: '4px 0',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  marginTop: 'auto',
                 }}
               >
-                {item.label}
-              </Button>
-            ))}
-          </div>
+                {activeSettingsView && (
+                  <div style={{
+                    padding: '10px 12px',
+                    borderBottom: '1px solid rgba(255,255,255,0.04)',
+                    marginBottom: 4,
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  }}>
+                    <Title headingLevel="h2" size="lg" style={{ margin: 0 }}>Settings</Title>
+                    <Button variant="plain" size="sm" icon={<ArrowLeftIcon />} onClick={() => setActiveSettingsView(null)} aria-label="Back" style={{ padding: 4 }} />
+                  </div>
+                )}
+                {([
+                  { key: 'providers' as const, label: 'Providers', icon: <CubesIcon /> },
+                  { key: 'mcps' as const, label: 'MCPs', icon: <PluggedIcon /> },
+                  { key: 'skills' as const, label: 'Skills', icon: <WrenchIcon /> },
+                  { key: 'settings' as const, label: 'Settings', icon: <CogIcon /> },
+                ]).map(item => (
+                  <button
+                    key={item.key}
+                    onClick={() => setActiveSettingsView(item.key)}
+                    style={{
+                      display: 'flex', alignItems: 'center',
+                      fontSize: 13,
+                      fontFamily: 'inherit',
+                      width: '100%',
+                      padding: '6px 8px',
+                      border: 'none',
+                      borderRadius: 0,
+                      cursor: 'pointer',
+                      color: 'var(--pf-t--global--text--color--regular)',
+                      background: activeSettingsView === item.key
+                        ? 'var(--pf-t--global--background--color--action--plain--clicked)'
+                        : 'transparent',
+                    }}
+                  >
+                    <span style={{ flex: 1, textAlign: 'left' }}>{item.label}</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', width: 50, flexShrink: 0, opacity: 0.7 }}>{item.icon}</span>
+                  </button>
+                ))}
+              </div>
+            </>
         </div>
 
         {/* Main content area */}
-        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', background: 'var(--agent-content-bg)', minWidth: 0 }}>
           {activeSettingsView ? (
             <GlobalSettingsPanel view={activeSettingsView} />
           ) : isSelectedAuthenticated && selectedAgent ? (
@@ -405,8 +422,8 @@ export function AgentSpace() {
                         onSettingsChange={handleSettingsChange}
                       />
                     </FlexItem>
-                    <FlexItem style={{ color: 'var(--pf-t--global--text--color--subtle)', fontSize: 14 }}>/</FlexItem>
-                    <FlexItem style={{ fontWeight: 600 }}>
+                    <FlexItem style={{ color: 'var(--pf-t--global--text--color--regular)', fontSize: 13 }}>/</FlexItem>
+                    <FlexItem style={{ fontSize: 13 }}>
                       {(() => {
                         const toolName = AGENT_TOOLS.find(t => t.id === selectedAgent.tool)?.name ?? ''
                         const parts = selectedAgent.name.split(' - ')
@@ -504,24 +521,23 @@ export function AgentSpace() {
                       <>
                         <FlexItem style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                           {([
-                            { key: 'changes' as const, label: 'Changes', icon: <CodeIcon style={{ fontSize: 12 }} /> },
-                            { key: 'git' as const, label: 'Git', icon: <CodeBranchIcon style={{ fontSize: 12 }} /> },
-                            { key: 'editor' as const, label: 'Editor', icon: <PencilAltIcon style={{ fontSize: 12 }} /> },
-                            { key: 'terminal' as const, label: 'Terminal', icon: <TerminalIcon style={{ fontSize: 12 }} /> },
+                            { key: 'changes' as const, label: 'Changes', icon: <CodeIcon /> },
+                            { key: 'git' as const, label: 'Git', icon: <CodeBranchIcon /> },
+                            { key: 'editor' as const, label: 'Editor', icon: <PencilAltIcon /> },
+                            { key: 'terminal' as const, label: 'Terminal', icon: <TerminalIcon /> },
                           ]).map(tab => (
                             <button
                               key={tab.key}
                               onClick={() => toggleRightPanel(tab.key)}
                               style={{
                                 display: 'inline-flex', alignItems: 'center', gap: 5,
-                                padding: '4px 10px', fontSize: 12, fontWeight: 500,
+                                padding: '4px 10px', fontSize: 13, fontWeight: 400,
+                                fontFamily: 'inherit',
                                 height: 28, border: 'none', cursor: 'pointer', borderRadius: 4,
                                 background: rightPanelView === tab.key
                                   ? 'var(--pf-t--global--background--color--action--plain--clicked)'
                                   : 'transparent',
-                                color: rightPanelView === tab.key
-                                  ? 'var(--pf-t--global--text--color--regular)'
-                                  : 'var(--pf-t--global--text--color--subtle)',
+                                color: 'var(--pf-t--global--text--color--regular)',
                               }}
                             >
                               {tab.icon} {tab.label}
