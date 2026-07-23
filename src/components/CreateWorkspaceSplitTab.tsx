@@ -16,6 +16,10 @@ import {
   MenuSearch,
   MenuSearchInput,
   MenuToggle,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
   NumberInput,
   PageSection,
   Popover,
@@ -35,7 +39,9 @@ import {
 } from '@patternfly/react-core'
 import {
   CheckIcon,
+  CogIcon,
   CubeIcon,
+  DesktopIcon,
   FilterIcon,
   HelpIcon,
   MinusIcon,
@@ -44,6 +50,8 @@ import {
 import { DependencyBrandIcon } from './DependencyBrandIcon'
 import { getDependencyBrandIcon } from './dependencySimpleIcons'
 import { BranchDropdown } from './BranchDropdown'
+import { BrandIcon } from './BrandIcons'
+import { hasBrandIcon } from './brandIconData'
 import { EditorDropdown, EDITORS } from './EditorDropdown'
 import { EnvironmentComponentsSection } from './EnvironmentComponentsSection'
 import { AIToolsSection } from './AIToolsSection'
@@ -134,7 +142,7 @@ const EXISTING_WORKSPACES = [
 
 interface CreateWorkspaceSplitTabProps {
   phase: string
-  onPhaseChange: (phase: 'phase1' | 'phase2') => void
+  onPhaseChange: (phase: 'phase1' | 'phase2' | 'dialog') => void
 }
 
 function nameFromTemplate(templateId: string): string {
@@ -151,6 +159,7 @@ function TemplateIcon({ icon, size }: { icon: string; size: number }) {
 
 export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspaceSplitTabProps) {
   const isPhase2 = phase === 'phase2'
+  const isDialogPhase = phase === 'dialog'
   const [mode, setMode] = useState<CreationMode>('repo')
   const [name, setName] = useState('')
   const [repoUrl, setRepoUrl] = useState('')
@@ -177,6 +186,8 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
   const [tagDropdownOpen, setTagDropdownOpen] = useState(false)
   const [tagSearch, setTagSearch] = useState('')
   const [templatePanelOpen, setTemplatePanelOpen] = useState(false)
+  const [templateModalOpen, setTemplateModalOpen] = useState(false)
+  const [editorModalOpen, setEditorModalOpen] = useState(false)
 
   const normalizedTemplateSearch = templateSearch.trim().toLowerCase()
   const filteredTemplates = useMemo(() => {
@@ -294,6 +305,12 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
         isSelected={phase === 'phase2'}
         onChange={() => onPhaseChange('phase2')}
       />
+      <ToggleGroupItem
+        text="Dialog"
+        buttonId="dialog"
+        isSelected={phase === 'dialog'}
+        onChange={() => onPhaseChange('dialog')}
+      />
     </ToggleGroup>
   )
 
@@ -339,11 +356,12 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
             {/* LEFT COLUMN: config form */}
             <div
               style={{
-                width: 440,
+                width: isDialogPhase ? undefined : 440,
+                flex: isDialogPhase ? 1 : undefined,
                 flexShrink: 0,
                 overflowY: 'auto',
                 overflowX: 'hidden',
-                borderRight: templatePanelOpen ? '1px solid var(--pf-t--global--border--color--default)' : 'none',
+                borderRight: templatePanelOpen && !isDialogPhase ? '1px solid var(--pf-t--global--border--color--default)' : 'none',
                 padding: 'var(--pf-t--global--spacer--lg)',
                 paddingRight: 'var(--pf-t--global--spacer--xl)',
                 display: 'flex',
@@ -353,60 +371,98 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
             >
               <Form onSubmit={handleSubmit}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--pf-t--global--spacer--lg)' }}>
-                  <FormGroup
-                    label="Workspace Name"
-                    fieldId="workspace-name"
-                    labelHelp={<FieldHelp text="A human-readable name for your workspace. Auto-generated from the template if left blank." />}
-                  >
-                    <TextInput
-                      id="workspace-name"
-                      value={name}
-                      onChange={handleNameChange}
-                      placeholder="my-project"
-                    />
-                  </FormGroup>
+                  <div style={{ maxWidth: isDialogPhase ? 600 : undefined, display: 'flex', flexDirection: 'column', gap: 'var(--pf-t--global--spacer--lg)' }}>
+                    <FormGroup
+                      label="Workspace Name"
+                      fieldId="workspace-name"
+                      labelHelp={<FieldHelp text="A human-readable name for your workspace. Auto-generated from the template if left blank." />}
+                    >
+                      <TextInput
+                        id="workspace-name"
+                        value={name}
+                        onChange={handleNameChange}
+                        placeholder="my-project"
+                      />
+                    </FormGroup>
 
-                  <FormGroup label="Template" fieldId="select-template">
-                    {selectedTemplateObj ? (
-                      <div
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 8,
-                          padding: '6px 12px',
-                          border: '1px solid var(--pf-t--global--border--color--default)',
-                          borderRadius: 'var(--pf-t--global--border--radius--small)',
-                          background: 'var(--pf-t--global--background--color--primary--default)',
-                        }}
-                      >
-                        <TemplateIcon icon={selectedTemplateObj.icon} size={16} />
-                        <span style={{ fontSize: 13, fontWeight: 500 }}>{selectedTemplateObj.name}</span>
+                    <FormGroup label="Template" fieldId="select-template">
+                      {selectedTemplateObj ? (
+                        <div
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            padding: '6px 12px',
+                            border: '1px solid var(--pf-t--global--border--color--default)',
+                            borderRadius: 'var(--pf-t--global--border--radius--small)',
+                            background: 'var(--pf-t--global--background--color--primary--default)',
+                          }}
+                        >
+                          <TemplateIcon icon={selectedTemplateObj.icon} size={16} />
+                          <span style={{ fontSize: 13, fontWeight: 500 }}>{selectedTemplateObj.name}</span>
+                          <Button
+                            variant="link"
+                            onClick={() => {
+                              if (isDialogPhase) {
+                                setTemplateModalOpen(true)
+                              } else {
+                                setTemplatePanelOpen((o) => !o)
+                              }
+                            }}
+                            style={{ padding: 0, fontSize: 13 }}
+                          >
+                            Change
+                          </Button>
+                        </div>
+                      ) : (
                         <Button
                           variant="link"
-                          onClick={() => setTemplatePanelOpen((o) => !o)}
-                          style={{ padding: 0, fontSize: 13 }}
+                          icon={<PlusCircleIcon />}
+                          onClick={() => {
+                            if (isDialogPhase) {
+                              setTemplateModalOpen(true)
+                            } else {
+                              setTemplatePanelOpen(true)
+                            }
+                          }}
+                          style={{ borderRadius: 'var(--pf-t--global--border--radius--small)' }}
                         >
-                          Change
+                          Select a Template
                         </Button>
-                      </div>
-                    ) : (
-                      <Button
-                        variant="link"
-                        icon={<PlusCircleIcon />}
-                        onClick={() => setTemplatePanelOpen(true)}
-                        style={{ borderRadius: 'var(--pf-t--global--border--radius--small)' }}
-                      >
-                        Select a Template
-                      </Button>
-                    )}
-                  </FormGroup>
+                      )}
+                    </FormGroup>
 
-                  <FormGroup
-                    label="Select an Editor"
-                    labelHelp={<FieldHelp text="Choose the IDE that will be launched in your workspace." />}
-                  >
-                    <EditorDropdown value={editor} onChange={setEditor} />
-                  </FormGroup>
+                    <FormGroup
+                      label="Select an Editor"
+                      labelHelp={<FieldHelp text="Choose the IDE that will be launched in your workspace." />}
+                    >
+                      {isDialogPhase ? (
+                        <div
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            padding: '6px 12px',
+                            border: '1px solid var(--pf-t--global--border--color--default)',
+                            borderRadius: 'var(--pf-t--global--border--radius--small)',
+                            background: 'var(--pf-t--global--background--color--primary--default)',
+                          }}
+                        >
+                          {hasBrandIcon(editor) ? <BrandIcon id={editor} size={16} /> : <DesktopIcon style={{ fontSize: 16 }} />}
+                          <span style={{ fontSize: 13, fontWeight: 500 }}>{EDITORS.find((e) => e.id === editor)?.label ?? editor}</span>
+                          <Button
+                            variant="link"
+                            onClick={() => setEditorModalOpen(true)}
+                            style={{ padding: 0, fontSize: 13 }}
+                          >
+                            Change
+                          </Button>
+                        </div>
+                      ) : (
+                        <EditorDropdown value={editor} onChange={setEditor} />
+                      )}
+                    </FormGroup>
+                  </div>
 
                   <FormGroup
                     label="Add AI Tools"
@@ -517,8 +573,8 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
               </Form>
             </div>
 
-            {/* RIGHT PANEL: template gallery (shown when templatePanelOpen) */}
-            {templatePanelOpen && (
+            {/* RIGHT PANEL: template gallery (shown when templatePanelOpen, hidden in dialog mode) */}
+            {templatePanelOpen && !isDialogPhase && (
               <div
                 style={{
                   flex: 1,
@@ -676,27 +732,21 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
                                   {tpl.description}
                                 </div>
                               </div>
-                              <span
-                                style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: 4,
-                                  fontSize: 12,
-                                  flexShrink: 0,
-                                  color: isSelected
-                                    ? 'var(--pf-t--global--color--brand--default)'
-                                    : 'var(--pf-t--global--text--color--subtle)',
-                                }}
-                              >
-                                {isSelected ? (
-                                  <>
-                                    <CheckIcon />
-                                    Selected
-                                  </>
-                                ) : (
-                                  'Select'
-                                )}
-                              </span>
+                              {isSelected && (
+                                <span
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 4,
+                                    fontSize: 12,
+                                    flexShrink: 0,
+                                    color: 'var(--pf-t--global--color--brand--default)',
+                                  }}
+                                >
+                                  <CheckIcon />
+                                  Selected
+                                </span>
+                              )}
                             </div>
                           </CardBody>
                         </Card>
@@ -706,71 +756,312 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
                 )}
               </div>
             )}
+
+            {/* Template Selector Modal (dialog phase) */}
+            <Modal
+              isOpen={templateModalOpen}
+              onClose={() => setTemplateModalOpen(false)}
+              variant="large"
+              aria-label="Select a template"
+            >
+              <ModalHeader
+                title="Select a Template"
+                description="Choose a template to start your workspace from."
+              />
+              <ModalBody>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: 12,
+                    alignItems: 'center',
+                    paddingBottom: 16,
+                    marginBottom: 16,
+                    borderBottom: '1px solid var(--pf-t--global--border--color--default)',
+                  }}
+                >
+                  <div style={{ flex: '1 1 280px' }}>
+                    <TextInput
+                      value={templateSearch}
+                      onChange={(_e, val) => setTemplateSearch(val)}
+                      aria-label="Search templates"
+                      placeholder="Search templates…"
+                    />
+                  </div>
+                  <Select
+                    isOpen={tagDropdownOpen}
+                    onOpenChange={(open) => {
+                      setTagDropdownOpen(open)
+                      if (!open) setTagSearch('')
+                    }}
+                    onSelect={(_e, val) => {
+                      setTemplateTag(val as string)
+                      setTagDropdownOpen(false)
+                      setTagSearch('')
+                    }}
+                    selected={templateTag}
+                    toggle={(toggleRef) => (
+                      <MenuToggle
+                        ref={toggleRef}
+                        onClick={() => setTagDropdownOpen((o) => !o)}
+                        isExpanded={tagDropdownOpen}
+                        icon={<FilterIcon />}
+                        style={{ minWidth: 160 }}
+                      >
+                        {templateTag === 'All' ? 'All Tags' : templateTag}
+                      </MenuToggle>
+                    )}
+                  >
+                    <MenuSearch>
+                      <MenuSearchInput>
+                        <TextInput
+                          value={tagSearch}
+                          onChange={(_e, val) => setTagSearch(val)}
+                          aria-label="Filter tags"
+                          placeholder="Filter tags…"
+                        />
+                      </MenuSearchInput>
+                    </MenuSearch>
+                    <SelectList style={{ maxHeight: 400, overflowY: 'auto' }}>
+                      {tagSearch.trim() === '' && (
+                        <SelectOption value="All" isSelected={templateTag === 'All'}>
+                          All Tags
+                        </SelectOption>
+                      )}
+                      {ALL_TAGS
+                        .filter((tag) =>
+                          tagSearch.trim() === '' ||
+                          tag.toLowerCase().includes(tagSearch.trim().toLowerCase()),
+                        )
+                        .map((tag) => (
+                          <SelectOption key={tag} value={tag} isSelected={templateTag === tag}>
+                            {tag}
+                          </SelectOption>
+                        ))}
+                    </SelectList>
+                  </Select>
+                  <span style={{ fontSize: 12, color: 'var(--pf-t--global--text--color--subtle)' }}>
+                    {filteredTemplates.length} shown
+                  </span>
+                  {hasActiveTemplateFilters && (
+                    <Button
+                      variant="link"
+                      onClick={() => {
+                        setTemplateSearch('')
+                        setTemplateTag('All')
+                      }}
+                      style={{ padding: 0 }}
+                    >
+                      Reset filters
+                    </Button>
+                  )}
+                </div>
+
+                {filteredTemplates.length === 0 ? (
+                  <div
+                    style={{
+                      padding: '24px 0',
+                      textAlign: 'center',
+                      color: 'var(--pf-t--global--text--color--subtle)',
+                    }}
+                  >
+                    No templates match your search and filter.
+                  </div>
+                ) : (
+                  <Gallery hasGutter minWidths={{ default: '260px' }}>
+                    {filteredTemplates.map((tpl) => {
+                      const isSelected = selectedTemplate === tpl.id
+                      return (
+                        <Card
+                          key={tpl.id}
+                          isSelectable
+                          isSelected={isSelected}
+                          onClick={() => {
+                            setSelectedTemplate((prev) => {
+                              const next = prev === tpl.id ? null : tpl.id
+                              if (!nameManuallyEdited.current) {
+                                setName(next ? nameFromTemplate(next) : '')
+                              }
+                              return next
+                            })
+                          }}
+                          style={{
+                            borderRadius: 12,
+                            border: isSelected
+                              ? '1px solid var(--pf-t--global--color--brand--default)'
+                              : '1px solid var(--pf-t--global--border--color--default)',
+                            boxShadow: isSelected
+                              ? '0 0 0 1px color-mix(in srgb, var(--pf-t--global--color--brand--default) 20%, transparent)'
+                              : '0 1px 2px rgba(3, 3, 3, 0.08)',
+                            background: 'var(--pf-t--global--background--color--primary--default)',
+                          }}
+                        >
+                          <CardBody style={{ padding: '12px 14px' }}>
+                            <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  width: 32,
+                                  height: 32,
+                                  borderRadius: 8,
+                                  background: 'var(--pf-t--global--background--color--secondary--default)',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                <TemplateIcon icon={tpl.icon} size={20} />
+                              </div>
+                              <div style={{ minWidth: 0, flex: 1 }}>
+                                <div style={{ fontWeight: 600, fontSize: 14, lineHeight: 1.2 }}>{tpl.name}</div>
+                                <div
+                                  style={{
+                                    marginTop: 2,
+                                    fontSize: 12,
+                                    lineHeight: 1.3,
+                                    color: 'var(--pf-t--global--text--color--subtle)',
+                                  }}
+                                >
+                                  {tpl.description}
+                                </div>
+                              </div>
+                              {isSelected && (
+                                <span
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 4,
+                                    fontSize: 12,
+                                    flexShrink: 0,
+                                    color: 'var(--pf-t--global--color--brand--default)',
+                                  }}
+                                >
+                                  <CheckIcon />
+                                  Selected
+                                </span>
+                              )}
+                            </div>
+                          </CardBody>
+                        </Card>
+                      )
+                    })}
+                  </Gallery>
+                )}
+              </ModalBody>
+              <ModalFooter>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, width: '100%' }}>
+                  <span style={{ fontSize: 13, color: 'var(--pf-t--global--text--color--subtle)' }}>
+                    {selectedTemplateObj
+                      ? `Selected: ${selectedTemplateObj.name}`
+                      : 'Click a template card to select it.'}
+                  </span>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <Button variant="link" onClick={() => setTemplateModalOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="primary"
+                      isDisabled={!selectedTemplate}
+                      onClick={() => setTemplateModalOpen(false)}
+                    >
+                      Done
+                    </Button>
+                  </div>
+                </div>
+              </ModalFooter>
+            </Modal>
+
           </>
         )}
 
         {mode === 'repo' && (
-          <div style={{ width: 600, overflowY: 'auto', padding: 'var(--pf-t--global--spacer--lg)' }}>
+          <div style={{ width: isDialogPhase ? undefined : 600, flex: isDialogPhase ? 1 : undefined, overflowY: 'auto', padding: 'var(--pf-t--global--spacer--lg)' }}>
             <Form onSubmit={handleSubmit}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--pf-t--global--spacer--lg)' }}>
-                {isPhase2 && (
-                  <FormGroup
-                    label="Workspace Name"
-                    fieldId="workspace-name-repo"
-                    labelHelp={<FieldHelp text="A human-readable name for your workspace. Auto-generated from the repo URL if left blank." />}
-                  >
-                    <TextInput
-                      id="workspace-name-repo"
-                      value={name}
-                      onChange={handleNameChange}
-                      placeholder="my-project"
-                    />
-                  </FormGroup>
-                )}
-
-                <FormGroup fieldId="repo-url" label="Git Repository URL" isRequired>
-                    <Split hasGutter>
-                      <SplitItem isFilled>
-                        <TextInput
-                          id="repo-url"
-                          aria-label="HTTPS or SSH URL"
-                          placeholder="Enter HTTPS or SSH URL"
-                          value={repoUrl}
-                          onChange={handleRepoChange}
-                        />
-                      </SplitItem>
-                      <SplitItem>
-                        <BranchDropdown
-                          value={branch}
-                          onChange={setBranch}
-                          disabled={!hasRepoInput}
-                        />
-                      </SplitItem>
-                    </Split>
-                  {isDuplicate && (
-                    <Alert
-                      variant="warning"
-                      isInline
-                      isPlain
-                      title="A workspace using this repository already exists. You can still create a new one."
-                      style={{ marginTop: 8 }}
-                    />
+                <div style={{ maxWidth: isDialogPhase ? 600 : undefined, display: 'flex', flexDirection: 'column', gap: 'var(--pf-t--global--spacer--lg)' }}>
+                  {isPhase2 && (
+                    <FormGroup
+                      label="Workspace Name"
+                      fieldId="workspace-name-repo"
+                      labelHelp={<FieldHelp text="A human-readable name for your workspace. Auto-generated from the repo URL if left blank." />}
+                    >
+                      <TextInput
+                        id="workspace-name-repo"
+                        value={name}
+                        onChange={handleNameChange}
+                        placeholder="my-project"
+                      />
+                    </FormGroup>
                   )}
-                  <FormHelperText>
-                    <HelperText>
-                      <HelperTextItem>
-                        Import from a Git repository to launch a Cloud Development Environment.
-                      </HelperTextItem>
-                    </HelperText>
-                  </FormHelperText>
-                </FormGroup>
 
-                <FormGroup
-                  label="Select an Editor"
-                  labelHelp={<FieldHelp text="Choose the IDE that will be launched in your workspace." />}
-                >
-                  <EditorDropdown value={editor} onChange={setEditor} />
-                </FormGroup>
+                  <FormGroup fieldId="repo-url" label="Git Repository URL" isRequired>
+                      <Split hasGutter>
+                        <SplitItem isFilled>
+                          <TextInput
+                            id="repo-url"
+                            aria-label="HTTPS or SSH URL"
+                            placeholder="Enter HTTPS or SSH URL"
+                            value={repoUrl}
+                            onChange={handleRepoChange}
+                          />
+                        </SplitItem>
+                        <SplitItem>
+                          <BranchDropdown
+                            value={branch}
+                            onChange={setBranch}
+                            disabled={!hasRepoInput}
+                          />
+                        </SplitItem>
+                      </Split>
+                    {isDuplicate && (
+                      <Alert
+                        variant="warning"
+                        isInline
+                        isPlain
+                        title="A workspace using this repository already exists. You can still create a new one."
+                        style={{ marginTop: 8 }}
+                      />
+                    )}
+                    <FormHelperText>
+                      <HelperText>
+                        <HelperTextItem>
+                          Import from a Git repository to launch a Cloud Development Environment.
+                        </HelperTextItem>
+                      </HelperText>
+                    </FormHelperText>
+                  </FormGroup>
+
+                  <FormGroup
+                    label="Select an Editor"
+                    labelHelp={<FieldHelp text="Choose the IDE that will be launched in your workspace." />}
+                  >
+                    {isDialogPhase ? (
+                      <div
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          padding: '6px 12px',
+                          border: '1px solid var(--pf-t--global--border--color--default)',
+                          borderRadius: 'var(--pf-t--global--border--radius--small)',
+                          background: 'var(--pf-t--global--background--color--primary--default)',
+                        }}
+                      >
+                        {hasBrandIcon(editor) ? <BrandIcon id={editor} size={16} /> : <DesktopIcon style={{ fontSize: 16 }} />}
+                        <span style={{ fontSize: 13, fontWeight: 500 }}>{EDITORS.find((e) => e.id === editor)?.label ?? editor}</span>
+                        <Button
+                          variant="link"
+                          onClick={() => setEditorModalOpen(true)}
+                          style={{ padding: 0, fontSize: 13 }}
+                        >
+                          Change
+                        </Button>
+                      </div>
+                    ) : (
+                      <EditorDropdown value={editor} onChange={setEditor} />
+                    )}
+                  </FormGroup>
+                </div>
 
                 {isPhase2 && (
                   <FormGroup
@@ -968,6 +1259,84 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
           </div>
         )}
       </div>
+
+      {/* Editor Selector Modal (dialog phase) */}
+      <Modal
+        isOpen={editorModalOpen}
+        onClose={() => setEditorModalOpen(false)}
+        variant="medium"
+        aria-label="Select an editor"
+      >
+        <ModalHeader
+          title="Select an Editor"
+          description="Choose the IDE that will be launched in your workspace."
+        />
+        <ModalBody>
+          <Gallery hasGutter minWidths={{ default: '240px' }}>
+            {EDITORS.map((e) => {
+              const isSelected = editor === e.id
+              return (
+                <Card
+                  key={e.id}
+                  isSelectable
+                  isSelected={isSelected}
+                  onClick={() => {
+                    setEditor(e.id)
+                    setEditorModalOpen(false)
+                  }}
+                  style={{
+                    borderRadius: 12,
+                    border: isSelected
+                      ? '1px solid var(--pf-t--global--color--brand--default)'
+                      : '1px solid var(--pf-t--global--border--color--default)',
+                    boxShadow: isSelected
+                      ? '0 0 0 1px color-mix(in srgb, var(--pf-t--global--color--brand--default) 20%, transparent)'
+                      : '0 1px 2px rgba(3, 3, 3, 0.08)',
+                    background: 'var(--pf-t--global--background--color--primary--default)',
+                  }}
+                >
+                  <CardBody style={{ padding: '12px 14px' }}>
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 32,
+                          height: 32,
+                          borderRadius: 8,
+                          background: 'var(--pf-t--global--background--color--secondary--default)',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {e.isCustom ? <CogIcon style={{ fontSize: 20, opacity: 0.5 }} /> : hasBrandIcon(e.id) ? <BrandIcon id={e.id} size={20} /> : <DesktopIcon style={{ fontSize: 20, opacity: 0.5 }} />}
+                      </div>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontWeight: 600, fontSize: 14, lineHeight: 1.2 }}>{e.label}</div>
+                      </div>
+                      {isSelected && (
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            fontSize: 12,
+                            flexShrink: 0,
+                            color: 'var(--pf-t--global--color--brand--default)',
+                          }}
+                        >
+                          <CheckIcon />
+                          Selected
+                        </span>
+                      )}
+                    </div>
+                  </CardBody>
+                </Card>
+              )
+            })}
+          </Gallery>
+        </ModalBody>
+      </Modal>
 
       {/* FOOTER */}
       <div style={{
