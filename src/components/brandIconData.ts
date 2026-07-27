@@ -2,6 +2,7 @@ interface IconData {
   path: string
   color: string
   viewBox?: number
+  paths?: { d: string; fill: string }[]
 }
 
 export const BRAND_ICONS: Record<string, IconData> = {
@@ -67,8 +68,14 @@ export const BRAND_ICONS: Record<string, IconData> = {
     path: 'M12 1L22 7V17L12 23L2 17V7Z',
   },
   'opencode': {
-    color: '#3B82F6',
-    path: 'M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z',
+    color: '#656363',
+    path: '',
+    viewBox: 512,
+    paths: [
+      { d: 'M0 0h512v512H0z', fill: '#131010' },
+      { d: 'M320 224V352H192V224H320Z', fill: '#5A5858' },
+      { d: 'M384 416H128V96H384V416ZM320 160H192V352H320V160Z', fill: '#FFFFFF' },
+    ],
   },
   'openshift-ai': {
     color: '#EE0000',
