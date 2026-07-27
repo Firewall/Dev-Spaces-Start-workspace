@@ -30,7 +30,7 @@ import {
 } from '@patternfly/react-icons'
 import type { Agent, AgentSettings, AgentToolId, Project, ToolAuth } from './agentSpaceTypes'
 import type { ChatMessage as ChatMessageType } from './agentSpaceV2Types'
-import { AGENT_TOOLS, DEFAULT_AGENT_SETTINGS, INITIAL_AUTH, MOCK_AGENTS, MOCK_PROJECTS, MOCK_TERMINAL_OUTPUT, PROVIDER_MODELS } from './agentSpaceMockData'
+import { AGENT_TOOLS, DEFAULT_AGENT_SETTINGS, INITIAL_AUTH, MOCK_AGENTS, MOCK_PROJECTS, MOCK_TERMINAL_OUTPUT } from './agentSpaceMockData'
 import { MOCK_STREAMING_RESPONSES, MOCK_THINKING, MOCK_TOOL_CALLS } from './agentSpaceV2MockData'
 import { AgentSidebar } from './AgentSidebar'
 import { AgentDetail } from './AgentDetail'
@@ -47,6 +47,7 @@ import { DiffPanel } from './DiffPanel'
 import { GitPanel } from './GitPanel'
 import { EditorPanel } from './EditorPanel'
 import { GlobalSettingsPanel, type SettingsView } from './GlobalSettingsPanel'
+import { VSCodeView } from './VSCodeView'
 
 let nextProjectId = 200
 let nextAgentId = 200
@@ -82,8 +83,7 @@ export function AgentSpace() {
   const [agentSettingsMap, setAgentSettingsMap] = useState<Record<string, AgentSettings>>(() => {
     const map: Record<string, AgentSettings> = {}
     MOCK_AGENTS.forEach(a => {
-      const models = PROVIDER_MODELS[a.tool]
-      map[a.id] = { ...DEFAULT_AGENT_SETTINGS, model: models?.[0]?.id ?? DEFAULT_AGENT_SETTINGS.model }
+      map[a.id] = { ...DEFAULT_AGENT_SETTINGS }
     })
     return map
   })
@@ -94,6 +94,9 @@ export function AgentSpace() {
   const streamingRef = useRef<number | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
+
+  // --- VSCode view state ---
+  const [showVSCode, setShowVSCode] = useState(false)
 
   // --- Toolbar state ---
   const [openInOpen, setOpenInOpen] = useState(false)
@@ -191,8 +194,7 @@ export function AgentSpace() {
     const toolName = AGENT_TOOLS.find(t => t.id === tool)?.name ?? tool
     const summary = AUTO_SUMMARIES[nextAgentId % AUTO_SUMMARIES.length]
     const name = `${toolName} - ${summary}`
-    const models = PROVIDER_MODELS[tool]
-    setAgentSettingsMap(prev => ({ ...prev, [id]: { ...DEFAULT_AGENT_SETTINGS, model: models?.[0]?.id ?? DEFAULT_AGENT_SETTINGS.model } }))
+    setAgentSettingsMap(prev => ({ ...prev, [id]: { ...DEFAULT_AGENT_SETTINGS } }))
     setAgents(prev => [...prev, { id, name, tool, status: 'running', projectId, summary, lastActivity: Date.now() }])
     selectAgent(id)
   }, [selectAgent])
@@ -348,7 +350,6 @@ export function AgentSpace() {
                   padding: '4px 0',
                   display: 'flex',
                   flexDirection: 'column',
-                  marginTop: 'auto',
                 }}
               >
                 {activeSettingsView && (
@@ -363,7 +364,7 @@ export function AgentSpace() {
                   </div>
                 )}
                 {([
-                  { key: 'providers' as const, label: 'Providers', icon: <CubesIcon /> },
+                  { key: 'providers' as const, label: 'Agents & Models', icon: <CubesIcon /> },
                   { key: 'mcps' as const, label: 'MCPs', icon: <PluggedIcon /> },
                   { key: 'skills' as const, label: 'Skills', icon: <WrenchIcon /> },
                   { key: 'settings' as const, label: 'Settings', icon: <CogIcon /> },
@@ -396,7 +397,9 @@ export function AgentSpace() {
 
         {/* Main content area */}
         <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', background: 'var(--agent-content-bg)', minWidth: 0 }}>
-          {activeSettingsView ? (
+          {showVSCode ? (
+            <VSCodeView projectName={selectedProject?.name} onBack={() => setShowVSCode(false)} />
+          ) : activeSettingsView ? (
             <GlobalSettingsPanel view={activeSettingsView} />
           ) : isSelectedAuthenticated && selectedAgent ? (
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
@@ -445,7 +448,7 @@ export function AgentSpace() {
                             splitButtonItems={[
                               <MenuToggleAction
                                 key="open-vscode"
-                                onClick={() => { /* open in VS Code */ }}
+                                onClick={() => setShowVSCode(true)}
                               >
                                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                                   <BrandIcon id="vscode" size={16} />

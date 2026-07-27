@@ -1,4 +1,6 @@
-export type AgentToolId = 'claude-code' | 'codex' | 'opencode' | 'openshift-ai'
+export type AgentToolId = 'claude-code' | 'codex' | 'opencode' | 'cursor-agent'
+
+export type InferenceProviderId = 'redhat-ai' | 'claude' | 'cursor' | 'openai' | 'google-vertex' | 'aws-bedrock'
 
 export type AgentStatus = 'running' | 'stopped'
 
@@ -38,6 +40,7 @@ export interface ModelOption {
 
 export interface AgentSettings {
   reasoningMode: ReasoningMode
+  inferenceProvider: InferenceProviderId
   model: string
   contextWindow: ContextWindowSize
   fastMode: boolean

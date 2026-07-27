@@ -19,7 +19,7 @@ import {
   MOCK_SKILLS_CATALOG,
   SKILL_CATEGORY_LABELS,
 } from './globalSettingsMockData'
-import { AGENT_TOOLS, PROVIDER_MODELS } from './agentSpaceMockData'
+import { AGENT_TOOLS, INFERENCE_PROVIDERS, INFERENCE_MODELS } from './agentSpaceMockData'
 import { BrandIcon } from './BrandIcons'
 
 export type SettingsView = 'providers' | 'mcps' | 'skills' | 'settings'
@@ -39,7 +39,7 @@ const CATEGORY_COLORS: Record<Skill['category'], 'blue' | 'purple' | 'orange' | 
 }
 
 const VIEW_TITLES: Record<SettingsView, string> = {
-  providers: 'Providers',
+  providers: 'Agents & Models',
   mcps: 'MCP Servers',
   skills: 'Skills',
   settings: 'Settings',
@@ -49,17 +49,27 @@ interface GlobalSettingsPanelProps {
   view: SettingsView
 }
 
-const INITIAL_PROVIDER_STATUS: Record<string, boolean> = {
-  'openshift-ai': true,
-  'opencode': true,
-  'claude-code': false,
+const INITIAL_HARNESS_STATUS: Record<string, boolean> = {
+  'claude-code': true,
   'codex': false,
+  'opencode': true,
+  'cursor-agent': false,
+}
+
+const INITIAL_INFERENCE_STATUS: Record<string, boolean> = {
+  'redhat-ai': true,
+  'claude': true,
+  'cursor': false,
+  'openai': false,
+  'google-vertex': false,
+  'aws-bedrock': false,
 }
 
 export function GlobalSettingsPanel({ view }: GlobalSettingsPanelProps) {
   const [mcpServers, setMcpServers] = useState<McpServer[]>(MOCK_MCP_CATALOG)
   const [skills, setSkills] = useState<Skill[]>(MOCK_SKILLS_CATALOG)
-  const [providerConnected, setProviderConnected] = useState<Record<string, boolean>>(INITIAL_PROVIDER_STATUS)
+  const [harnessConnected, setHarnessConnected] = useState<Record<string, boolean>>(INITIAL_HARNESS_STATUS)
+  const [inferenceConnected, setInferenceConnected] = useState<Record<string, boolean>>(INITIAL_INFERENCE_STATUS)
   const [mcpFilter, setMcpFilter] = useState('')
   const [skillFilter, setSkillFilter] = useState('')
 
@@ -101,50 +111,96 @@ export function GlobalSettingsPanel({ view }: GlobalSettingsPanelProps) {
 
       <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
         {view === 'providers' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 1, maxWidth: 640 }}>
-            {AGENT_TOOLS.map(tool => {
-              const models = PROVIDER_MODELS[tool.id] ?? []
-              const connected = providerConnected[tool.id] ?? false
-              return (
-                <div
-                  key={tool.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: 12,
-                    padding: '12px 16px',
-                    borderRadius: 8,
-                    background: 'var(--pf-t--global--background--color--secondary--default)',
-                    marginBottom: 8,
-                  }}
-                >
-                  <div style={{ paddingTop: 2 }}>
-                    <BrandIcon id={tool.id} size={24} />
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                      <span style={{ fontWeight: 600, fontSize: 14 }}>{tool.name}</span>
-                      <Label color={connected ? 'green' : 'grey'} isCompact>
-                        {connected ? 'connected' : 'disconnected'}
-                      </Label>
+          <div style={{ maxWidth: 640 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--pf-t--global--text--color--subtle)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>
+              Harness
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 1, marginBottom: 32 }}>
+              {AGENT_TOOLS.map(tool => {
+                const connected = harnessConnected[tool.id] ?? false
+                return (
+                  <div
+                    key={tool.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 12,
+                      padding: '12px 16px',
+                      borderRadius: 8,
+                      background: 'var(--pf-t--global--background--color--secondary--default)',
+                      marginBottom: 8,
+                    }}
+                  >
+                    <div style={{ paddingTop: 2 }}>
+                      <BrandIcon id={tool.id} size={24} />
                     </div>
-                    <div style={{ fontSize: 13, opacity: 0.7 }}>{tool.description}</div>
-                    {models.length > 0 && (
-                      <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
-                        {models.map(m => (
-                          <Label key={m.id} isCompact color="blue">{m.name}</Label>
-                        ))}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                        <span style={{ fontWeight: 600, fontSize: 14 }}>{tool.name}</span>
+                        <Label color={connected ? 'green' : 'grey'} isCompact>
+                          {connected ? 'enabled' : 'disabled'}
+                        </Label>
                       </div>
-                    )}
+                      <div style={{ fontSize: 13, opacity: 0.7 }}>{tool.description}</div>
+                    </div>
+                    <Switch
+                      isChecked={connected}
+                      onChange={() => setHarnessConnected(prev => ({ ...prev, [tool.id]: !prev[tool.id] }))}
+                      aria-label={`Toggle ${tool.name}`}
+                    />
                   </div>
-                  <Switch
-                    isChecked={connected}
-                    onChange={() => setProviderConnected(prev => ({ ...prev, [tool.id]: !prev[tool.id] }))}
-                    aria-label={`Toggle ${tool.name}`}
-                  />
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
+
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--pf-t--global--text--color--subtle)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>
+              Inference Providers
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              {INFERENCE_PROVIDERS.map(provider => {
+                const models = INFERENCE_MODELS[provider.id] ?? []
+                const connected = inferenceConnected[provider.id] ?? false
+                return (
+                  <div
+                    key={provider.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 12,
+                      padding: '12px 16px',
+                      borderRadius: 8,
+                      background: 'var(--pf-t--global--background--color--secondary--default)',
+                      marginBottom: 8,
+                    }}
+                  >
+                    <div style={{ paddingTop: 2 }}>
+                      <BrandIcon id={provider.id} size={24} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                        <span style={{ fontWeight: 600, fontSize: 14 }}>{provider.name}</span>
+                        <Label color={connected ? 'green' : 'grey'} isCompact>
+                          {connected ? 'connected' : 'disconnected'}
+                        </Label>
+                      </div>
+                      <div style={{ fontSize: 13, opacity: 0.7 }}>{provider.description}</div>
+                      {models.length > 0 && (
+                        <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+                          {models.map(m => (
+                            <Label key={m.id} isCompact color="blue">{m.name}</Label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <Switch
+                      isChecked={connected}
+                      onChange={() => setInferenceConnected(prev => ({ ...prev, [provider.id]: !prev[provider.id] }))}
+                      aria-label={`Toggle ${provider.name}`}
+                    />
+                  </div>
+                )
+              })}
+            </div>
           </div>
         )}
 

@@ -1,10 +1,10 @@
-import type { Agent, AgentSettings, AgentToolId, ModelOption, Project, ToolAuth } from './agentSpaceTypes'
+import type { Agent, AgentSettings, AgentToolId, InferenceProviderId, ModelOption, Project, ToolAuth } from './agentSpaceTypes'
 
 export const AGENT_TOOLS: { id: AgentToolId; name: string; description: string }[] = [
-  { id: 'openshift-ai', name: 'OpenShift AI', description: 'Local models via OpenShift AI' },
   { id: 'claude-code', name: 'Claude Code', description: 'Anthropic AI coding agent' },
   { id: 'codex', name: 'Codex', description: 'OpenAI autonomous coding agent' },
   { id: 'opencode', name: 'OpenCode', description: 'Open-source AI coding CLI' },
+  { id: 'cursor-agent', name: 'Cursor Agent', description: 'AI-powered code editor agent' },
 ]
 
 export const MOCK_PROJECTS: Project[] = [
@@ -14,28 +14,77 @@ export const MOCK_PROJECTS: Project[] = [
 
 export const MOCK_AGENTS: Agent[] = [
   // web-app agents
-  { id: 'agent-1', name: 'OpenShift AI - Implementing OAuth2 login flow', tool: 'openshift-ai', status: 'running', projectId: 'proj-1', summary: 'Implementing OAuth2 login flow', lastActivity: Date.now() - 2 * 60 * 1000 },
-  { id: 'agent-6', name: 'OpenShift AI - Add user profile settings page', tool: 'openshift-ai', status: 'running', projectId: 'proj-1', summary: 'Add user profile settings page', lastActivity: Date.now() - 8 * 60 * 1000 },
-  { id: 'agent-2', name: 'OpenShift AI - Refactor database migration scripts', tool: 'openshift-ai', status: 'running', projectId: 'proj-1', summary: 'Refactor database migration scripts', lastActivity: Date.now() - 14 * 60 * 60 * 1000 },
-  { id: 'agent-7', name: 'OpenShift AI - Upgrade React Router to v7', tool: 'openshift-ai', status: 'running', projectId: 'proj-1', summary: 'Upgrade React Router to v7', lastActivity: Date.now() - 2 * 24 * 60 * 60 * 1000 },
-  { id: 'agent-8', name: 'OpenShift AI - Investigate memory leak in dashboard', tool: 'openshift-ai', status: 'running', projectId: 'proj-1', summary: 'Investigate memory leak in dashboard', lastActivity: Date.now() - 3 * 24 * 60 * 60 * 1000 },
-  { id: 'agent-3', name: 'OpenShift AI - Fix sidebar navigation styling issues', tool: 'openshift-ai', status: 'running', projectId: 'proj-1', summary: 'Fix sidebar navigation styling issues', lastActivity: Date.now() - 5 * 24 * 60 * 60 * 1000 },
-  { id: 'agent-9', name: 'OpenShift AI - Add dark mode theme support', tool: 'openshift-ai', status: 'running', projectId: 'proj-1', summary: 'Add dark mode theme support', lastActivity: Date.now() - 7 * 24 * 60 * 60 * 1000 },
+  { id: 'agent-1', name: 'Claude Code -Implementing OAuth2 login flow', tool: 'claude-code', status: 'running', projectId: 'proj-1', summary: 'Implementing OAuth2 login flow', lastActivity: Date.now() - 2 * 60 * 1000 },
+  { id: 'agent-6', name: 'Claude Code -Add user profile settings page', tool: 'claude-code', status: 'running', projectId: 'proj-1', summary: 'Add user profile settings page', lastActivity: Date.now() - 8 * 60 * 1000 },
+  { id: 'agent-2', name: 'Claude Code -Refactor database migration scripts', tool: 'claude-code', status: 'running', projectId: 'proj-1', summary: 'Refactor database migration scripts', lastActivity: Date.now() - 14 * 60 * 60 * 1000 },
+  { id: 'agent-7', name: 'Claude Code -Upgrade React Router to v7', tool: 'claude-code', status: 'running', projectId: 'proj-1', summary: 'Upgrade React Router to v7', lastActivity: Date.now() - 2 * 24 * 60 * 60 * 1000 },
+  { id: 'agent-8', name: 'Claude Code -Investigate memory leak in dashboard', tool: 'claude-code', status: 'running', projectId: 'proj-1', summary: 'Investigate memory leak in dashboard', lastActivity: Date.now() - 3 * 24 * 60 * 60 * 1000 },
+  { id: 'agent-3', name: 'Claude Code -Fix sidebar navigation styling issues', tool: 'claude-code', status: 'running', projectId: 'proj-1', summary: 'Fix sidebar navigation styling issues', lastActivity: Date.now() - 5 * 24 * 60 * 60 * 1000 },
+  { id: 'agent-9', name: 'Claude Code -Add dark mode theme support', tool: 'claude-code', status: 'running', projectId: 'proj-1', summary: 'Add dark mode theme support', lastActivity: Date.now() - 7 * 24 * 60 * 60 * 1000 },
   // api-service agents
-  { id: 'agent-10', name: 'OpenShift AI - Fix rate limiting middleware', tool: 'openshift-ai', status: 'running', projectId: 'proj-2', summary: 'Fix rate limiting middleware', lastActivity: Date.now() - 3 * 60 * 1000 },
-  { id: 'agent-5', name: 'OpenShift AI - Generate API documentation from types', tool: 'openshift-ai', status: 'running', projectId: 'proj-2', summary: 'Generate API documentation from types', lastActivity: Date.now() - 10 * 60 * 1000 },
-  { id: 'agent-11', name: 'OpenShift AI - Add GraphQL subscriptions for real-time', tool: 'openshift-ai', status: 'running', projectId: 'proj-2', summary: 'Add GraphQL subscriptions for real-time', lastActivity: Date.now() - 1 * 24 * 60 * 60 * 1000 },
-  { id: 'agent-12', name: 'OpenShift AI - Optimize database query performance', tool: 'openshift-ai', status: 'running', projectId: 'proj-2', summary: 'Optimize database query performance', lastActivity: Date.now() - 4 * 24 * 60 * 60 * 1000 },
-  { id: 'agent-4', name: 'OpenShift AI - Add integration tests for API endpoints', tool: 'openshift-ai', status: 'running', projectId: 'proj-2', summary: 'Add integration tests for API endpoints', lastActivity: Date.now() - 6 * 24 * 60 * 60 * 1000 },
-  { id: 'agent-13', name: 'OpenShift AI - Set up CI/CD pipeline with GitHub Actions', tool: 'openshift-ai', status: 'running', projectId: 'proj-2', summary: 'Set up CI/CD pipeline with GitHub Actions', lastActivity: Date.now() - 10 * 24 * 60 * 60 * 1000 },
+  { id: 'agent-10', name: 'Claude Code -Fix rate limiting middleware', tool: 'claude-code', status: 'running', projectId: 'proj-2', summary: 'Fix rate limiting middleware', lastActivity: Date.now() - 3 * 60 * 1000 },
+  { id: 'agent-5', name: 'Claude Code -Generate API documentation from types', tool: 'claude-code', status: 'running', projectId: 'proj-2', summary: 'Generate API documentation from types', lastActivity: Date.now() - 10 * 60 * 1000 },
+  { id: 'agent-11', name: 'Claude Code -Add GraphQL subscriptions for real-time', tool: 'claude-code', status: 'running', projectId: 'proj-2', summary: 'Add GraphQL subscriptions for real-time', lastActivity: Date.now() - 1 * 24 * 60 * 60 * 1000 },
+  { id: 'agent-12', name: 'Claude Code -Optimize database query performance', tool: 'claude-code', status: 'running', projectId: 'proj-2', summary: 'Optimize database query performance', lastActivity: Date.now() - 4 * 24 * 60 * 60 * 1000 },
+  { id: 'agent-4', name: 'Claude Code -Add integration tests for API endpoints', tool: 'claude-code', status: 'running', projectId: 'proj-2', summary: 'Add integration tests for API endpoints', lastActivity: Date.now() - 6 * 24 * 60 * 60 * 1000 },
+  { id: 'agent-13', name: 'Claude Code -Set up CI/CD pipeline with GitHub Actions', tool: 'claude-code', status: 'running', projectId: 'proj-2', summary: 'Set up CI/CD pipeline with GitHub Actions', lastActivity: Date.now() - 10 * 24 * 60 * 60 * 1000 },
 ]
 
 export const INITIAL_AUTH: ToolAuth[] = [
-  { toolId: 'claude-code', authenticated: false },
+  { toolId: 'claude-code', authenticated: true },
   { toolId: 'codex', authenticated: false },
   { toolId: 'opencode', authenticated: false },
-  { toolId: 'openshift-ai', authenticated: true },
+  { toolId: 'cursor-agent', authenticated: false },
 ]
+
+export const INFERENCE_PROVIDERS: { id: InferenceProviderId; name: string; description: string }[] = [
+  { id: 'redhat-ai', name: 'Red Hat AI', description: 'On-cluster inference via OpenShift AI model serving' },
+  { id: 'claude', name: 'Claude', description: 'Anthropic Claude models' },
+  { id: 'cursor', name: 'Cursor', description: 'Cursor inference API' },
+  { id: 'openai', name: 'OpenAI', description: 'OpenAI GPT and reasoning models' },
+  { id: 'google-vertex', name: 'Google Vertex', description: 'Google Cloud Vertex AI models' },
+  { id: 'aws-bedrock', name: 'AWS Bedrock', description: 'Amazon Bedrock foundation models' },
+]
+
+export const INFERENCE_MODELS: Record<InferenceProviderId, ModelOption[]> = {
+  'redhat-ai': [
+    { id: 'kimi-k3', name: 'Kimi K3' },
+    { id: 'granite-4.0-h-small', name: 'Granite 4.0 H Small' },
+    { id: 'llama-3.3-70b', name: 'Llama 3.3 70B' },
+    { id: 'mistral-small-3.2', name: 'Mistral Small 3.2' },
+    { id: 'deepseek-v3.2', name: 'DeepSeek V3.2' },
+    { id: 'qwen3-coder', name: 'Qwen 3 Coder' },
+  ],
+  'claude': [
+    { id: 'opus-5', name: 'Opus 5' },
+    { id: 'sonnet-5', name: 'Sonnet 5' },
+    { id: 'fable-5', name: 'Fable 5' },
+    { id: 'haiku-4.5', name: 'Haiku 4.5' },
+  ],
+  'cursor': [
+    { id: 'cursor-fast', name: 'Cursor Fast' },
+    { id: 'cursor-smart', name: 'Cursor Smart' },
+  ],
+  'openai': [
+    { id: 'gpt-5.6-sol', name: 'GPT-5.6 Sol' },
+    { id: 'gpt-5.6-terra', name: 'GPT-5.6 Terra' },
+    { id: 'gpt-5.6-luna', name: 'GPT-5.6 Luna' },
+    { id: 'gpt-5.5', name: 'GPT-5.5' },
+  ],
+  'google-vertex': [
+    { id: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash' },
+    { id: 'gemini-3.5-flash', name: 'Gemini 3.5 Flash' },
+    { id: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash-Lite' },
+    { id: 'gemini-3.1-pro', name: 'Gemini 3.1 Pro' },
+  ],
+  'aws-bedrock': [
+    { id: 'claude-opus-4.7', name: 'Claude Opus 4.7' },
+    { id: 'claude-sonnet-4.6', name: 'Claude Sonnet 4.6' },
+    { id: 'gpt-5.6-sol', name: 'GPT-5.6 Sol' },
+    { id: 'llama-4', name: 'Llama 4' },
+    { id: 'deepseek-v3.2', name: 'DeepSeek V3.2' },
+  ],
+}
 
 export const PROVIDER_MODELS: Record<AgentToolId, ModelOption[]> = {
   'claude-code': [
@@ -53,13 +102,9 @@ export const PROVIDER_MODELS: Record<AgentToolId, ModelOption[]> = {
     { id: 'gpt-4o', name: 'GPT-4o' },
     { id: 'deepseek-r1', name: 'DeepSeek R1' },
   ],
-  'openshift-ai': [
-    { id: 'glm-5.2', name: 'GLM-5.2' },
-    { id: 'minimax-m3', name: 'MiniMax M3' },
-    { id: 'qwen-3.7', name: 'Qwen 3.7' },
-    { id: 'deepseek-v4-pro', name: 'Deepseek V4 Pro' },
-    { id: 'kimi-k2.7', name: 'Kimi K2.7' },
-    { id: 'mistral-medium-5', name: 'Mistral Medium 5' },
+  'cursor-agent': [
+    { id: 'cursor-fast', name: 'Cursor Fast' },
+    { id: 'cursor-smart', name: 'Cursor Smart' },
   ],
 }
 
@@ -71,7 +116,8 @@ export const CONTEXT_WINDOW_OPTIONS: { id: string; label: string }[] = [
 
 export const DEFAULT_AGENT_SETTINGS: AgentSettings = {
   reasoningMode: 'standard',
-  model: 'glm-5.2',
+  inferenceProvider: 'redhat-ai',
+  model: 'kimi-k3',
   contextWindow: '200k',
   fastMode: false,
   agentMode: 'build',
@@ -103,12 +149,11 @@ export const MOCK_TERMINAL_OUTPUT: Record<AgentToolId, string[]> = {
     'Ready for instructions.',
     '> ',
   ],
-  'openshift-ai': [
-    '$ openshift-ai',
-    'OpenShift AI CLI v0.1.0',
-    'Connecting to model serving endpoint...',
-    'Model server ready: granite-8b',
-    'Project loaded.',
+  'cursor-agent': [
+    '$ cursor-agent',
+    'Cursor Agent v0.1',
+    'Connecting to workspace...',
+    'Workspace loaded.',
     'Ready for instructions.',
     '> ',
   ],

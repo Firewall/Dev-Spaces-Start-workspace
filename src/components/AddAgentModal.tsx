@@ -22,19 +22,19 @@ interface AddAgentModalProps {
 }
 
 export function AddAgentModal({ isOpen, projectName, onClose, onSave }: AddAgentModalProps) {
-  const [tool, setTool] = useState<AgentToolId>('openshift-ai')
+  const [tool, setTool] = useState<AgentToolId>('claude-code')
   const [toolSelectOpen, setToolSelectOpen] = useState(false)
 
   const selectedToolName = AGENT_TOOLS.find((t) => t.id === tool)?.name ?? tool
 
   function handleSave() {
     onSave(tool)
-    setTool('openshift-ai')
+    setTool('claude-code')
     onClose()
   }
 
   function handleClose() {
-    setTool('openshift-ai')
+    setTool('claude-code')
     onClose()
   }
 

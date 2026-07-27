@@ -11,8 +11,8 @@ import {
   Switch,
   Tooltip,
 } from '@patternfly/react-core'
-import type { AccessMode, AgentMode, AgentSettings, AgentToolId, ContextWindowSize, ReasoningMode } from './agentSpaceTypes'
-import { AGENT_TOOLS, CONTEXT_WINDOW_OPTIONS, PROVIDER_MODELS } from './agentSpaceMockData'
+import type { AccessMode, AgentMode, AgentSettings, AgentToolId, ContextWindowSize, InferenceProviderId, ReasoningMode } from './agentSpaceTypes'
+import { AGENT_TOOLS, CONTEXT_WINDOW_OPTIONS, INFERENCE_MODELS, INFERENCE_PROVIDERS } from './agentSpaceMockData'
 import { BrandIcon } from './BrandIcons'
 
 export type ViewMode = 'chat' | 'terminal'
@@ -45,14 +45,16 @@ export function AgentProviderDropdown({
   const menuRef = useRef<HTMLDivElement>(null)
 
   const toolName = AGENT_TOOLS.find((t) => t.id === tool)?.name ?? tool
-  const models = PROVIDER_MODELS[tool] ?? []
+  const inferenceName = INFERENCE_PROVIDERS.find((p) => p.id === settings.inferenceProvider)?.name ?? settings.inferenceProvider
+  const models = INFERENCE_MODELS[settings.inferenceProvider] ?? []
   const currentModelName = models.find((m) => m.id === settings.model)?.name ?? settings.model
   const currentCtxLabel = CONTEXT_WINDOW_OPTIONS.find((o) => o.id === settings.contextWindow)?.label ?? settings.contextWindow
   const currentAccessLabel = ACCESS_OPTIONS.find((o) => o.id === settings.accessMode)?.label ?? settings.accessMode
 
   const tooltipContent = (
     <div style={{ textAlign: 'left' }}>
-      <div><strong>Provider:</strong> {toolName}</div>
+      <div><strong>Harness:</strong> {toolName}</div>
+      <div><strong>Inference:</strong> {inferenceName}</div>
       <div><strong>Model:</strong> {currentModelName}</div>
       <div><strong>Reasoning:</strong> {settings.reasoningMode === 'standard' ? 'Standard' : 'Extended'}</div>
       <div><strong>Context:</strong> {currentCtxLabel}</div>
@@ -67,14 +69,9 @@ export function AgentProviderDropdown({
     onSettingsChange({ ...settings, ...patch })
   }
 
-  const providerMenu = (
+  const harnessMenu = (
     <Menu onSelect={(_e, itemId) => {
-      const newTool = itemId as AgentToolId
-      onToolChange(newTool)
-      const newModels = PROVIDER_MODELS[newTool]
-      if (newModels?.length) {
-        update({ model: newModels[0].id })
-      }
+      onToolChange(itemId as AgentToolId)
       setIsOpen(false)
     }}>
       <MenuContent>
@@ -82,6 +79,25 @@ export function AgentProviderDropdown({
           {AGENT_TOOLS.map((t) => (
             <MenuItem key={t.id} itemId={t.id} icon={<BrandIcon id={t.id} size={16} />} isSelected={t.id === tool}>
               {t.name}
+            </MenuItem>
+          ))}
+        </MenuList>
+      </MenuContent>
+    </Menu>
+  )
+
+  const inferenceMenu = (
+    <Menu onSelect={(_e, itemId) => {
+      const newProvider = itemId as InferenceProviderId
+      const newModels = INFERENCE_MODELS[newProvider]
+      update({ inferenceProvider: newProvider, model: newModels?.[0]?.id ?? '' })
+      setIsOpen(false)
+    }}>
+      <MenuContent>
+        <MenuList>
+          {INFERENCE_PROVIDERS.map((p) => (
+            <MenuItem key={p.id} itemId={p.id} icon={<BrandIcon id={p.id} size={16} />} isSelected={p.id === settings.inferenceProvider}>
+              {p.name}
             </MenuItem>
           ))}
         </MenuList>
@@ -203,11 +219,18 @@ export function AgentProviderDropdown({
           <MenuContent>
             <MenuList>
               <MenuItem
-                flyoutMenu={providerMenu}
+                flyoutMenu={harnessMenu}
                 description={toolName}
-                itemId="provider-group"
+                itemId="harness-group"
               >
-                Provider
+                Harness
+              </MenuItem>
+              <MenuItem
+                flyoutMenu={inferenceMenu}
+                description={inferenceName}
+                itemId="inference-group"
+              >
+                Inference
               </MenuItem>
               <MenuItem
                 flyoutMenu={modelMenu}
