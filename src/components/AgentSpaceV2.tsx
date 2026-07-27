@@ -106,8 +106,6 @@ export function AgentSpace() {
   }, [])
 
   const [terminalLineCounts, setTerminalLineCounts] = useState<Record<string, number>>({})
-  const terminalLineCountsRef = useRef(terminalLineCounts)
-  useEffect(() => { terminalLineCountsRef.current = terminalLineCounts }, [terminalLineCounts])
   const terminalGenRef = useRef(0)
 
   useEffect(() => {
@@ -160,18 +158,17 @@ export function AgentSpace() {
     const gen = ++terminalGenRef.current
     if (viewMode !== 'terminal' || !selectedAgent || !isSelectedAuthenticated || !selectedAgentId) return
     const total = MOCK_TERMINAL_OUTPUT[selectedAgent.tool].length
-    const agentId = selectedAgentId
-    const existing = terminalLineCountsRef.current[agentId] ?? 0
+    const existing = terminalLineCounts[selectedAgentId] ?? 0
     if (existing >= total) return
     let count = existing
     const interval = setInterval(() => {
       if (gen !== terminalGenRef.current) { clearInterval(interval); return }
       count++
-      setTerminalLineCounts(prev => ({ ...prev, [agentId]: count }))
+      setTerminalLineCounts(prev => ({ ...prev, [selectedAgentId]: count }))
       if (count >= total) clearInterval(interval)
     }, 400)
     return () => clearInterval(interval)
-  }, [viewMode, selectedAgent, isSelectedAuthenticated, selectedAgentId])
+  }, [viewMode, selectedAgent, isSelectedAuthenticated, selectedAgentId, terminalLineCounts])
 
   // --- Agent/project handlers ---
   const handleAuthenticate = useCallback((toolId: AgentToolId) => {
