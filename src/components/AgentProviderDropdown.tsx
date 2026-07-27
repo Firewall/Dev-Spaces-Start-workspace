@@ -12,7 +12,7 @@ import {
   Tooltip,
 } from '@patternfly/react-core'
 import type { AccessMode, AgentMode, AgentSettings, AgentToolId, ContextWindowSize, InferenceProviderId, ReasoningMode } from './agentSpaceTypes'
-import { AGENT_TOOLS, CONTEXT_WINDOW_OPTIONS, INFERENCE_MODELS, INFERENCE_PROVIDERS } from './agentSpaceMockData'
+import { AGENT_TOOLS, CONTEXT_WINDOW_OPTIONS, HARNESS_PROVIDERS, INFERENCE_MODELS, INFERENCE_PROVIDERS } from './agentSpaceMockData'
 import { BrandIcon } from './BrandIcons'
 
 export type ViewMode = 'chat' | 'terminal'
@@ -69,9 +69,21 @@ export function AgentProviderDropdown({
     onSettingsChange({ ...settings, ...patch })
   }
 
+  const compatibleProviders = HARNESS_PROVIDERS[tool] ?? []
+  const filteredInferenceProviders = INFERENCE_PROVIDERS.filter(p => compatibleProviders.includes(p.id))
+
   const harnessMenu = (
     <Menu onSelect={(_e, itemId) => {
-      onToolChange(itemId as AgentToolId)
+      const newTool = itemId as AgentToolId
+      onToolChange(newTool)
+      const newCompatible = HARNESS_PROVIDERS[newTool] ?? []
+      if (!newCompatible.includes(settings.inferenceProvider)) {
+        const fallback = newCompatible[0]
+        if (fallback) {
+          const fallbackModels = INFERENCE_MODELS[fallback]
+          update({ inferenceProvider: fallback, model: fallbackModels?.[0]?.id ?? '' })
+        }
+      }
       setIsOpen(false)
     }}>
       <MenuContent>
@@ -95,7 +107,7 @@ export function AgentProviderDropdown({
     }}>
       <MenuContent>
         <MenuList>
-          {INFERENCE_PROVIDERS.map((p) => (
+          {filteredInferenceProviders.map((p) => (
             <MenuItem key={p.id} itemId={p.id} icon={<BrandIcon id={p.id} size={16} />} isSelected={p.id === settings.inferenceProvider}>
               {p.name}
             </MenuItem>
