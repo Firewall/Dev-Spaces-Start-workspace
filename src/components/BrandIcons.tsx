@@ -33,7 +33,7 @@ export function BrandIcon({ id, size = 16, style }: BrandIconProps) {
         width={size}
         height={size}
         role="img"
-        style={{ flexShrink: 0, objectFit: 'contain', ...style }}
+        style={{ flexShrink: 0, objectFit: 'contain', display: 'block', ...style }}
       />
     )
   }
