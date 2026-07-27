@@ -45,7 +45,7 @@ export function OpenShellBadge() {
         <span style={{ display: 'inline-flex', alignItems: 'center', lineHeight: 0 }}>
           <OpenShellIcon size={14} />
         </span>
-        OpenShell
+        <span className="openshell-label">OpenShell</span>
       </span>
     </Tooltip>
   )

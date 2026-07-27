@@ -8,12 +8,11 @@ import {
   EmptyStateActions,
   EmptyStateBody,
   EmptyStateFooter,
-  Flex,
-  FlexItem,
   MenuToggle,
   MenuToggleAction,
   PageSection,
   Title,
+  Tooltip,
 } from '@patternfly/react-core'
 import {
   ArrowLeftIcon,
@@ -403,139 +402,138 @@ export function AgentSpace() {
             <GlobalSettingsPanel view={activeSettingsView} />
           ) : isSelectedAuthenticated && selectedAgent ? (
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-              {/* Toolbar */}
-              <div style={{ containerType: 'inline-size', borderBottom: '1px solid var(--pf-t--global--border--color--default)' }}>
-              <Flex
-                alignItems={{ default: 'alignItemsCenter' }}
-                justifyContent={{ default: 'justifyContentSpaceBetween' }}
-                flexWrap={{ default: 'nowrap' }}
-                style={{ padding: '8px 16px' }}
-              >
-                <FlexItem>
-                  <Flex alignItems={{ default: 'alignItemsCenter' }} gap={{ default: 'gapSm' }}>
-                    <FlexItem>
-                      <AgentProviderDropdown
-                        tool={selectedAgent.tool}
-                        settings={selectedAgentSettings}
-                        onToolChange={handleToolChange}
-                        onSettingsChange={handleSettingsChange}
-                        viewMode={viewMode}
-                        onViewModeChange={setViewMode}
-                      />
-                    </FlexItem>
-                    <FlexItem style={{ color: 'var(--pf-t--global--text--color--regular)', fontSize: 13 }}>/</FlexItem>
-                    <FlexItem style={{ fontSize: 13 }}>
-                      {(() => {
-                        const toolName = AGENT_TOOLS.find(t => t.id === selectedAgent.tool)?.name ?? ''
-                        const parts = selectedAgent.name.split(' - ')
-                        return parts.length > 1 ? parts.slice(1).join(' - ') : selectedAgent.name.replace(toolName, '').replace(/^[\s-]+/, '') || selectedAgent.name
-                      })()}
-                    </FlexItem>
-                    <FlexItem>
-                      <OpenShellBadge />
-                    </FlexItem>
-                  </Flex>
-                </FlexItem>
+              {/* Toolbar styles — responsive via container queries */}
+              <style>{`
+                .agent-toolbar-v2 .pf-v6-c-menu-toggle,
+                .agent-toolbar-v2 .pf-v6-c-button {
+                  height: 28px !important; max-height: 28px !important; min-height: 28px !important;
+                  font-size: 13px; display: inline-flex; align-items: center; box-sizing: border-box;
+                  padding-inline: 8px !important; padding-block: 0 !important;
+                }
+                .agent-toolbar-v2 .pf-v6-c-menu-toggle.pf-m-split-button {
+                  padding: 0 !important;
+                  --pf-v6-c-menu-toggle--PaddingBlockStart: 0;
+                  --pf-v6-c-menu-toggle--PaddingBlockEnd: 0;
+                  --pf-v6-c-menu-toggle--PaddingInlineStart: 6px;
+                  --pf-v6-c-menu-toggle--PaddingInlineEnd: 6px;
+                  --pf-v6-c-menu-toggle--m-split-button--pill--child--PaddingInlineEnd--offset: 6px;
+                  --pf-v6-c-menu-toggle--m-split-button--pill--child--PaddingInlineStart--offset: 4px;
+                  --pf-v6-c-menu-toggle__button--toggle-icon--PaddingInlineStart: 4px;
+                  --pf-v6-c-menu-toggle__button--toggle-icon--PaddingInlineEnd: 4px;
+                }
+                .agent-toolbar-v2 .pf-v6-c-menu-toggle.pf-m-split-button > * {
+                  align-self: stretch !important;
+                  display: inline-flex !important; align-items: center !important;
+                  padding-block: 0 !important;
+                }
+                .agent-toolbar-v2 .pf-v6-c-menu-toggle.pf-m-split-button .pf-v6-c-menu-toggle__controls {
+                  display: inline-flex; align-items: center; justify-content: center;
+                }
+                .agent-toolbar-v2 .pf-v6-c-menu-toggle.pf-m-split-button .pf-v6-c-menu-toggle__controls .pf-v6-c-menu-toggle__toggle-icon {
+                  display: inline-flex; align-items: center; min-width: 12px;
+                }
+                .header-icon-btn {
+                  display: inline-flex; align-items: center; justify-content: center;
+                  height: 28px; border: none; cursor: pointer; border-radius: 4px;
+                  background: transparent; color: var(--pf-t--global--text--color--subtle);
+                  font-size: 13px; padding: 0 8px; font-family: inherit; gap: 5px;
+                  transition: background 0.1s, color 0.1s; white-space: nowrap;
+                }
+                .header-icon-btn:hover { background: var(--pf-t--global--background--color--action--plain--hover); color: var(--pf-t--global--text--color--regular); }
+                .header-icon-btn[data-active="true"] { background: var(--pf-t--global--background--color--action--plain--clicked); color: var(--pf-t--global--text--color--regular); }
+                .header-icon-btn .panel-label { display: inline; }
 
-                <FlexItem>
-                  <Flex alignItems={{ default: 'alignItemsCenter' }} gap={{ default: 'gapSm' }}>
-                    <FlexItem className="agent-toolbar-v2">
-                      <Dropdown isOpen={openInOpen} onSelect={() => setOpenInOpen(false)} onOpenChange={setOpenInOpen} popperProps={{ position: 'right' }}
-                        toggle={(toggleRef) => (
-                          <MenuToggle
-                            ref={toggleRef}
-                            isExpanded={openInOpen}
-                            splitButtonItems={[
-                              <MenuToggleAction
-                                key="open-vscode"
-                                onClick={() => setShowVSCode(true)}
-                              >
-                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                                  <BrandIcon id="vscode" size={16} />
-                                  Open in VS Code
-                                </span>
-                              </MenuToggleAction>,
-                            ]}
-                            onClick={() => setOpenInOpen(o => !o)}
-                          />
-                        )}
+                /* Responsive: hide OpenShell label text below 1000px */
+                @container toolbar (max-width: 1000px) {
+                  .openshell-label { display: none !important; }
+                }
+                /* Responsive: hide panel button labels below 900px */
+                @container toolbar (max-width: 900px) {
+                  .header-icon-btn .panel-label { display: none; }
+                  .header-icon-btn { padding: 0; width: 28px; }
+                }
+                /* Responsive: hide provider model name below 700px */
+                @container toolbar (max-width: 700px) {
+                  .toolbar-provider-name { display: none !important; }
+                }
+                /* Responsive: collapse "Open in VS Code" text below 800px */
+                @container toolbar (max-width: 800px) {
+                  .open-editor-label { display: none !important; }
+                }
+              `}</style>
+
+              {/* Toolbar — single responsive line */}
+              <div style={{ containerType: 'inline-size', containerName: 'toolbar', borderBottom: '1px solid var(--pf-t--global--border--color--default)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', height: 36, padding: '0 12px', gap: 6 }}>
+                  <AgentProviderDropdown
+                    tool={selectedAgent.tool}
+                    settings={selectedAgentSettings}
+                    onToolChange={handleToolChange}
+                    onSettingsChange={handleSettingsChange}
+                    viewMode={viewMode}
+                    onViewModeChange={setViewMode}
+                  />
+                  <span style={{
+                    fontSize: 13, fontWeight: 500, flex: 1,
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    color: 'var(--pf-t--global--text--color--regular)',
+                    padding: '0 4px',
+                  }}>
+                    {(() => {
+                      const toolName = AGENT_TOOLS.find(t => t.id === selectedAgent.tool)?.name ?? ''
+                      const parts = selectedAgent.name.split(' - ')
+                      return parts.length > 1 ? parts.slice(1).join(' - ') : selectedAgent.name.replace(toolName, '').replace(/^[\s-]+/, '') || selectedAgent.name
+                    })()}
+                  </span>
+                  <OpenShellBadge />
+                  <div style={{ width: 1, height: 16, background: 'var(--pf-t--global--border--color--default)', flexShrink: 0 }} />
+                  {viewMode === 'chat' && ([
+                    { key: 'changes' as const, label: 'Changes', icon: <CodeIcon /> },
+                    { key: 'git' as const, label: 'Git', icon: <CodeBranchIcon /> },
+                    { key: 'editor' as const, label: 'Editor', icon: <PencilAltIcon /> },
+                    { key: 'terminal' as const, label: 'Terminal', icon: <TerminalIcon /> },
+                  ]).map(tab => (
+                    <Tooltip key={tab.key} content={tab.label} position="bottom">
+                      <button
+                        className="header-icon-btn"
+                        data-active={rightPanelView === tab.key}
+                        onClick={() => toggleRightPanel(tab.key)}
+                        aria-label={tab.label}
                       >
-                        <DropdownList>
-                          {EDITORS.filter(e => !('isCustom' in e) && e.id !== 'vscode').map(editor => (
-                            <DropdownItem key={editor.id} icon={hasBrandIcon(editor.id) ? <BrandIcon id={editor.id} size={18} /> : <DesktopIcon />}>
-                              {editor.label}
-                            </DropdownItem>
-                          ))}
-                        </DropdownList>
-                      </Dropdown>
-                    </FlexItem>
-                    <style>{`
-                      .agent-toolbar-v2 .pf-v6-c-menu-toggle,
-                      .agent-toolbar-v2 .pf-v6-c-button {
-                        height: 28px !important; max-height: 28px !important; min-height: 28px !important;
-                        font-size: 13px; display: inline-flex; align-items: center; box-sizing: border-box;
-                        padding-inline: 8px !important; padding-block: 0 !important;
-                      }
-                      .agent-toolbar-v2 .pf-v6-c-menu-toggle.pf-m-split-button {
-                        padding: 0 !important;
-                        --pf-v6-c-menu-toggle--PaddingBlockStart: 0;
-                        --pf-v6-c-menu-toggle--PaddingBlockEnd: 0;
-                        --pf-v6-c-menu-toggle--PaddingInlineStart: 6px;
-                        --pf-v6-c-menu-toggle--PaddingInlineEnd: 6px;
-                        --pf-v6-c-menu-toggle--m-split-button--pill--child--PaddingInlineEnd--offset: 6px;
-                        --pf-v6-c-menu-toggle--m-split-button--pill--child--PaddingInlineStart--offset: 4px;
-                        --pf-v6-c-menu-toggle__button--toggle-icon--PaddingInlineStart: 4px;
-                        --pf-v6-c-menu-toggle__button--toggle-icon--PaddingInlineEnd: 4px;
-                      }
-                      .agent-toolbar-v2 .pf-v6-c-menu-toggle.pf-m-split-button > * {
-                        align-self: stretch !important;
-                        display: inline-flex !important; align-items: center !important;
-                        padding-block: 0 !important;
-                      }
-                      .agent-toolbar-v2 .pf-v6-c-menu-toggle.pf-m-split-button .pf-v6-c-menu-toggle__controls {
-                        display: inline-flex; align-items: center; justify-content: center;
-                      }
-                      .agent-toolbar-v2 .pf-v6-c-menu-toggle.pf-m-split-button .pf-v6-c-menu-toggle__controls .pf-v6-c-menu-toggle__toggle-icon {
-                        display: inline-flex; align-items: center; min-width: 12px;
-                      }
-                      @container (max-width: 1240px) {
-                        .toolbar-provider-name { display: none !important; }
-                      }
-                    `}</style>
-
-                    {viewMode === 'chat' && (
-                      <>
-                        <FlexItem style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                          {([
-                            { key: 'changes' as const, label: 'Changes', icon: <CodeIcon /> },
-                            { key: 'git' as const, label: 'Git', icon: <CodeBranchIcon /> },
-                            { key: 'editor' as const, label: 'Editor', icon: <PencilAltIcon /> },
-                            { key: 'terminal' as const, label: 'Terminal', icon: <TerminalIcon /> },
-                          ]).map(tab => (
-                            <button
-                              key={tab.key}
-                              onClick={() => toggleRightPanel(tab.key)}
-                              style={{
-                                display: 'inline-flex', alignItems: 'center', gap: 5,
-                                padding: '4px 10px', fontSize: 13, fontWeight: 400,
-                                fontFamily: 'inherit',
-                                height: 28, border: 'none', cursor: 'pointer', borderRadius: 4,
-                                background: rightPanelView === tab.key
-                                  ? 'var(--pf-t--global--background--color--action--plain--clicked)'
-                                  : 'transparent',
-                                color: 'var(--pf-t--global--text--color--regular)',
-                              }}
-                            >
-                              {tab.icon} {tab.label}
-                            </button>
-                          ))}
-                        </FlexItem>
-                      </>
-                    )}
-
-                  </Flex>
-                </FlexItem>
-              </Flex>
+                        {tab.icon}
+                        <span className="panel-label">{tab.label}</span>
+                      </button>
+                    </Tooltip>
+                  ))}
+                  <div style={{ width: 1, height: 16, background: 'var(--pf-t--global--border--color--default)', flexShrink: 0 }} />
+                  <div className="agent-toolbar-v2">
+                    <Dropdown isOpen={openInOpen} onSelect={() => setOpenInOpen(false)} onOpenChange={setOpenInOpen} popperProps={{ position: 'right' }}
+                      toggle={(toggleRef) => (
+                        <MenuToggle
+                          ref={toggleRef}
+                          isExpanded={openInOpen}
+                          splitButtonItems={[
+                            <MenuToggleAction key="open-vscode" onClick={() => setShowVSCode(true)}>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                                <BrandIcon id="vscode" size={16} />
+                                <span className="open-editor-label">Open in VS Code</span>
+                              </span>
+                            </MenuToggleAction>,
+                          ]}
+                          onClick={() => setOpenInOpen(o => !o)}
+                        />
+                      )}
+                    >
+                      <DropdownList>
+                        {EDITORS.filter(e => !('isCustom' in e) && e.id !== 'vscode').map(editor => (
+                          <DropdownItem key={editor.id} icon={hasBrandIcon(editor.id) ? <BrandIcon id={editor.id} size={18} /> : <DesktopIcon />}>
+                            {editor.label}
+                          </DropdownItem>
+                        ))}
+                      </DropdownList>
+                    </Dropdown>
+                  </div>
+                </div>
               </div>
 
               {/* Content area — terminal or chat */}
