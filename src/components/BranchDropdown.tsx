@@ -36,7 +36,7 @@ export function BranchDropdown({ value, onChange, disabled }: BranchDropdownProp
             isExpanded={isOpen}
             isDisabled={disabled}
             icon={<CodeBranchIcon />}
-            style={{ minWidth: 180 }}
+            style={{ minWidth: 140 }}
           >
             {value || 'Select branch'}
           </MenuToggle>

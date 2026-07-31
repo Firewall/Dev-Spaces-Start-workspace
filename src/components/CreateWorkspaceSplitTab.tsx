@@ -353,20 +353,18 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
             >
               <Form onSubmit={handleSubmit}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--pf-t--global--spacer--lg)' }}>
-                  {isPhase2 && (
-                    <FormGroup
-                      label="Workspace Name"
-                      fieldId="workspace-name"
-                      labelHelp={<FieldHelp text="A human-readable name for your workspace. Auto-generated from the template if left blank." />}
-                    >
-                      <TextInput
-                        id="workspace-name"
-                        value={name}
-                        onChange={handleNameChange}
-                        placeholder="my-project"
-                      />
-                    </FormGroup>
-                  )}
+                  <FormGroup
+                    label="Workspace Name"
+                    fieldId="workspace-name"
+                    labelHelp={<FieldHelp text="A human-readable name for your workspace. Auto-generated from the template if left blank." />}
+                  >
+                    <TextInput
+                      id="workspace-name"
+                      value={name}
+                      onChange={handleNameChange}
+                      placeholder="my-project"
+                    />
+                  </FormGroup>
 
                   <FormGroup label="Template" fieldId="select-template">
                     {selectedTemplateObj ? (
@@ -452,9 +450,7 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
                         />
                       </FormGroup>
 
-                      {isPhase2 && (
-                        <>
-                          <FormGroup
+                      <FormGroup
                             label={`CPU Limit (${envSettings.cpuLimit ? `${envSettings.cpuLimit} cores` : 'default'})`}
                             fieldId="cpu-limit"
                           >
@@ -515,8 +511,6 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
                               inputProps={{ step: 0.01 }}
                             />
                           </FormGroup>
-                        </>
-                      )}
                     </div>
                   </ExpandableSection>
                 </div>
@@ -716,7 +710,7 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
         )}
 
         {mode === 'repo' && (
-          <div style={{ maxWidth: 700, overflowY: 'auto', padding: 'var(--pf-t--global--spacer--lg)' }}>
+          <div style={{ width: 600, overflowY: 'auto', padding: 'var(--pf-t--global--spacer--lg)' }}>
             <Form onSubmit={handleSubmit}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--pf-t--global--spacer--lg)' }}>
                 {isPhase2 && (
@@ -735,7 +729,6 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
                 )}
 
                 <FormGroup fieldId="repo-url" label="Git Repository URL" isRequired>
-                  {isPhase2 ? (
                     <Split hasGutter>
                       <SplitItem isFilled>
                         <TextInput
@@ -754,15 +747,6 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
                         />
                       </SplitItem>
                     </Split>
-                  ) : (
-                    <TextInput
-                      id="repo-url"
-                      aria-label="HTTPS or SSH URL"
-                      placeholder="Enter HTTPS or SSH URL"
-                      value={repoUrl}
-                      onChange={handleRepoChange}
-                    />
-                  )}
                   {isDuplicate && (
                     <Alert
                       variant="warning"
@@ -868,9 +852,7 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
                       />
                     </FormGroup>
 
-                    {isPhase2 && (
-                      <>
-                        <FormGroup
+                    <FormGroup
                           label={`CPU Limit (${envSettings.cpuLimit ? `${envSettings.cpuLimit} cores` : 'default'})`}
                           fieldId="cpu-limit-repo"
                         >
@@ -931,8 +913,6 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
                             inputProps={{ step: 0.01 }}
                           />
                         </FormGroup>
-                      </>
-                    )}
 
                     <FormGroup label="Additional Git Remotes" fieldId="git-remotes">
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
