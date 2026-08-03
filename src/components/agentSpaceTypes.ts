@@ -12,6 +12,8 @@ export interface Agent {
   projectId: string
   summary: string
   lastActivity: number
+  model?: string
+  branch?: string
 }
 
 export interface Project {
