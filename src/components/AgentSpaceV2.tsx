@@ -29,7 +29,7 @@ import {
 } from '@patternfly/react-icons'
 import type { Agent, AgentSettings, AgentToolId, Project, ToolAuth } from './agentSpaceTypes'
 import type { ChatMessage as ChatMessageType } from './agentSpaceV2Types'
-import { AGENT_TOOLS, DEFAULT_AGENT_SETTINGS, INITIAL_AUTH, MOCK_AGENTS, MOCK_PROJECTS, MOCK_TERMINAL_OUTPUT } from './agentSpaceMockData'
+import { AGENT_TOOLS, DEFAULT_AGENT_SETTINGS, INITIAL_AUTH, MOCK_AGENTS, MOCK_PROJECTS, MOCK_TERMINAL_OUTPUT, resolveModelSettings } from './agentSpaceMockData'
 import { MOCK_STREAMING_RESPONSES, MOCK_THINKING, MOCK_TOOL_CALLS } from './agentSpaceV2MockData'
 import { AgentSidebar } from './AgentSidebar'
 import { AgentDetail } from './AgentDetail'
@@ -82,7 +82,8 @@ export function AgentSpace() {
   const [agentSettingsMap, setAgentSettingsMap] = useState<Record<string, AgentSettings>>(() => {
     const map: Record<string, AgentSettings> = {}
     MOCK_AGENTS.forEach(a => {
-      map[a.id] = { ...DEFAULT_AGENT_SETTINGS }
+      const resolved = resolveModelSettings(a.model)
+      map[a.id] = { ...DEFAULT_AGENT_SETTINGS, ...resolved }
     })
     return map
   })
@@ -327,9 +328,11 @@ export function AgentSpace() {
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   }}>
                     <Title headingLevel="h2" size="lg" style={{ margin: 0, flex: 1 }}>Projects</Title>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', width: 50, flexShrink: 0 }}>
-                      <Button variant="plain" size="sm" icon={<PlusCircleIcon style={{ fontSize: 12 }} />} onClick={() => setAddProjectModalOpen(true)} aria-label="Add project" style={{ padding: 0, display: 'inline-flex', alignItems: 'center' }} />
-                    </span>
+                    <PlusCircleIcon
+                      style={{ fontSize: 12, flexShrink: 0, cursor: 'pointer', opacity: 0.7 }}
+                      onClick={() => setAddProjectModalOpen(true)}
+                      aria-label="Add project"
+                    />
                   </div>
                   <AgentSidebar
                     projects={projects}
