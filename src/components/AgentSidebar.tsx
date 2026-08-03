@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Button } from '@patternfly/react-core'
+import type React from 'react'
 import {
   ArchiveIcon,
   AngleDownIcon,
   AngleRightIcon,
   PlusCircleIcon,
+  CodeBranchIcon,
 } from '@patternfly/react-icons'
 import type { Agent, Project } from './agentSpaceTypes'
+import { BrandIcon } from './BrandIcons'
 
 interface ContextMenuState {
   projectId: string
@@ -34,6 +36,12 @@ function timeAgo(timestamp: number): string {
   if (hours < 24) return `${hours}h ago`
   const days = Math.floor(hours / 24)
   return `${days}d ago`
+}
+
+function branchShort(branch?: string): string {
+  if (!branch) return 'main'
+  const parts = branch.split('/')
+  return parts.length > 1 ? parts.slice(1).join('/') : branch
 }
 
 const INITIAL_VISIBLE = 4
@@ -173,19 +181,14 @@ export function AgentSidebar({
                     {project.name}
                   </span>
                 )}
-                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', width: 50, flexShrink: 0 }}>
-                  <Button
-                    variant="plain"
-                    size="sm"
-                    icon={<PlusCircleIcon style={{ fontSize: 12 }} />}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onAddAgent(project.id)
-                    }}
-                    aria-label={`Add agent to ${project.name}`}
-                    style={{ padding: 0, display: 'inline-flex', alignItems: 'center' }}
-                  />
-                </span>
+                <PlusCircleIcon
+                  style={{ fontSize: 12, flexShrink: 0, cursor: 'pointer', opacity: 0.7 }}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onAddAgent(project.id)
+                  }}
+                  aria-label={`Add agent to ${project.name}`}
+                />
               </div>
 
               {!isCollapsed && (
@@ -196,10 +199,7 @@ export function AgentSidebar({
                       className="agent-sidebar-item"
                       onClick={() => onSelectAgent(agent.id)}
                       style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 8,
-                        padding: '6px 8px 6px 24px',
+                        padding: '7px 8px 7px 24px',
                         cursor: 'pointer',
                         background:
                           agent.id === selectedAgentId
@@ -207,43 +207,73 @@ export function AgentSidebar({
                             : undefined,
                       }}
                     >
-                      <span
-                        style={{
-                          flex: 1,
-                          fontSize: 13,
+                      {/* Row 1: harness icon (with status dot) + summary + time/archive */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ position: 'relative', flexShrink: 0 }}>
+                          <BrandIcon id={agent.tool} size={16} />
+                          <div style={{
+                            position: 'absolute', bottom: -1, right: -1,
+                            width: 6, height: 6, borderRadius: '50%',
+                            background: agent.status === 'running' ? '#4caf50' : 'var(--pf-t--global--text--color--regular)',
+                            opacity: agent.status === 'running' ? 1 : 0.4,
+                            border: '1px solid var(--pf-t--global--background--color--primary--default)',
+                          }} />
+                        </div>
+                        <span
+                          style={{
+                            flex: 1,
+                            fontSize: 13,
+                            fontWeight: 500,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            color: 'var(--pf-t--global--text--color--regular)',
+                          }}
+                        >
+                          {agent.summary}
+                        </span>
+                        <span style={{ position: 'relative', flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', width: 50 }}>
+                          <span
+                            className="agent-sidebar-time"
+                            style={{
+                              fontSize: 10,
+                              color: 'var(--pf-t--global--text--color--regular)',
+                              whiteSpace: 'nowrap',
+                              opacity: 0.5,
+                            }}
+                          >
+                            {timeAgo(agent.lastActivity)}
+                          </span>
+                          <ArchiveIcon
+                            className="agent-sidebar-archive"
+                            style={{ fontSize: 12, position: 'absolute', right: 0, cursor: 'pointer', opacity: 0.7 }}
+                            onClick={(e: React.MouseEvent) => {
+                              e.stopPropagation()
+                              onDeleteAgent(agent.id)
+                            }}
+                            aria-label={`Archive ${agent.name}`}
+                          />
+                        </span>
+                      </div>
+                      {/* Row 2: model + branch */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3, paddingLeft: 24 }}>
+                        <span style={{ fontSize: 10, color: 'var(--pf-t--global--text--color--regular)', opacity: 0.5 }}>
+                          {agent.model || 'unknown'}
+                        </span>
+                        <span style={{ fontSize: 10, color: 'var(--pf-t--global--text--color--regular)', opacity: 0.3 }}>·</span>
+                        <CodeBranchIcon style={{ fontSize: 9, color: 'var(--pf-t--global--text--color--regular)', opacity: 0.4 }} />
+                        <span style={{
+                          fontSize: 10,
+                          fontFamily: 'var(--pf-t--global--font--family--mono)',
+                          color: 'var(--pf-t--global--text--color--regular)',
+                          opacity: 0.5,
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
-                          color: 'var(--pf-t--global--text--color--regular)',
-                        }}
-                      >
-                        {agent.summary}
-                      </span>
-                      <span style={{ position: 'relative', flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', width: 50 }}>
-                        <span
-                          className="agent-sidebar-time"
-                          style={{
-                            fontSize: 11,
-                            color: 'var(--pf-t--global--text--color--regular)',
-                            whiteSpace: 'nowrap',
-                            opacity: 0.6,
-                          }}
-                        >
-                          {timeAgo(agent.lastActivity)}
+                        }}>
+                          {branchShort(agent.branch)}
                         </span>
-                        <Button
-                          variant="plain"
-                          size="sm"
-                          icon={<ArchiveIcon style={{ fontSize: 12 }} />}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            onDeleteAgent(agent.id)
-                          }}
-                          aria-label={`Archive ${agent.name}`}
-                          className="agent-sidebar-archive"
-                          style={{ padding: 2, position: 'absolute', right: 0 }}
-                        />
-                      </span>
+                      </div>
                     </div>
                   ))}
                   {hasMore && !isExpanded && (
