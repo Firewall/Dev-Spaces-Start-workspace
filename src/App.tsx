@@ -123,7 +123,7 @@ export default function App() {
   const isAgentSpace = activePage === 'agent-space'
 
   const masthead = (
-    <Masthead style={isAgentSpace ? { background: 'var(--agent-sidebar-bg)' } : undefined}>
+    <Masthead style={isAgentSpace ? { background: 'var(--agent-header-bg)' } : undefined}>
       <MastheadMain>
         {!isAgentSpace && (
           <MastheadToggle>

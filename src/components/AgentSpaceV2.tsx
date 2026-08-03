@@ -302,12 +302,14 @@ export function AgentSpace() {
     <>
       <style>{`
         :root {
-          --agent-sidebar-bg: #f0f0f0;
+          --agent-sidebar-bg: #ffffff;
           --agent-content-bg: #ffffff;
+          --agent-header-bg: #f0f0f0;
         }
         .pf-v6-theme-dark {
-          --agent-sidebar-bg: #0f0f0f;
+          --agent-sidebar-bg: #1a1a1a;
           --agent-content-bg: #1a1a1a;
+          --agent-header-bg: #0f0f0f;
         }
       `}</style>
       <div style={{ display: 'flex', flex: 1, minHeight: 0, height: '100%' }}>
@@ -316,6 +318,7 @@ export function AgentSpace() {
           width: 260,
           minWidth: 260,
           background: 'var(--agent-sidebar-bg)',
+          borderRight: '1px solid var(--pf-t--global--border--color--default)',
           display: 'flex', flexDirection: 'column', outline: 'none',
           paddingLeft: 8,
         }}>

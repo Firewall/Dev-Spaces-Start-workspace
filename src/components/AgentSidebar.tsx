@@ -223,7 +223,6 @@ export function AgentSidebar({
                           style={{
                             flex: 1,
                             fontSize: 13,
-                            fontWeight: 500,
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
