@@ -25,7 +25,7 @@ export const MOCK_AGENTS: Agent[] = [
   { id: 'agent-10', name: 'OpenCode - Rate limiter', tool: 'opencode', status: 'running', projectId: 'proj-2', summary: 'Fix rate limiting middleware', lastActivity: Date.now() - 3 * 60 * 1000, model: 'Kimi K3', branch: 'bugfix/rate-limiter' },
   { id: 'agent-5', name: 'OpenCode - API docs', tool: 'opencode', status: 'running', projectId: 'proj-2', summary: 'Generate API documentation from types', lastActivity: Date.now() - 10 * 60 * 1000, model: 'Llama 3.3 70B', branch: 'docs/api-types' },
   { id: 'agent-11', name: 'OpenCode - GraphQL subs', tool: 'opencode', status: 'stopped', projectId: 'proj-2', summary: 'Add GraphQL subscriptions for real-time', lastActivity: Date.now() - 1 * 24 * 60 * 60 * 1000, model: 'Mistral Small 3.2', branch: 'feature/graphql-subs' },
-  { id: 'agent-12', name: 'Cursor - Query perf', tool: 'cursor-agent', status: 'running', projectId: 'proj-2', summary: 'Optimize database query performance', lastActivity: Date.now() - 4 * 24 * 60 * 60 * 1000, model: 'Claude Sonnet 4', branch: 'perf/db-queries' },
+  { id: 'agent-12', name: 'Cursor - Query perf', tool: 'cursor-agent', status: 'running', projectId: 'proj-2', summary: 'Optimize database query performance', lastActivity: Date.now() - 4 * 24 * 60 * 60 * 1000, model: 'Grok 4.5', branch: 'perf/db-queries' },
   { id: 'agent-4', name: 'OpenCode - Integration tests', tool: 'opencode', status: 'running', projectId: 'proj-2', summary: 'Add integration tests for API endpoints', lastActivity: Date.now() - 6 * 24 * 60 * 60 * 1000, model: 'Kimi K3', branch: 'test/api-integration' },
   { id: 'agent-13', name: 'Claude Code - CI/CD', tool: 'claude-code', status: 'running', projectId: 'proj-2', summary: 'Set up CI/CD pipeline with GitHub Actions', lastActivity: Date.now() - 10 * 24 * 60 * 60 * 1000, model: 'Opus 4.8', branch: 'chore/ci-cd-pipeline' },
 ]
@@ -69,9 +69,8 @@ export const INFERENCE_MODELS: Record<InferenceProviderId, ModelOption[]> = {
     { id: 'haiku-4.5', name: 'Haiku 4.5' },
   ],
   'cursor': [
-    { id: 'claude-sonnet-4', name: 'Claude Sonnet 4' },
-    { id: 'gpt-4o', name: 'GPT-4o' },
-    { id: 'cursor-small', name: 'cursor-small' },
+    { id: 'grok-4.5', name: 'Grok 4.5' },
+    { id: 'composer-2.5', name: 'Composer 2.5' },
   ],
   'openai': [
     { id: 'gpt-5.6-sol', name: 'GPT-5.6 Sol' },
@@ -111,9 +110,8 @@ export const PROVIDER_MODELS: Record<AgentToolId, ModelOption[]> = {
     { id: 'deepseek-r1', name: 'DeepSeek R1' },
   ],
   'cursor-agent': [
-    { id: 'claude-sonnet-4', name: 'Claude Sonnet 4' },
-    { id: 'gpt-4o', name: 'GPT-4o' },
-    { id: 'cursor-small', name: 'cursor-small' },
+    { id: 'grok-4.5', name: 'Grok 4.5' },
+    { id: 'composer-2.5', name: 'Composer 2.5' },
   ],
 }
 
