@@ -14,7 +14,7 @@ export const MOCK_PROJECTS: Project[] = [
 
 export const MOCK_AGENTS: Agent[] = [
   // web-app agents
-  { id: 'agent-1', name: 'OpenCode - OAuth2 login flow', tool: 'opencode', status: 'running', projectId: 'proj-1', summary: 'Implementing OAuth2 login flow', lastActivity: Date.now() - 2 * 60 * 1000, model: 'Granite 4.0 H', branch: 'feature/oauth2-login' },
+  { id: 'agent-1', name: 'OpenCode - OAuth2 login flow', tool: 'opencode', status: 'running', projectId: 'proj-1', summary: 'Implementing OAuth2 login flow', lastActivity: Date.now() - 2 * 60 * 1000, model: 'Kimi K3', branch: 'feature/oauth2-login' },
   { id: 'agent-6', name: 'OpenCode - User profile page', tool: 'opencode', status: 'running', projectId: 'proj-1', summary: 'Add user profile settings page', lastActivity: Date.now() - 8 * 60 * 1000, model: 'Kimi K3', branch: 'feature/user-profile' },
   { id: 'agent-2', name: 'OpenCode - DB migrations', tool: 'opencode', status: 'running', projectId: 'proj-1', summary: 'Refactor database migration scripts', lastActivity: Date.now() - 14 * 60 * 60 * 1000, model: 'Llama 3.3 70B', branch: 'refactor/db-migrations' },
   { id: 'agent-7', name: 'Claude Code - React Router', tool: 'claude-code', status: 'running', projectId: 'proj-1', summary: 'Upgrade React Router to v7', lastActivity: Date.now() - 2 * 24 * 60 * 60 * 1000, model: 'Sonnet 5', branch: 'chore/react-router-v7' },
