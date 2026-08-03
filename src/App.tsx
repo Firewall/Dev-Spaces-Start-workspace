@@ -38,6 +38,7 @@ import { AgentSpace } from './components/AgentSpaceV2'
 import { CreateWorkspaceSplitTab } from './components/CreateWorkspaceSplitTab'
 import { UserPreferences } from './components/UserPreferences'
 import { WorkspaceList } from './components/WorkspaceList'
+import { VariationShowcase } from './components/AgentSidebarVariations'
 
 type Phase = 'phase1' | 'phase2'
 type ThemeMode = 'light' | 'dark' | 'auto'
@@ -60,7 +61,7 @@ const DARK_THEME_CLASS = 'pf-v6-theme-dark'
 
 function getRouteFromHash(): string {
   const route = window.location.hash.replace('#/', '').replace('#', '')
-  if (route === 'workspaces' || route === 'create-workspace' || route === 'agent-space') return route
+  if (route === 'workspaces' || route === 'create-workspace' || route === 'agent-space' || route === 'variations-demo') return route
   if (route.startsWith('user-preferences')) {
     const tab = route.split('/')[1]
     if (tab && VALID_PREF_TABS.has(tab)) return route
@@ -121,6 +122,7 @@ export default function App() {
   }, [activePage, signedIn])
 
   const isAgentSpace = activePage === 'agent-space'
+  const isVariationsDemo = activePage === 'variations-demo'
 
   const masthead = (
     <Masthead style={isAgentSpace ? { background: 'var(--agent-sidebar-bg)' } : undefined}>
@@ -143,15 +145,26 @@ export default function App() {
       </MastheadMain>
       <MastheadContent>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto' }}>
-          <Button
-            variant="secondary"
-            size="sm"
-            icon={<ExternalLinkAltIcon />}
-            iconPosition="end"
-            onClick={() => setActivePage(activePage === 'agent-space' ? 'workspaces' : 'agent-space')}
-          >
-            {activePage === 'agent-space' ? 'Workspaces' : 'Agent Space'}
-          </Button>
+          {isVariationsDemo && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setActivePage('workspaces')}
+            >
+              Back
+            </Button>
+          )}
+          {!isVariationsDemo && (
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<ExternalLinkAltIcon />}
+              iconPosition="end"
+              onClick={() => setActivePage(activePage === 'agent-space' ? 'workspaces' : 'agent-space')}
+            >
+              {activePage === 'agent-space' ? 'Workspaces' : 'Agent Space'}
+            </Button>
+          )}
           <Button variant="plain" aria-label="Applications">
             <ThLargeIcon />
           </Button>
@@ -271,6 +284,18 @@ export default function App() {
     </PageSidebar>
   )
 
+  if (isVariationsDemo && signedIn) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--agent-content-bg)' }}>
+        {masthead}
+
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+          <VariationShowcase />
+        </div>
+      </div>
+    )
+  }
+
   if (isAgentSpace && signedIn) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--agent-content-bg)' }}>
@@ -294,9 +319,19 @@ export default function App() {
         ) : activePage === 'create-workspace' ? (
           <CreateWorkspaceSplitTab phase={phase} onPhaseChange={setPhase} />
         ) : (
-          <WorkspaceList
-            onCreateWorkspace={() => setActivePage('create-workspace')}
-          />
+          <PageSection>
+            <div>
+              <h1>Workspaces</h1>
+              <p style={{ marginBottom: 16 }}>
+                <a href="#/variations-demo" style={{ color: 'var(--pf-t--global--color--interactive--primary--default)', textDecoration: 'none' }}>
+                  → View Sidebar Variations
+                </a>
+              </p>
+              <WorkspaceList
+                onCreateWorkspace={() => setActivePage('create-workspace')}
+              />
+            </div>
+          </PageSection>
         )
       ) : (
         <PageSection
