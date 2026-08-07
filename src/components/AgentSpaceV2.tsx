@@ -11,17 +11,13 @@ import {
   MenuToggle,
   MenuToggleAction,
   PageSection,
-  Title,
   Tooltip,
 } from '@patternfly/react-core'
 import {
-  ArrowLeftIcon,
   CodeBranchIcon,
   CodeIcon,
   CogIcon,
-  CubesIcon,
   DesktopIcon,
-  WrenchIcon,
   PencilAltIcon,
   PlusCircleIcon,
   PluggedIcon,
@@ -47,7 +43,6 @@ import { GitPanel } from './GitPanel'
 import { EditorPanel } from './EditorPanel'
 import { IssuesPanel } from './IssuesPanel'
 import { ChatSettingsBar } from './ChatSettingsBar'
-import { GlobalSettingsPanel, type SettingsView } from './GlobalSettingsPanel'
 import { VSCodeView } from './VSCodeView'
 
 let nextProjectId = 200
@@ -77,7 +72,6 @@ export function AgentSpace({ username }: { username?: string }) {
     () => MOCK_AGENTS[0]?.id ?? null,
   )
   const [addProjectModalOpen, setAddProjectModalOpen] = useState(false)
-  const [activeSettingsView, setActiveSettingsView] = useState<SettingsView | null>(null)
   const [agentSettingsMap, setAgentSettingsMap] = useState<Record<string, AgentSettings>>(() => {
     const map: Record<string, AgentSettings> = {}
     MOCK_AGENTS.forEach(a => {
@@ -427,88 +421,61 @@ export function AgentSpace({ username }: { username?: string }) {
             onMouseLeave={e => { if (!sidebarDragging.current) e.currentTarget.style.borderRight = '1px solid var(--pf-t--global--border--color--default)' }}
           />
             <>
-              {!activeSettingsView && (
-                <>
-                  <div style={{
-                    height: 36,
-                    boxSizing: 'border-box',
-                    padding: '0 8px',
-                    borderBottom: '1px solid var(--pf-t--global--border--color--default)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  }}>
-                    <span style={{
-                      fontSize: 14, fontWeight: 600,
-                      color: 'var(--pf-t--global--text--color--regular)',
-                    }}>
-                      Projects
-                    </span>
-                    <PlusCircleIcon
-                      style={{ fontSize: 12, flexShrink: 0, cursor: 'pointer', opacity: 0.7 }}
-                      onClick={() => setAddProjectModalOpen(true)}
-                      aria-label="Add project"
-                    />
-                  </div>
-                  <AgentSidebar
-                    projects={projects}
-                    agents={agents}
-                    selectedAgentId={selectedAgentId}
-                    showIssues
-                    viewedComplete={viewedComplete}
-                    onSelectAgent={selectAgent}
-                    onAddAgent={handleAddAgent}
-                    onDeleteAgent={handleDeleteAgent}
-                    onDeleteProject={handleDeleteProject}
-                    onRenameProject={handleRenameProject}
-                  />
-                </>
-              )}
+              <div style={{
+                height: 36,
+                boxSizing: 'border-box',
+                padding: '0 8px',
+                borderBottom: '1px solid var(--pf-t--global--border--color--default)',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              }}>
+                <span style={{
+                  fontSize: 14, fontWeight: 600,
+                  color: 'var(--pf-t--global--text--color--regular)',
+                }}>
+                  Projects
+                </span>
+                <PlusCircleIcon
+                  style={{ fontSize: 12, flexShrink: 0, cursor: 'pointer', opacity: 0.7 }}
+                  onClick={() => setAddProjectModalOpen(true)}
+                  aria-label="Add project"
+                />
+              </div>
+              <AgentSidebar
+                projects={projects}
+                agents={agents}
+                selectedAgentId={selectedAgentId}
+                showIssues
+                viewedComplete={viewedComplete}
+                onSelectAgent={selectAgent}
+                onAddAgent={handleAddAgent}
+                onDeleteAgent={handleDeleteAgent}
+                onDeleteProject={handleDeleteProject}
+                onRenameProject={handleRenameProject}
+              />
               <div
                 style={{
                   borderTop: '1px solid rgba(255,255,255,0.04)',
                   padding: '4px 0',
-                  display: 'flex',
-                  flexDirection: 'column',
                 }}
               >
-                {activeSettingsView && (
-                  <div style={{
-                    padding: '10px 12px',
-                    borderBottom: '1px solid rgba(255,255,255,0.04)',
-                    marginBottom: 4,
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  }}>
-                    <Title headingLevel="h2" size="lg" style={{ margin: 0 }}>Settings</Title>
-                    <Button variant="plain" size="sm" icon={<ArrowLeftIcon />} onClick={() => setActiveSettingsView(null)} aria-label="Back" style={{ padding: 4 }} />
-                  </div>
-                )}
-                {([
-                  { key: 'providers' as const, label: 'Agents & Models', icon: <CubesIcon /> },
-                  { key: 'mcps' as const, label: 'MCPs', icon: <PluggedIcon /> },
-                  { key: 'skills' as const, label: 'Skills', icon: <WrenchIcon /> },
-                  { key: 'settings' as const, label: 'Settings', icon: <CogIcon /> },
-                ]).map(item => (
-                  <button
-                    key={item.key}
-                    onClick={() => setActiveSettingsView(item.key)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 8,
-                      fontSize: 13,
-                      fontFamily: 'inherit',
-                      width: '100%',
-                      padding: '6px 8px',
-                      border: 'none',
-                      borderRadius: 0,
-                      cursor: 'pointer',
-                      color: 'var(--pf-t--global--text--color--regular)',
-                      background: activeSettingsView === item.key
-                        ? 'var(--pf-t--global--background--color--action--plain--clicked)'
-                        : 'transparent',
-                    }}
-                  >
-                    <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 14, opacity: 0.7, flexShrink: 0 }}>{item.icon}</span>
-                    <span style={{ flex: 1, textAlign: 'left' }}>{item.label}</span>
-                  </button>
-                ))}
+                <button
+                  onClick={() => { window.location.hash = '#/user-preferences/agent-configurations' }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    fontSize: 13,
+                    fontFamily: 'inherit',
+                    width: '100%',
+                    padding: '6px 8px',
+                    border: 'none',
+                    borderRadius: 0,
+                    cursor: 'pointer',
+                    color: 'var(--pf-t--global--text--color--regular)',
+                    background: 'transparent',
+                  }}
+                >
+                  <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 14, opacity: 0.7, flexShrink: 0 }}><CogIcon /></span>
+                  <span style={{ flex: 1, textAlign: 'left' }}>Settings</span>
+                </button>
               </div>
             </>
         </div>
@@ -517,8 +484,6 @@ export function AgentSpace({ username }: { username?: string }) {
         <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', background: 'var(--agent-content-bg)', minWidth: 0 }}>
           {showVSCode ? (
             <VSCodeView projectName={selectedProject?.name} onBack={() => setShowVSCode(false)} />
-          ) : activeSettingsView ? (
-            <GlobalSettingsPanel view={activeSettingsView} />
           ) : selectedAgent ? (
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
               {/* Toolbar styles — responsive via container queries */}
