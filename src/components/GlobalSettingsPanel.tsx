@@ -433,7 +433,6 @@ export function GlobalSettingsPanel({ view }: GlobalSettingsPanelProps) {
                     isChecked={autoSave}
                     onChange={(_e, checked) => setAutoSave(checked)}
                     label="Automatically save file changes made by agents"
-                    labelOff="Automatically save file changes made by agents"
                   />
                 </FormGroup>
                 <FormGroup label="Show token usage" fieldId="setting-token-usage">
@@ -442,7 +441,6 @@ export function GlobalSettingsPanel({ view }: GlobalSettingsPanelProps) {
                     isChecked={showTokenUsage}
                     onChange={(_e, checked) => setShowTokenUsage(checked)}
                     label="Display token consumption in chat sessions"
-                    labelOff="Display token consumption in chat sessions"
                   />
                 </FormGroup>
                 <FormGroup label="Stream responses" fieldId="setting-stream">
@@ -451,7 +449,6 @@ export function GlobalSettingsPanel({ view }: GlobalSettingsPanelProps) {
                     isChecked={streamResponses}
                     onChange={(_e, checked) => setStreamResponses(checked)}
                     label="Show agent responses as they are generated"
-                    labelOff="Show agent responses as they are generated"
                   />
                 </FormGroup>
                 <FormGroup label="Notification sounds" fieldId="setting-sounds">
@@ -460,7 +457,6 @@ export function GlobalSettingsPanel({ view }: GlobalSettingsPanelProps) {
                     isChecked={enableSounds}
                     onChange={(_e, checked) => setEnableSounds(checked)}
                     label="Play sounds for agent completions and errors"
-                    labelOff="Play sounds for agent completions and errors"
                   />
                 </FormGroup>
               </FormSection>
@@ -472,7 +468,6 @@ export function GlobalSettingsPanel({ view }: GlobalSettingsPanelProps) {
                     isChecked={confirmDestructive}
                     onChange={(_e, checked) => setConfirmDestructive(checked)}
                     label="Require confirmation before file deletions and force pushes"
-                    labelOff="Require confirmation before file deletions and force pushes"
                   />
                 </FormGroup>
                 <FormGroup label="Auto-approve read operations" fieldId="setting-auto-approve-reads">
@@ -481,7 +476,6 @@ export function GlobalSettingsPanel({ view }: GlobalSettingsPanelProps) {
                     isChecked={autoApproveReads}
                     onChange={(_e, checked) => setAutoApproveReads(checked)}
                     label="Allow agents to read files without explicit approval"
-                    labelOff="Allow agents to read files without explicit approval"
                   />
                 </FormGroup>
               </FormSection>
