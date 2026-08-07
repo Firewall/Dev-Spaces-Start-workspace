@@ -7,7 +7,10 @@ import {
   MenuContent,
   MenuItem,
   MenuList,
+  MenuSearch,
+  MenuSearchInput,
   MenuToggle,
+  SearchInput,
   Switch,
   Tooltip,
 } from '@patternfly/react-core'
@@ -41,6 +44,7 @@ export function AgentProviderDropdown({
   onViewModeChange,
 }: AgentProviderDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [modelSearch, setModelSearch] = useState('')
   const toggleRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -117,15 +121,47 @@ export function AgentProviderDropdown({
     </Menu>
   )
 
+  const allModels = compatibleProviders.flatMap(pid => {
+    const providerName = INFERENCE_PROVIDERS.find(p => p.id === pid)?.name ?? pid
+    return (INFERENCE_MODELS[pid] ?? []).map(m => ({ ...m, providerId: pid, providerName }))
+  })
+  const filteredModels = modelSearch
+    ? allModels.filter(m => m.name.toLowerCase().includes(modelSearch.toLowerCase()) || m.providerName.toLowerCase().includes(modelSearch.toLowerCase()))
+    : models.map(m => ({ ...m, providerId: settings.inferenceProvider, providerName: inferenceName }))
+
   const modelMenu = (
-    <Menu onSelect={(_e, itemId) => { update({ model: String(itemId) }); setIsOpen(false) }}>
-      <MenuContent>
+    <Menu onSelect={(_e, itemId) => {
+      const selected = allModels.find(m => m.id === String(itemId))
+      if (selected && selected.providerId !== settings.inferenceProvider) {
+        update({ inferenceProvider: selected.providerId, model: selected.id })
+      } else {
+        update({ model: String(itemId) })
+      }
+      setModelSearch('')
+      setIsOpen(false)
+    }} style={{ minWidth: 220 }}>
+      <MenuSearch>
+        <MenuSearchInput>
+          <SearchInput
+            placeholder="Search models..."
+            value={modelSearch}
+            onChange={(_e, val) => setModelSearch(val)}
+            onClear={() => setModelSearch('')}
+            aria-label="Search models"
+          />
+        </MenuSearchInput>
+      </MenuSearch>
+      <MenuContent style={{ maxHeight: 280, overflowY: 'auto' }}>
         <MenuList>
-          {models.map((m) => (
-            <MenuItem key={m.id} itemId={m.id} isSelected={m.id === settings.model}>
-              {m.name}
-            </MenuItem>
-          ))}
+          {filteredModels.length === 0 ? (
+            <MenuItem isDisabled key="no-results" itemId="no-results">No models found</MenuItem>
+          ) : (
+            filteredModels.map((m) => (
+              <MenuItem key={`${m.providerId}-${m.id}`} itemId={m.id} isSelected={m.id === settings.model && m.providerId === settings.inferenceProvider} description={modelSearch ? m.providerName : undefined}>
+                {m.name}
+              </MenuItem>
+            ))
+          )}
         </MenuList>
       </MenuContent>
     </Menu>

@@ -132,13 +132,16 @@ export default function App() {
             </PageToggleButton>
           </MastheadToggle>
         )}
-        <MastheadBrand style={{ display: 'flex', alignItems: 'center' }}>
+        <MastheadBrand style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <img
             src={`${import.meta.env.BASE_URL}icon.png`}
             alt="Red Hat Dev Spaces"
             style={{ height: 36, borderRadius: 8 }}
           />
-          <span style={{ fontSize: 14, marginLeft: 10 }}>Red Hat Dev Spaces</span>
+          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
+            <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--pf-t--global--text--color--regular)' }}>Red Hat</span>
+            <span style={{ fontSize: 14, fontWeight: 600 }}>Dev Spaces</span>
+          </div>
         </MastheadBrand>
       </MastheadMain>
       <MastheadContent>
@@ -277,7 +280,7 @@ export default function App() {
         {masthead}
 
         <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-          <AgentSpace />
+          <AgentSpace username={username} />
         </div>
       </div>
     )

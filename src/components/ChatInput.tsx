@@ -6,9 +6,10 @@ interface ChatInputProps {
   onSend: (content: string) => void
   isStreaming: boolean
   onStop?: () => void
+  footer?: React.ReactNode
 }
 
-export function ChatInput({ onSend, isStreaming, onStop }: ChatInputProps) {
+export function ChatInput({ onSend, isStreaming, onStop, footer }: ChatInputProps) {
   const [value, setValue] = useState('')
   const [focused, setFocused] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -37,8 +38,6 @@ export function ChatInput({ onSend, isStreaming, onStop }: ChatInputProps) {
   return (
     <div style={{
       padding: '8px 16px 10px',
-      borderTop: '1px solid var(--pf-t--global--border--color--default)',
-      background: 'var(--pf-t--global--background--color--primary--default)',
     }}>
       <div style={{
         position: 'relative',
@@ -62,11 +61,12 @@ export function ChatInput({ onSend, isStreaming, onStop }: ChatInputProps) {
           style={{
             width: '100%',
             resize: 'none',
+            overflow: 'hidden',
             border: 'none',
             borderRadius: 6,
             padding: '10px 40px 10px 12px',
             fontSize: 13,
-            fontFamily: '"SF Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+            fontFamily: 'inherit',
             lineHeight: 1.5,
             background: 'transparent',
             color: 'var(--pf-t--global--text--color--regular)',
@@ -83,7 +83,7 @@ export function ChatInput({ onSend, isStreaming, onStop }: ChatInputProps) {
               style={{
                 position: 'absolute',
                 right: 4,
-                bottom: 4,
+                top: 4,
                 padding: 4,
                 color: 'var(--pf-t--global--icon--color--status--danger--default)',
               }}
@@ -98,7 +98,7 @@ export function ChatInput({ onSend, isStreaming, onStop }: ChatInputProps) {
             style={{
               position: 'absolute',
               right: 4,
-              bottom: 4,
+              top: 4,
               padding: 4,
               color: value.trim()
                 ? 'var(--pf-t--global--color--brand--default)'
@@ -106,6 +106,11 @@ export function ChatInput({ onSend, isStreaming, onStop }: ChatInputProps) {
             }}
             icon={<PaperPlaneIcon />}
           />
+        )}
+        {footer && (
+          <div style={{ padding: '4px 8px 6px', borderTop: '1px solid var(--pf-t--global--border--color--default)' }}>
+            {footer}
+          </div>
         )}
       </div>
     </div>

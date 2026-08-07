@@ -2,7 +2,33 @@ export type AgentToolId = 'claude-code' | 'codex' | 'opencode' | 'cursor-agent'
 
 export type InferenceProviderId = 'redhat-ai' | 'claude' | 'cursor' | 'openai' | 'google-vertex' | 'aws-bedrock'
 
-export type AgentStatus = 'running' | 'stopped'
+export type AgentStatus = 'running' | 'complete' | 'blocked'
+
+export type IssueSource = 'github' | 'jira'
+
+export type IssueStatus = 'open' | 'in-progress' | 'closed' | 'merged'
+
+export interface LinkedPR {
+  id: string
+  number: number
+  title: string
+  url: string
+  status: 'open' | 'merged' | 'closed' | 'draft'
+}
+
+export interface LinkedIssue {
+  source: IssueSource
+  id: string
+  number?: number
+  title: string
+  description: string
+  url: string
+  status: IssueStatus
+  labels?: string[]
+  assignee?: string
+  pr?: LinkedPR
+  branch?: string
+}
 
 export interface Agent {
   id: string
@@ -14,6 +40,7 @@ export interface Agent {
   lastActivity: number
   model?: string
   branch?: string
+  issue?: LinkedIssue
 }
 
 export interface Project {

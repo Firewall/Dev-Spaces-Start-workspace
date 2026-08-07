@@ -27,19 +27,22 @@ export function OpenShellBadge() {
   const [hovered, setHovered] = useState(false)
 
   return (
-    <Tooltip content={TOOLTIP_CONTENT}>
+    <Tooltip content={TOOLTIP_CONTENT} position="bottom">
       <span
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         style={{
-          display: 'inline-flex', alignItems: 'center', gap: 4,
-          padding: '1px 6px', borderRadius: 4, cursor: 'default', position: 'relative', top: 2,
-          fontSize: 11, fontWeight: 500,
+          display: 'inline-flex', alignItems: 'center', gap: 5,
+          padding: '0 8px', borderRadius: 4, cursor: 'default',
+          height: 28,
+          fontSize: 13, fontWeight: 500,
+          fontFamily: 'inherit',
           color: hovered
             ? '#76B900'
             : 'var(--pf-t--global--text--color--subtle)',
           background: hovered ? 'rgba(127,127,127,0.1)' : 'transparent',
           transition: 'all 0.15s ease',
+          whiteSpace: 'nowrap',
         }}
       >
         <span style={{ display: 'inline-flex', alignItems: 'center', lineHeight: 0 }}>

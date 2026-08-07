@@ -1,9 +1,24 @@
 import React, { useState } from 'react'
-import { AngleRightIcon, AngleDownIcon, CheckCircleIcon } from '@patternfly/react-icons'
+import { AngleRightIcon, AngleDownIcon, CheckCircleIcon, UserIcon } from '@patternfly/react-icons'
 import type { ChatMessage as ChatMessageType, ToolCall } from './agentSpaceV2Types'
+import type { AgentToolId } from './agentSpaceTypes'
+import { AGENT_TOOLS } from './agentSpaceMockData'
+import { BrandIcon } from './BrandIcons'
+
+function formatTimestamp(ts: number): string {
+  const now = Date.now()
+  const diff = now - ts
+  if (diff < 60 * 1000) return 'just now'
+  if (diff < 60 * 60 * 1000) return `${Math.floor(diff / 60000)}m ago`
+  if (diff < 24 * 60 * 60 * 1000) return `${Math.floor(diff / 3600000)}h ago`
+  const d = new Date(ts)
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+}
 
 interface ChatMessageProps {
   message: ChatMessageType
+  tool?: AgentToolId
+  username?: string
 }
 
 function renderMarkdown(text: string) {
@@ -253,8 +268,9 @@ function ToolCallBlock({ toolCall }: { toolCall: ToolCall }) {
   )
 }
 
-export function ChatMessage({ message }: ChatMessageProps) {
+export function ChatMessage({ message, tool, username }: ChatMessageProps) {
   const isUser = message.role === 'user'
+  const toolName = !isUser && tool ? AGENT_TOOLS.find(t => t.id === tool)?.name : undefined
 
   return (
     <div style={{
@@ -268,29 +284,47 @@ export function ChatMessage({ message }: ChatMessageProps) {
         gap: 6,
         marginBottom: isUser ? 4 : 8,
       }}>
-        <span style={{
-          width: 18,
-          height: 18,
-          borderRadius: isUser ? '50%' : 4,
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 9,
-          fontWeight: 700,
-          background: isUser
-            ? 'var(--pf-t--global--color--brand--default)'
-            : 'var(--pf-t--global--background--color--action--plain--clicked)',
-          color: isUser ? '#fff' : 'var(--pf-t--global--text--color--regular)',
-          flexShrink: 0,
-        }}>
-          {isUser ? 'U' : 'AI'}
-        </span>
+        {isUser ? (
+          <span style={{
+            width: 18,
+            height: 18,
+            borderRadius: '50%',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 10,
+            backgroundColor: '#6b4226',
+            color: '#fff',
+            flexShrink: 0,
+          }}>
+            <UserIcon style={{ fontSize: 10 }} />
+          </span>
+        ) : (
+          <span style={{ display: 'inline-flex', flexShrink: 0 }}>
+            {tool ? <BrandIcon id={tool} size={18} /> : (
+              <span style={{
+                width: 18, height: 18, borderRadius: 4,
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 9, fontWeight: 700,
+                background: 'var(--pf-t--global--background--color--action--plain--clicked)',
+                color: 'var(--pf-t--global--text--color--regular)',
+              }}>AI</span>
+            )}
+          </span>
+        )}
         <span style={{
           fontSize: 12,
           fontWeight: 600,
           color: 'var(--pf-t--global--text--color--subtle)',
         }}>
-          {isUser ? 'You' : 'Assistant'}
+          {isUser ? (username ?? 'You') : (toolName ?? 'Assistant')}
+        </span>
+        <span style={{
+          fontSize: 11,
+          color: 'var(--pf-t--global--text--color--subtle)',
+          opacity: 0.6,
+        }}>
+          {formatTimestamp(message.timestamp)}
         </span>
       </div>
       <div style={{
