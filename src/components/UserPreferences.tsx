@@ -551,17 +551,17 @@ export function UserPreferences({ activeTab, onTabChange }: { activeTab: Prefere
             aria-label="User preferences navigation"
             style={{ minWidth: 240, flexShrink: 0, alignSelf: 'flex-start', position: 'sticky', top: 0 }}
           >
-            <NavGroup title="AI">
-              <NavItem itemId="agent-configurations" isActive={activeTab === 'agent-configurations'} icon={<RobotIcon />}>Agents & Models</NavItem>
-              <NavItem itemId="skills" isActive={activeTab === 'skills'} icon={<AutomationIcon />}>Skills</NavItem>
-              <NavItem itemId="mcps" isActive={activeTab === 'mcps'} icon={<PluggedIcon />}>MCPs</NavItem>
-            </NavGroup>
             <NavGroup title="General">
               <NavItem itemId="container-registries" isActive={activeTab === 'container-registries'} icon={<RegistryIcon />}>Container Registries</NavItem>
               <NavItem itemId="git-services" isActive={activeTab === 'git-services'} icon={<GitAltIcon />}>Git Services</NavItem>
               <NavItem itemId="personal-access-tokens" isActive={activeTab === 'personal-access-tokens'} icon={<LockIcon />}>Personal Access Tokens</NavItem>
               <NavItem itemId="gitconfig" isActive={activeTab === 'gitconfig'} icon={<CogIcon />}>Gitconfig</NavItem>
               <NavItem itemId="ssh-keys" isActive={activeTab === 'ssh-keys'} icon={<KeyIcon />}>SSH Keys</NavItem>
+            </NavGroup>
+            <NavGroup title="AI">
+              <NavItem itemId="agent-configurations" isActive={activeTab === 'agent-configurations'} icon={<RobotIcon />}>Agents & Models</NavItem>
+              <NavItem itemId="skills" isActive={activeTab === 'skills'} icon={<AutomationIcon />}>Skills</NavItem>
+              <NavItem itemId="mcps" isActive={activeTab === 'mcps'} icon={<PluggedIcon />}>MCPs</NavItem>
             </NavGroup>
           </Nav>
 

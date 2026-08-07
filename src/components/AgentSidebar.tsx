@@ -307,7 +307,7 @@ export function AgentSidebar({
                         </span>
                       </div>
                       {/* Row 2: model + branch */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3, paddingLeft: 24, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3, minWidth: 0 }}>
                         <span style={{ fontSize: SIDEBAR_FONT.secondary, color: 'var(--pf-t--global--text--color--regular)', opacity: 0.5 }}>
                           {agent.model || 'unknown'}
                         </span>
@@ -327,7 +327,7 @@ export function AgentSidebar({
                       </div>
                       {/* Row 3: linked issue (prototype A) */}
                       {showIssues && agent.issue && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 3, paddingLeft: 24 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 3 }}>
                           <span style={{
                             display: 'inline-flex', alignItems: 'center',
                             color: ISSUE_STATUS_COLORS[agent.issue.status] ?? '#8b949e',
