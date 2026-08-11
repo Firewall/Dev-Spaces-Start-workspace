@@ -1,4 +1,4 @@
-import React, { type CSSProperties, useSyncExternalStore } from 'react'
+import { type CSSProperties, useSyncExternalStore } from 'react'
 import { BRAND_ICONS } from './brandIconData'
 
 export function JiraIcon({ size = 10 }: { size?: number }) {
