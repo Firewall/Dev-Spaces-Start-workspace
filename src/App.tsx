@@ -34,7 +34,7 @@ import {
   ThLargeIcon,
   UserIcon,
 } from '@patternfly/react-icons'
-import { AgentSpace } from './components/AgentSpaceV2'
+import { AgentSpace } from './components/AgentSpacePage'
 import { CreateWorkspaceSplitTab } from './components/CreateWorkspaceSplitTab'
 import { UserPreferences } from './components/UserPreferences'
 import { WorkspaceList } from './components/WorkspaceList'

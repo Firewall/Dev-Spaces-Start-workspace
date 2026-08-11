@@ -1,4 +1,4 @@
-import type { ChatProvider, ChatConversation, ChatWorkspace } from './agentSpaceV2Types'
+import type { ChatProvider, ChatConversation, ChatWorkspace } from './chatTypes'
 
 export const CHAT_PROVIDERS: ChatProvider[] = [
   {

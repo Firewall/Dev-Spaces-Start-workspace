@@ -5,7 +5,7 @@ import {
   GithubIcon,
 } from '@patternfly/react-icons'
 import type { LinkedIssue } from './agentSpaceTypes'
-import { JiraIcon } from './AgentSidebar'
+import { JiraIcon } from './BrandIcons'
 
 const MONO_FONT = '"SF Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace'
 

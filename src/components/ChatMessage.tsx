@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { AngleRightIcon, AngleDownIcon, CheckCircleIcon, UserIcon } from '@patternfly/react-icons'
-import type { ChatMessage as ChatMessageType, ToolCall } from './agentSpaceV2Types'
+import type { ChatMessage as ChatMessageType, ToolCall } from './chatTypes'
 import type { AgentToolId } from './agentSpaceTypes'
 import { AGENT_TOOLS } from './agentSpaceMockData'
 import { BrandIcon } from './BrandIcons'

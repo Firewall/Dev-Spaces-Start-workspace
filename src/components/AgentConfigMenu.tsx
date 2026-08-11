@@ -20,7 +20,7 @@ import { BrandIcon } from './BrandIcons'
 
 export type ViewMode = 'chat' | 'terminal'
 
-interface AgentProviderDropdownProps {
+interface AgentConfigMenuProps {
   tool: AgentToolId
   settings: AgentSettings
   onToolChange: (tool: AgentToolId) => void
@@ -35,14 +35,14 @@ const ACCESS_OPTIONS: { id: AccessMode; label: string }[] = [
   { id: 'supervised', label: 'Supervised' },
 ]
 
-export function AgentProviderDropdown({
+export function AgentConfigMenu({
   tool,
   settings,
   onToolChange,
   onSettingsChange,
   viewMode = 'chat',
   onViewModeChange,
-}: AgentProviderDropdownProps) {
+}: AgentConfigMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [modelSearch, setModelSearch] = useState('')
   const toggleRef = useRef<HTMLButtonElement>(null)
