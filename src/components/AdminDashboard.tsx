@@ -51,7 +51,7 @@ interface Metric {
   status?: StatusVariant
 }
 
-function TrendIndicator({ value, prevValue, unit, lowerIsBetter }: Omit<Metric, 'label'>) {
+function TrendIndicator({ value, prevValue, unit, lowerIsBetter, neutral }: Omit<Metric, 'label'> & { neutral?: boolean }) {
   const currentNum = typeof value === 'number' ? value : parseFloat(value)
   const diff = currentNum - prevValue
   const absDiff = Math.round(Math.abs(diff) * 10) / 10
@@ -60,8 +60,8 @@ function TrendIndicator({ value, prevValue, unit, lowerIsBetter }: Omit<Metric, 
   const isNeutral = diff === 0
 
   const isPositive = isNeutral ? null : lowerIsBetter ? !isUp : isUp
-  const trendColor = isNeutral
-    ? 'var(--pf-t--global--text--color--subtle)'
+  const trendColor = isNeutral || neutral
+    ? 'var(--pf-t--global--text--color--regular)'
     : isPositive
       ? 'var(--pf-t--global--color--status--success--default)'
       : 'var(--pf-t--global--color--status--danger--default)'
@@ -322,7 +322,7 @@ export function AdminDashboard() {
                           aria-label="CPU usage"
                         />
                         <div style={{ marginTop: 4 }}>
-                          <TrendIndicator value={RESOURCE_USAGE.cpuUsed} prevValue={RESOURCE_USAGE.cpuPrevUsed} unit=" cores" lowerIsBetter />
+                          <TrendIndicator value={RESOURCE_USAGE.cpuUsed} prevValue={RESOURCE_USAGE.cpuPrevUsed} unit=" cores" neutral />
                         </div>
                       </FlexItem>
                       <FlexItem>
@@ -340,7 +340,7 @@ export function AdminDashboard() {
                           aria-label="Memory usage"
                         />
                         <div style={{ marginTop: 4 }}>
-                          <TrendIndicator value={RESOURCE_USAGE.memoryUsedGi} prevValue={RESOURCE_USAGE.memoryPrevUsedGi} unit=" Gi" lowerIsBetter />
+                          <TrendIndicator value={RESOURCE_USAGE.memoryUsedGi} prevValue={RESOURCE_USAGE.memoryPrevUsedGi} unit=" Gi" neutral />
                         </div>
                       </FlexItem>
                       <FlexItem>
@@ -358,7 +358,7 @@ export function AdminDashboard() {
                           aria-label="Storage usage"
                         />
                         <div style={{ marginTop: 4 }}>
-                          <TrendIndicator value={RESOURCE_USAGE.storageUsedGi} prevValue={RESOURCE_USAGE.storagePrevUsedGi} unit=" Gi" lowerIsBetter />
+                          <TrendIndicator value={RESOURCE_USAGE.storageUsedGi} prevValue={RESOURCE_USAGE.storagePrevUsedGi} unit=" Gi" neutral />
                         </div>
                       </FlexItem>
                     </Flex>
