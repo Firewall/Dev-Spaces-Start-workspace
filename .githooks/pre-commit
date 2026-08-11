@@ -1,6 +1,6 @@
 #!/bin/sh
 
-npx tsc --noEmit
+npx tsc -b
 
 STAGED=$(git diff --cached --name-only --diff-filter=ACM -- '*.ts' '*.tsx')
 if [ -n "$STAGED" ]; then
