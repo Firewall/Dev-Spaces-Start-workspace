@@ -30,6 +30,7 @@ import {
   ThLargeIcon,
   UserIcon,
 } from '@patternfly/react-icons'
+import { AdminDashboard } from './components/AdminDashboard'
 import { CreateWorkspaceSplitTab } from './components/CreateWorkspaceSplitTab'
 import { UserPreferences } from './components/UserPreferences'
 import { WorkspaceList } from './components/WorkspaceList'
@@ -56,6 +57,7 @@ const DARK_THEME_CLASS = 'pf-v6-theme-dark'
 function getRouteFromHash(): string {
   const route = window.location.hash.replace('#/', '').replace('#', '')
   if (route === 'workspaces' || route === 'create-workspace') return route
+  if (route.startsWith('admin')) return 'admin'
   if (route.startsWith('user-preferences')) {
     const tab = route.split('/')[1]
     if (tab && VALID_PREF_TABS.has(tab)) return route
@@ -112,6 +114,7 @@ export default function App() {
     if (activePage === 'workspaces') document.title = 'Workspaces - Dev Spaces'
     else if (activePage === 'create-workspace') document.title = 'Create Workspace - Dev Spaces'
     else if (activePage.startsWith('user-preferences')) document.title = 'User Preferences - Dev Spaces'
+    else if (activePage === 'admin') document.title = 'Administration - Dev Spaces'
     else document.title = 'Dev Spaces'
   }, [activePage, signedIn])
 
@@ -139,6 +142,7 @@ export default function App() {
             onSelect={(_event, value) => {
               setProfileMenuOpen(false)
               if (value === 'user-prefs') setActivePage('user-preferences/container-registries')
+              if (value === 'admin') setActivePage('admin')
               if (value === 'logout') setSignedIn(false)
             }}
             onOpenChange={setProfileMenuOpen}
@@ -204,6 +208,8 @@ export default function App() {
             <div style={{ padding: '8px 16px 4px', fontSize: 14, fontWeight: 600 }}>Actions</div>
             <DropdownList>
               <DropdownItem key="user-prefs" value="user-prefs">User Preferences</DropdownItem>
+              <DropdownItem key="admin" value="admin">Administration</DropdownItem>
+              <Divider />
               <DropdownItem key="logout" value="logout">
                 Logout
               </DropdownItem>
@@ -250,7 +256,9 @@ export default function App() {
   return (
     <Page masthead={masthead} sidebar={sidebar}>
       {signedIn ? (
-        activePage.startsWith('user-preferences') ? (
+        activePage === 'admin' ? (
+          <AdminDashboard />
+        ) : activePage.startsWith('user-preferences') ? (
           <UserPreferences
             activeTab={(activePage.split('/')[1] || 'container-registries') as import('./components/UserPreferences').PreferencesTab}
             onTabChange={(tab) => setActivePage(`user-preferences/${tab}`)}
