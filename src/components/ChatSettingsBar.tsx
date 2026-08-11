@@ -98,9 +98,10 @@ function DropdownMenu({
           borderRadius: 8,
           boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
           padding: '4px 0',
-          minWidth: 160,
+          minWidth: 320,
           maxHeight: 320,
           overflowY: 'auto',
+          scrollbarWidth: 'none',
         }}
       >
         {children}
@@ -265,7 +266,7 @@ export function ChatSettingsBar({ tool, settings, onToolChange, onSettingsChange
                   placeholder="Search models..."
                   style={{
                     width: '100%', boxSizing: 'border-box',
-                    padding: '5px 8px', fontSize: 12, fontFamily: 'inherit',
+                    padding: '5px 8px', fontSize: 13, fontFamily: 'inherit',
                     border: '1px solid var(--pf-t--global--border--color--default)',
                     borderRadius: 4,
                     background: 'var(--pf-t--global--background--color--secondary--default)',
@@ -276,7 +277,7 @@ export function ChatSettingsBar({ tool, settings, onToolChange, onSettingsChange
                   onBlur={e => (e.currentTarget.style.borderColor = 'var(--pf-t--global--border--color--default)')}
                 />
               </div>
-              <div style={{ maxHeight: 280, overflowY: 'auto' }}>
+              <div style={{ height: 280, overflowY: 'auto', scrollbarWidth: 'none' }}>
                 {(() => {
                   const activeHarness = harnessFilter ?? tool
                   const harnessProviders = HARNESS_PROVIDERS[activeHarness] ?? []
@@ -366,7 +367,7 @@ export function ChatSettingsBar({ tool, settings, onToolChange, onSettingsChange
               key={opt.id}
               selected={settings.contextWindow === opt.id}
               onClick={() => update({ contextWindow: opt.id as ContextWindowSize })}
-              badge={opt.id === '1m' ? 'Default' : undefined}
+              badge={undefined}
             >
               {opt.label}
             </MenuOption>
