@@ -35,6 +35,7 @@ import {
   Thead,
   Tr,
   Th,
+  type ThProps,
   Tbody,
   Td,
 } from '@patternfly/react-table'
@@ -157,19 +158,60 @@ const RECENT_EVENTS = [
 ]
 
 const NODE_INFO = [
-  { name: 'worker-06', status: 'NotReady', cpu: '0 / 16 cores', memory: '0 / 32 Gi', workspaces: 0 },
-  { name: 'worker-01', status: 'Ready', cpu: '6.2 / 16 cores', memory: '14.1 / 32 Gi', workspaces: 8 },
-  { name: 'worker-02', status: 'Ready', cpu: '5.8 / 16 cores', memory: '13.5 / 32 Gi', workspaces: 7 },
-  { name: 'worker-03', status: 'Ready', cpu: '7.1 / 16 cores', memory: '28.8 / 32 Gi', workspaces: 9 },
-  { name: 'worker-04', status: 'Ready', cpu: '4.9 / 16 cores', memory: '11.2 / 32 Gi', workspaces: 6 },
-  { name: 'worker-05', status: 'Ready', cpu: '5.4 / 16 cores', memory: '12.9 / 32 Gi', workspaces: 5 },
+  { name: 'worker-06', status: 'NotReady', cpu: '0 / 16 cores', cpuUsed: 0, memory: '0 / 32 Gi', memUsed: 0, workspaces: 0 },
+  { name: 'worker-01', status: 'Ready', cpu: '6.2 / 16 cores', cpuUsed: 6.2, memory: '14.1 / 32 Gi', memUsed: 14.1, workspaces: 8 },
+  { name: 'worker-02', status: 'Ready', cpu: '5.8 / 16 cores', cpuUsed: 5.8, memory: '13.5 / 32 Gi', memUsed: 13.5, workspaces: 7 },
+  { name: 'worker-03', status: 'Ready', cpu: '7.1 / 16 cores', cpuUsed: 7.1, memory: '28.8 / 32 Gi', memUsed: 28.8, workspaces: 9 },
+  { name: 'worker-04', status: 'Ready', cpu: '4.9 / 16 cores', cpuUsed: 4.9, memory: '11.2 / 32 Gi', memUsed: 11.2, workspaces: 6 },
+  { name: 'worker-05', status: 'Ready', cpu: '5.4 / 16 cores', cpuUsed: 5.4, memory: '12.9 / 32 Gi', memUsed: 12.9, workspaces: 5 },
 ]
 
 const EVENTS_PAGE_SIZE = 10
 
+type SortDir = 'asc' | 'desc'
+
+function useSortableTable<T>(data: T[], defaultIndex: number, defaultDir: SortDir, keys: ((item: T) => string | number)[]) {
+  const [sortIndex, setSortIndex] = useState(defaultIndex)
+  const [sortDir, setSortDir] = useState<SortDir>(defaultDir)
+
+  const sorted = [...data].sort((a, b) => {
+    const aVal = keys[sortIndex](a)
+    const bVal = keys[sortIndex](b)
+    const cmp = typeof aVal === 'string' ? aVal.localeCompare(bVal as string) : (aVal as number) - (bVal as number)
+    return sortDir === 'asc' ? cmp : -cmp
+  })
+
+  const getSortParams = (index: number): ThProps['sort'] => ({
+    sortBy: { index: sortIndex, direction: sortDir },
+    onSort: (_event, idx, direction) => {
+      setSortIndex(idx)
+      setSortDir(direction)
+    },
+    columnIndex: index,
+  })
+
+  return { sorted, getSortParams }
+}
+
 export function AdminDashboard() {
   const [visibleCount, setVisibleCount] = useState(EVENTS_PAGE_SIZE)
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set())
+
+  const nodeSort = useSortableTable(NODE_INFO, 1, 'asc', [
+    (n) => n.name,
+    (n) => n.status === 'Ready' ? 1 : 0,
+    (n) => n.cpuUsed,
+    (n) => n.memUsed,
+    (n) => n.workspaces,
+  ])
+
+  const userSort = useSortableTable(TOP_USERS, 2, 'desc', [
+    (u) => u.name,
+    (u) => u.workspaces,
+    (u) => u.cpuCores,
+    (u) => u.memoryGi,
+    (u) => u.starts7d,
+  ])
   const observerRef = useRef<IntersectionObserver | null>(null)
   const sentinelRef = useCallback((node: HTMLDivElement | null) => {
     if (observerRef.current) observerRef.current.disconnect()
@@ -330,15 +372,15 @@ export function AdminDashboard() {
                     <Table aria-label="Top users table" variant="compact">
                       <Thead>
                         <Tr>
-                          <Th width={25}>User</Th>
-                          <Th width={15}>Workspaces</Th>
-                          <Th width={20}>CPU (cores)</Th>
-                          <Th width={20}>Memory (Gi)</Th>
-                          <Th width={20}>Starts (7d)</Th>
+                          <Th width={25} sort={userSort.getSortParams(0)}>User</Th>
+                          <Th width={15} sort={userSort.getSortParams(1)}>Workspaces</Th>
+                          <Th width={20} sort={userSort.getSortParams(2)}>CPU (cores)</Th>
+                          <Th width={20} sort={userSort.getSortParams(3)}>Memory (Gi)</Th>
+                          <Th width={20} sort={userSort.getSortParams(4)}>Starts (7d)</Th>
                         </Tr>
                       </Thead>
                       <Tbody>
-                        {TOP_USERS.map((user) => (
+                        {userSort.sorted.map((user) => (
                           <Tr key={user.name}>
                             <Td dataLabel="User">
                               <strong>{user.name}</strong>
@@ -397,15 +439,15 @@ export function AdminDashboard() {
             <Table aria-label="Cluster nodes table" variant="compact">
               <Thead>
                 <Tr>
-                  <Th width={20}>Node</Th>
-                  <Th width={15}>Status</Th>
-                  <Th width={25}>CPU</Th>
-                  <Th width={25}>Memory</Th>
-                  <Th width={15}>Workspaces</Th>
+                  <Th width={20} sort={nodeSort.getSortParams(0)}>Node</Th>
+                  <Th width={15} sort={nodeSort.getSortParams(1)}>Status</Th>
+                  <Th width={25} sort={nodeSort.getSortParams(2)}>CPU</Th>
+                  <Th width={25} sort={nodeSort.getSortParams(3)}>Memory</Th>
+                  <Th width={15} sort={nodeSort.getSortParams(4)}>Workspaces</Th>
                 </Tr>
               </Thead>
               <Tbody>
-                {NODE_INFO.map((node) => (
+                {nodeSort.sorted.map((node) => (
                   <Tr key={node.name}>
                     <Td dataLabel="Node"><strong>{node.name}</strong></Td>
                     <Td dataLabel="Status">
