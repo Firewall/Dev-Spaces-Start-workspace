@@ -114,9 +114,7 @@ function SubMetric({ label, value, prevValue, unit, lowerIsBetter, status }: Met
 }
 
 const ALERTS = [
-  { key: 'node', variant: 'danger' as const, title: 'Node worker-06 is NotReady', description: 'Node has been unresponsive for 5 minutes. 0 workspaces affected.', action: 'View node' },
   { key: 'memory', variant: 'warning' as const, title: 'Memory usage approaching limit on worker-03', description: 'worker-03 is at 90% memory utilization (28.8 / 32 Gi) with 9 active workspaces.', action: 'Manage workloads' },
-  { key: 'cert', variant: 'info' as const, title: 'TLS certificate expires in 12 days', description: '*.devspaces.example.com certificate expires Aug 23. Renew to avoid service disruption.', action: 'Renew certificate' },
 ]
 
 const RESOURCE_USAGE = {
