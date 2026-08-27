@@ -245,6 +245,106 @@ export function resolveModelSettings(displayName?: string): { inferenceProvider:
   return { inferenceProvider: DEFAULT_AGENT_SETTINGS.inferenceProvider, model: DEFAULT_AGENT_SETTINGS.model }
 }
 
+export interface ThreadContextPR {
+  number: number
+  title: string
+  status: 'open' | 'draft' | 'merged' | 'closed'
+  ciStatus: 'passed' | 'failed' | 'pending'
+}
+
+export interface CIPipelineRun {
+  status: 'passed' | 'failed'
+  duration: string
+  url: string
+  branch: string
+}
+
+export interface CatalogEntry {
+  component: string
+  owner: string
+  docsUrl: string
+}
+
+export interface OrgPolicy {
+  label: string
+}
+
+export interface ThreadContext {
+  repo: string
+  branch: string
+  pushed?: boolean
+  prs?: ThreadContextPR[]
+  ci?: CIPipelineRun
+  catalog?: CatalogEntry[]
+  policies?: OrgPolicy[]
+}
+
+export const MOCK_THREAD_CONTEXT: Record<string, ThreadContext> = {
+  'agent-1': {
+    repo: 'acme/web-app',
+    branch: 'feature/oauth2-login',
+    pushed: true,
+    prs: [
+      { number: 287, title: 'feat: add OAuth2 PKCE login flow', status: 'draft', ciStatus: 'pending' },
+    ],
+    ci: { status: 'passed', duration: '2m 14s', url: 'https://github.com/acme/web-app/actions/runs/12345', branch: 'feature/oauth2-login' },
+    catalog: [
+      { component: 'auth-service', owner: 'Team Platform', docsUrl: 'https://backstage.acme.io/catalog/auth-service/api' },
+    ],
+    policies: [
+      { label: 'Requires 2 approvals' },
+      { label: 'Security review required for auth changes' },
+    ],
+  },
+  'agent-8': {
+    repo: 'acme/web-app',
+    branch: 'bugfix/dashboard-leak',
+    pushed: false,
+    catalog: [
+      { component: 'web-app-frontend', owner: 'Team Atlas', docsUrl: 'https://backstage.acme.io/catalog/web-app-frontend/api' },
+    ],
+    policies: [
+      { label: 'Requires 2 approvals' },
+      { label: 'CI must pass before merge' },
+    ],
+  },
+  'agent-10': {
+    repo: 'acme/api-service',
+    branch: 'bugfix/rate-limiter',
+    pushed: true,
+    prs: [
+      { number: 63, title: 'fix: rate limiter concurrent request handling', status: 'open', ciStatus: 'passed' },
+    ],
+    ci: { status: 'passed', duration: '5m 18s', url: 'https://github.com/acme/api-service/actions/runs/67890', branch: 'bugfix/rate-limiter' },
+    policies: [
+      { label: 'Requires 2 approvals' },
+      { label: 'Load tests required for middleware changes' },
+    ],
+  },
+}
+
+export interface SandboxState {
+  image: string
+  tag: string
+  networkPolicy: string
+  allowedHosts: string[]
+  credentials: string[]
+  cpu: string
+  memory: string
+  policySource: string
+}
+
+export const MOCK_SANDBOX_STATE: SandboxState = {
+  image: 'registry.redhat.io/openshell/sandbox',
+  tag: 'v0.4.2',
+  networkPolicy: 'Deny-all',
+  allowedHosts: ['github.com', 'registry.npmjs.org', 'api.openai.com'],
+  credentials: ['GitHub PAT', 'RHOAI inference token', 'NPM read token'],
+  cpu: '2 cores',
+  memory: '4 Gi',
+  policySource: 'org-default + project-override',
+}
+
 export const MOCK_TERMINAL_OUTPUT: Record<AgentToolId, string[]> = {
   'claude-code': [
     '$ claude',

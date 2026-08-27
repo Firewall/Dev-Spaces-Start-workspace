@@ -14,23 +14,20 @@ import {
   Tooltip,
 } from '@patternfly/react-core'
 import {
-  CodeBranchIcon,
   CodeIcon,
   CogIcon,
   DesktopIcon,
   PencilAltIcon,
   PlusCircleIcon,
+  InfoCircleIcon,
   PluggedIcon,
   TerminalIcon,
-  GithubIcon,
-  GitlabIcon,
 } from '@patternfly/react-icons'
 import type { Agent, AgentSettings, AgentToolId, Project } from './agentSpaceTypes'
 import type { ChatMessage as ChatMessageType } from './chatTypes'
-import { AGENT_TOOLS, DEFAULT_AGENT_SETTINGS, INFERENCE_MODELS, MOCK_AGENTS, MOCK_PROJECTS, MOCK_TERMINAL_OUTPUT, resolveModelSettings } from './agentSpaceMockData'
+import { AGENT_TOOLS, DEFAULT_AGENT_SETTINGS, INFERENCE_MODELS, MOCK_AGENTS, MOCK_PROJECTS, MOCK_THREAD_CONTEXT, MOCK_TERMINAL_OUTPUT, resolveModelSettings } from './agentSpaceMockData'
 import { MOCK_STREAMING_RESPONSES, MOCK_THINKING, MOCK_TOOL_CALLS } from './chatMockData'
 import { AgentSidebar } from './AgentSidebar'
-import { JiraIcon } from './BrandIcons'
 import { AddProjectModal } from './AddProjectModal'
 import { BrandIcon } from './BrandIcons'
 import { hasBrandIcon } from './brandIconData'
@@ -39,11 +36,10 @@ import type { ViewMode } from './AgentConfigMenu'
 import { OpenShellBadge } from './OpenShellBadge'
 import { ChatMessage } from './ChatMessage'
 import { ChatInput } from './ChatInput'
-import { DiffPanel } from './DiffPanel'
-import { GitPanel } from './GitPanel'
+import { ChangesPanel } from './ChangesPanel'
 import { EditorPanel } from './EditorPanel'
-import { IssuesPanel } from './IssuesPanel'
 import { ChatSettingsBar } from './ChatSettingsBar'
+import { ThreadContextCard } from './ThreadContextCard'
 import { VSCodeView } from './VSCodeView'
 
 let nextProjectId = 200
@@ -121,7 +117,7 @@ export function AgentSpace({ username }: { username?: string }) {
 
   // --- Toolbar state ---
   const [openInOpen, setOpenInOpen] = useState(false)
-  type RightPanelView = 'changes' | 'git' | 'editor' | 'terminal' | 'issues'
+  type RightPanelView = 'changes' | 'git' | 'editor' | 'terminal' | 'issues' | 'context'
   const [rightPanelView, setRightPanelView] = useState<RightPanelView | null>(null)
   const toggleRightPanel = useCallback((view: RightPanelView) => {
     setRightPanelView(prev => prev === view ? null : view)
@@ -562,11 +558,10 @@ export function AgentSpace({ username }: { username?: string }) {
                   <OpenShellBadge />
                   <div style={{ width: 1, height: 16, background: 'var(--pf-t--global--border--color--default)', flexShrink: 0 }} />
                   {viewMode === 'chat' && ([
+                        { key: 'context' as const, label: 'Context', icon: <InfoCircleIcon /> },
                         { key: 'changes' as const, label: 'Changes', icon: <CodeIcon /> },
-                        { key: 'git' as const, label: 'Git', icon: <CodeBranchIcon /> },
                         { key: 'editor' as const, label: 'Editor', icon: <PencilAltIcon /> },
                         { key: 'terminal' as const, label: 'Terminal', icon: <TerminalIcon /> },
-                        ...(selectedAgent?.issue ? [{ key: 'issues' as const, label: selectedAgent.issue.source === 'github' ? 'GitHub' : selectedAgent.issue.source === 'jira' ? 'Jira' : 'GitLab', icon: selectedAgent.issue.source === 'github' ? <GithubIcon /> : selectedAgent.issue.source === 'jira' ? <JiraIcon size={14} /> : <GitlabIcon /> }] : []),
                       ]).map(tab => (
                         <Tooltip key={tab.key} content={tab.label} position="bottom">
                           <button
@@ -683,10 +678,20 @@ export function AgentSpace({ username }: { username?: string }) {
                       onMouseEnter={e => (e.currentTarget.style.borderLeft = '2px solid var(--pf-t--global--color--brand--default)')}
                       onMouseLeave={e => { if (!rightPanelDragging.current) e.currentTarget.style.borderLeft = '1px solid var(--pf-t--global--border--color--default)' }}
                     />
-                      {rightPanelView === 'changes' && <DiffPanel />}
-                      {rightPanelView === 'git' && <GitPanel />}
+                      {rightPanelView === 'context' && selectedAgent && (() => {
+                        const ctx = MOCK_THREAD_CONTEXT[selectedAgent.id] ?? {
+                          repo: selectedProject?.repoUrl?.replace('https://github.com/', '') ?? selectedProject?.name ?? 'unknown',
+                          branch: selectedAgent.branch ?? 'main',
+                          policies: [{ label: 'Requires 2 approvals' }, { label: 'No direct push to main' }],
+                        }
+                        return (
+                          <div style={{ height: '100%', overflowY: 'auto' }}>
+                            <ThreadContextCard context={ctx} agentBranch={selectedAgent.branch} issue={selectedAgent.issue} />
+                          </div>
+                        )
+                      })()}
+                      {rightPanelView === 'changes' && <ChangesPanel />}
                       {rightPanelView === 'editor' && <EditorPanel />}
-                      {rightPanelView === 'issues' && selectedAgent?.issue && <IssuesPanel issue={selectedAgent.issue} />}
                       {rightPanelView === 'terminal' && (
                         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#1e1e1e' }}>
                           <div style={{

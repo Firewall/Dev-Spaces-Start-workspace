@@ -8,7 +8,8 @@ import {
   CodeBranchIcon,
   GithubIcon,
 } from '@patternfly/react-icons'
-import type { Agent, Project } from './agentSpaceTypes'
+import type { Agent, AgentToolId, Project } from './agentSpaceTypes'
+import { AGENT_TOOLS } from './agentSpaceMockData'
 import { BrandIcon, JiraIcon } from './BrandIcons'
 
 interface ContextMenuState {
@@ -22,9 +23,10 @@ interface AgentSidebarProps {
   agents: Agent[]
   selectedAgentId: string | null
   showIssues?: boolean
+  showToolPicker?: boolean
   viewedComplete?: Set<string>
   onSelectAgent: (agentId: string) => void
-  onAddAgent: (projectId: string) => void
+  onAddAgent: (projectId: string, tool?: AgentToolId) => void
   onDeleteAgent: (agentId: string) => void
   onDeleteProject: (projectId: string) => void
   onRenameProject: (projectId: string, newName: string) => void
@@ -68,6 +70,7 @@ export function AgentSidebar({
   agents,
   selectedAgentId,
   showIssues,
+  showToolPicker,
   viewedComplete,
   onSelectAgent,
   onAddAgent,
@@ -78,20 +81,22 @@ export function AgentSidebar({
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
+  const [toolPickerProjectId, setToolPickerProjectId] = useState<string | null>(null)
+  const [toolPickerPos, setToolPickerPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
   const [renamingProjectId, setRenamingProjectId] = useState<string | null>(null)
   const [renameValue, setRenameValue] = useState('')
   const renameInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (!contextMenu) return
-    const close = () => setContextMenu(null)
+    if (!contextMenu && !toolPickerProjectId) return
+    const close = () => { setContextMenu(null); setToolPickerProjectId(null) }
     document.addEventListener('click', close)
     document.addEventListener('contextmenu', close)
     return () => {
       document.removeEventListener('click', close)
       document.removeEventListener('contextmenu', close)
     }
-  }, [contextMenu])
+  }, [contextMenu, toolPickerProjectId])
 
   useEffect(() => {
     if (renamingProjectId) renameInputRef.current?.focus()
@@ -204,9 +209,15 @@ export function AgentSidebar({
                 )}
                 <PlusCircleIcon
                   style={{ fontSize: 12, flexShrink: 0, cursor: 'pointer', opacity: 0.7 }}
-                  onClick={(e) => {
+                  onClick={(e: React.MouseEvent) => {
                     e.stopPropagation()
-                    onAddAgent(project.id)
+                    if (showToolPicker) {
+                      const rect = (e.target as HTMLElement).getBoundingClientRect()
+                      setToolPickerPos({ x: rect.left, y: rect.bottom + 4 })
+                      setToolPickerProjectId(project.id)
+                    } else {
+                      onAddAgent(project.id)
+                    }
                   }}
                   aria-label={`Add agent to ${project.name}`}
                 />
@@ -222,10 +233,10 @@ export function AgentSidebar({
                       style={{
                         padding: '7px 8px 7px 12px',
                         cursor: 'pointer',
-                        borderLeft: agent.status === 'running'
-                          ? '3px solid #4caf50'
-                          : agent.status === 'blocked'
+                        borderLeft: agent.status === 'blocked'
                           ? '3px solid #d29922'
+                          : (agent.status === 'complete' && !viewedComplete?.has(agent.id))
+                          ? '3px solid #4caf50'
                           : '3px solid transparent',
                         marginBottom: 2,
                         background:
@@ -243,18 +254,16 @@ export function AgentSidebar({
                           <span style={{
                             display: 'inline-flex', alignItems: 'center', gap: 3, flexShrink: 0,
                             fontSize: SIDEBAR_FONT.secondary,
-                            color: agent.status === 'running' ? '#4caf50' : agent.status === 'blocked' ? '#d29922' : 'var(--pf-t--global--text--color--regular)',
-                            opacity: agent.status === 'complete' ? 0.4 : 1,
+                            color: agent.status === 'blocked' ? '#d29922' : agent.status === 'complete' ? '#4caf50' : '#1f6feb',
                           }}>
                             <span
-                              className={agent.status !== 'complete' ? 'agent-status-dot' : undefined}
+                              className={agent.status === 'blocked' ? 'agent-status-dot' : undefined}
                               style={{
                                 width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
-                                background: agent.status === 'running' ? '#4caf50' : agent.status === 'blocked' ? '#d29922' : 'var(--pf-t--global--text--color--regular)',
-                                opacity: agent.status === 'complete' ? 0.5 : 1,
+                                background: agent.status === 'blocked' ? '#d29922' : agent.status === 'complete' ? '#4caf50' : '#1f6feb',
                               }}
                             />
-                            {agent.status === 'running' ? 'Running' : agent.status === 'blocked' ? 'Blocked' : 'Complete'}
+                            {agent.status === 'running' ? 'Running' : agent.status === 'blocked' ? 'Needs input' : 'Complete'}
                           </span>
                         )}
                         <span
@@ -294,16 +303,15 @@ export function AgentSidebar({
                       </div>
                       {/* Row 2: model + branch */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3, minWidth: 0 }}>
-                        <span style={{ fontSize: SIDEBAR_FONT.secondary, color: 'var(--pf-t--global--text--color--regular)', opacity: 0.5 }}>
+                        <span style={{ fontSize: SIDEBAR_FONT.secondary, color: 'var(--pf-t--global--text--color--subtle)' }}>
                           {agent.model || 'unknown'}
                         </span>
-                        <span style={{ fontSize: SIDEBAR_FONT.secondary, color: 'var(--pf-t--global--text--color--regular)', opacity: 0.3 }}>·</span>
-                        <CodeBranchIcon style={{ fontSize: SIDEBAR_FONT.icon, color: 'var(--pf-t--global--text--color--regular)', opacity: 0.4 }} />
+                        <span style={{ fontSize: SIDEBAR_FONT.secondary, color: 'var(--pf-t--global--text--color--subtle)' }}>·</span>
+                        <CodeBranchIcon style={{ fontSize: SIDEBAR_FONT.icon, color: 'var(--pf-t--global--text--color--subtle)' }} />
                         <span style={{
                           fontSize: SIDEBAR_FONT.secondary,
                           fontFamily: 'var(--pf-t--global--font--family--mono)',
-                          color: 'var(--pf-t--global--text--color--regular)',
-                          opacity: 0.5,
+                          color: 'var(--pf-t--global--text--color--subtle)',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
@@ -385,6 +393,43 @@ export function AgentSidebar({
             </div>
           )
         })
+      )}
+      {toolPickerProjectId && (
+        <div
+          style={{
+            position: 'fixed',
+            top: toolPickerPos.y,
+            left: toolPickerPos.x,
+            zIndex: 9999,
+            background: 'var(--pf-t--global--background--color--primary--default)',
+            border: '1px solid var(--pf-t--global--border--color--default)',
+            borderRadius: 6,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+            padding: '4px 0',
+            minWidth: 180,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {AGENT_TOOLS.map(tool => (
+            <div
+              key={tool.id}
+              className="agent-sidebar-item"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '7px 12px',
+                fontSize: 13,
+                cursor: 'pointer',
+              }}
+              onClick={() => {
+                onAddAgent(toolPickerProjectId, tool.id)
+                setToolPickerProjectId(null)
+              }}
+            >
+              <BrandIcon id={tool.id} size={16} />
+              <span style={{ fontWeight: 500, color: 'var(--pf-t--global--text--color--regular)' }}>{tool.name}</span>
+            </div>
+          ))}
+        </div>
       )}
       {contextMenu && (
         <div

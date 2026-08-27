@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { CodeBranchIcon } from '@patternfly/react-icons'
+import { Button, TextArea, Tooltip } from '@patternfly/react-core'
+import { CodeBranchIcon, CloudUploadAltIcon, MagicIcon, PlusIcon, MinusIcon } from '@patternfly/react-icons'
 
 interface DiffLine {
   type: 'add' | 'remove' | 'context' | 'hunk'
@@ -280,7 +281,15 @@ const DIFF_STYLES = `
   }
 `
 
-function DiffFileBlock({ file }: { file: DiffFile }) {
+const MONO_FONT = '"SF Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace'
+
+const MOCK_COMMITS = [
+  { hash: 'a3f1c2d', message: 'Fix authentication token refresh', author: 'mokhtar', time: '2h ago' },
+  { hash: 'b7e4a19', message: 'Add rate limiter middleware', author: 'mokhtar', time: '5h ago' },
+  { hash: 'c9d2f38', message: 'Update database connection config', author: 'mokhtar', time: '1d ago' },
+]
+
+function DiffFileBlock({ file, staged, onToggleStage }: { file: DiffFile; staged: boolean; onToggleStage: () => void }) {
   const [collapsed, setCollapsed] = useState(false)
 
   return (
@@ -299,6 +308,23 @@ function DiffFileBlock({ file }: { file: DiffFile }) {
           {file.additions > 0 && <span className="diff-stat-pill add">+{file.additions}</span>}
           {file.deletions > 0 && <span className="diff-stat-pill remove">-{file.deletions}</span>}
         </span>
+        <Tooltip content={staged ? 'Unstage' : 'Stage'} position="left">
+          <button
+            onClick={e => { e.stopPropagation(); onToggleStage() }}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              padding: 3, borderRadius: 4, flexShrink: 0,
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              color: staged ? 'var(--diff-add-text)' : 'var(--diff-text-muted)',
+              fontSize: 12,
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--diff-hover)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+            aria-label={staged ? 'Unstage file' : 'Stage file'}
+          >
+            {staged ? <MinusIcon /> : <PlusIcon />}
+          </button>
+        </Tooltip>
       </div>
 
       {!collapsed && (
@@ -327,26 +353,162 @@ function DiffFileBlock({ file }: { file: DiffFile }) {
   )
 }
 
-export function DiffPanel() {
+export function ChangesPanel() {
+  const [commitMessage, setCommitMessage] = useState('')
+  const [stagedPaths, setStagedPaths] = useState<Set<string>>(() => new Set())
   const totalAdditions = MOCK_DIFF_FILES.reduce((sum, f) => sum + f.additions, 0)
   const totalDeletions = MOCK_DIFF_FILES.reduce((sum, f) => sum + f.deletions, 0)
+  const stagedFiles = MOCK_DIFF_FILES.filter(f => stagedPaths.has(f.path))
+  const unstagedFiles = MOCK_DIFF_FILES.filter(f => !stagedPaths.has(f.path))
+  const canCommit = commitMessage.trim().length > 0 && stagedFiles.length > 0
+
+  const toggleStage = (path: string) => {
+    setStagedPaths(prev => {
+      const next = new Set(prev)
+      if (next.has(path)) next.delete(path)
+      else next.add(path)
+      return next
+    })
+  }
 
   return (
-    <div className="diff-panel" style={{ height: '100%', overflowY: 'auto', background: 'var(--diff-bg)' }}>
+    <div className="diff-panel" style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--diff-bg)' }}>
       <style>{DIFF_STYLES}</style>
 
-      <div className="diff-summary">
-        <CodeBranchIcon style={{ color: 'var(--diff-text-muted)', fontSize: 14 }} />
-        <span className="diff-summary-count">
-          {MOCK_DIFF_FILES.length} file{MOCK_DIFF_FILES.length !== 1 ? 's' : ''} changed
-        </span>
-        <span className="diff-stat-pill add">+{totalAdditions}</span>
-        <span className="diff-stat-pill remove">-{totalDeletions}</span>
+      {/* Diff view */}
+      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+        <div className="diff-summary">
+          <CodeBranchIcon style={{ color: 'var(--diff-text-muted)', fontSize: 14 }} />
+          <span className="diff-summary-count">
+            {MOCK_DIFF_FILES.length} file{MOCK_DIFF_FILES.length !== 1 ? 's' : ''} changed
+          </span>
+          <span className="diff-stat-pill add">+{totalAdditions}</span>
+          <span className="diff-stat-pill remove">-{totalDeletions}</span>
+          <span style={{ flex: 1 }} />
+          <Tooltip content={stagedPaths.size === MOCK_DIFF_FILES.length ? 'Unstage all' : 'Stage all'}>
+            <button
+              onClick={() => {
+                if (stagedPaths.size === MOCK_DIFF_FILES.length) setStagedPaths(new Set())
+                else setStagedPaths(new Set(MOCK_DIFF_FILES.map(f => f.path)))
+              }}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                padding: '2px 6px', borderRadius: 4, fontSize: 11, fontWeight: 500,
+                color: 'var(--diff-text-muted)', fontFamily: 'inherit',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'var(--diff-hover)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+            >
+              {stagedPaths.size === MOCK_DIFF_FILES.length ? 'Unstage all' : 'Stage all'}
+            </button>
+          </Tooltip>
+        </div>
+
+        {/* Staged files */}
+        {stagedFiles.length > 0 && (
+          <>
+            <div style={{
+              padding: '6px 16px', fontSize: 11, fontWeight: 600,
+              textTransform: 'uppercase', letterSpacing: '0.5px',
+              color: 'var(--diff-add-text)',
+              borderBottom: '1px solid var(--diff-border)',
+            }}>
+              Staged ({stagedFiles.length})
+            </div>
+            {stagedFiles.map((file, i) => (
+              <DiffFileBlock key={`s-${i}`} file={file} staged onToggleStage={() => toggleStage(file.path)} />
+            ))}
+          </>
+        )}
+
+        {/* Unstaged files */}
+        {stagedFiles.length > 0 && unstagedFiles.length > 0 && (
+          <div style={{
+            padding: '6px 16px', fontSize: 11, fontWeight: 600,
+            textTransform: 'uppercase', letterSpacing: '0.5px',
+            color: 'var(--diff-text-muted)',
+            borderBottom: '1px solid var(--diff-border)',
+            borderTop: '1px solid var(--diff-border)',
+          }}>
+            Changes ({unstagedFiles.length})
+          </div>
+        )}
+        {(stagedFiles.length === 0 ? MOCK_DIFF_FILES : unstagedFiles).map((file, i) => (
+          <DiffFileBlock key={`u-${i}`} file={file} staged={false} onToggleStage={() => toggleStage(file.path)} />
+        ))}
+
+        {/* Recent commits */}
+        <div style={{ borderTop: '1px solid var(--diff-border)', padding: '8px 0' }}>
+          <div style={{
+            padding: '4px 16px 6px',
+            fontSize: 11, fontWeight: 600, textTransform: 'uppercase',
+            letterSpacing: '0.5px', color: 'var(--diff-text-muted)',
+          }}>
+            Recent commits
+          </div>
+          {MOCK_COMMITS.map(commit => (
+            <div
+              key={commit.hash}
+              style={{
+                padding: '4px 16px',
+                display: 'flex', alignItems: 'baseline', gap: 8,
+                fontSize: 12,
+              }}
+            >
+              <span style={{ fontFamily: MONO_FONT, fontSize: 11, color: 'var(--diff-text-muted)', flexShrink: 0 }}>
+                {commit.hash.slice(0, 7)}
+              </span>
+              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--diff-text)' }}>
+                {commit.message}
+              </span>
+              <span style={{ fontSize: 11, color: 'var(--diff-text-muted)', flexShrink: 0 }}>
+                {commit.time}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {MOCK_DIFF_FILES.map((file, i) => (
-        <DiffFileBlock key={i} file={file} />
-      ))}
+      {/* Commit controls */}
+      <div style={{ borderTop: '1px solid var(--diff-border)', padding: '10px 12px', flexShrink: 0 }}>
+        <style>{`.diff-commit-input.pf-v6-c-form-control { --pf-v6-c-form-control--BorderColor: var(--diff-border); --pf-v6-c-form-control--hover--BorderColor: var(--diff-border); box-shadow: none; }`}</style>
+        <div style={{ position: 'relative' }}>
+          <TextArea
+            className="diff-commit-input"
+            value={commitMessage}
+            onChange={(_e, val) => setCommitMessage(val)}
+            placeholder="Commit message"
+            rows={2}
+            style={{ fontSize: 12, resize: 'vertical', fontFamily: MONO_FONT, paddingRight: 32 }}
+            aria-label="Commit message"
+          />
+          <Tooltip content="Generate commit message" position="left">
+            <button
+              onClick={() => setCommitMessage('feat: add token refresh and rate limiter middleware')}
+              style={{
+                position: 'absolute', top: 6, right: 6,
+                background: 'none', border: 'none', cursor: 'pointer',
+                padding: 4, borderRadius: 4,
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                color: 'var(--pf-t--global--text--color--subtle)', fontSize: 14,
+              }}
+              onMouseEnter={e => (e.currentTarget.style.color = 'var(--pf-t--global--text--color--regular)')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'var(--pf-t--global--text--color--subtle)')}
+              aria-label="Generate commit message"
+            >
+              <MagicIcon />
+            </button>
+          </Tooltip>
+        </div>
+        <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+          <Button variant="primary" isBlock isDisabled={!canCommit} style={{ fontSize: 12 }}>
+            Commit
+          </Button>
+          <Button variant="secondary" isDisabled={!canCommit} style={{ fontSize: 12, flexShrink: 0 }} icon={<CloudUploadAltIcon />}>
+            Commit & Push
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }
