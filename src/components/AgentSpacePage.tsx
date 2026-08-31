@@ -11,21 +11,16 @@ import {
   MenuToggle,
   MenuToggleAction,
   PageSection,
-  Tooltip,
 } from '@patternfly/react-core'
 import {
-  CodeIcon,
   CogIcon,
   DesktopIcon,
-  PencilAltIcon,
   PlusCircleIcon,
-  InfoCircleIcon,
   PluggedIcon,
-  TerminalIcon,
 } from '@patternfly/react-icons'
 import type { Agent, AgentSettings, AgentToolId, Project } from './agentSpaceTypes'
 import type { ChatMessage as ChatMessageType } from './chatTypes'
-import { AGENT_TOOLS, DEFAULT_AGENT_SETTINGS, INFERENCE_MODELS, MOCK_AGENTS, MOCK_PROJECTS, MOCK_THREAD_CONTEXT, MOCK_TERMINAL_OUTPUT, resolveModelSettings } from './agentSpaceMockData'
+import { AGENT_TOOLS, DEFAULT_AGENT_SETTINGS, INFERENCE_MODELS, MOCK_AGENTS, MOCK_PROJECTS, MOCK_TERMINAL_OUTPUT, resolveModelSettings } from './agentSpaceMockData'
 import { MOCK_STREAMING_RESPONSES, MOCK_THINKING, MOCK_TOOL_CALLS } from './chatMockData'
 import { AgentSidebar } from './AgentSidebar'
 import { AddProjectModal } from './AddProjectModal'
@@ -36,10 +31,9 @@ import type { ViewMode } from './AgentConfigMenu'
 import { OpenShellBadge } from './OpenShellBadge'
 import { ChatMessage } from './ChatMessage'
 import { ChatInput } from './ChatInput'
-import { ChangesPanel } from './ChangesPanel'
-import { EditorPanel } from './EditorPanel'
 import { ChatSettingsBar } from './ChatSettingsBar'
-import { ThreadContextCard } from './ThreadContextCard'
+import { PanelToggleButtons, RightPanelContent, RightPanelWrapper } from './AgentRightPanel'
+import { useRightPanel } from './useRightPanel'
 import { VSCodeView } from './VSCodeView'
 
 let nextProjectId = 200
@@ -117,18 +111,11 @@ export function AgentSpace({ username }: { username?: string }) {
 
   // --- Toolbar state ---
   const [openInOpen, setOpenInOpen] = useState(false)
-  type RightPanelView = 'changes' | 'git' | 'editor' | 'terminal' | 'issues' | 'context'
-  const [rightPanelView, setRightPanelView] = useState<RightPanelView | null>(null)
-  const toggleRightPanel = useCallback((view: RightPanelView) => {
-    setRightPanelView(prev => prev === view ? null : view)
-  }, [])
-
+  const rightPanel = useRightPanel()
 
   // --- Resizable panels ---
   const [sidebarWidth, setSidebarWidth] = useState(260)
-  const [rightPanelWidth, setRightPanelWidth] = useState(560)
   const sidebarDragging = useRef(false)
-  const rightPanelDragging = useRef(false)
 
   const handleSidebarMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
@@ -151,28 +138,6 @@ export function AgentSpace({ username }: { username?: string }) {
     document.addEventListener('mousemove', onMove)
     document.addEventListener('mouseup', onUp)
   }, [sidebarWidth])
-
-  const handleRightPanelMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    rightPanelDragging.current = true
-    const startX = e.clientX
-    const startWidth = rightPanelWidth
-    const onMove = (ev: MouseEvent) => {
-      if (!rightPanelDragging.current) return
-      setRightPanelWidth(Math.max(300, Math.min(900, startWidth - (ev.clientX - startX))))
-    }
-    const onUp = () => {
-      rightPanelDragging.current = false
-      document.removeEventListener('mousemove', onMove)
-      document.removeEventListener('mouseup', onUp)
-      document.body.style.cursor = ''
-      document.body.style.userSelect = ''
-    }
-    document.body.style.cursor = 'col-resize'
-    document.body.style.userSelect = 'none'
-    document.addEventListener('mousemove', onMove)
-    document.addEventListener('mouseup', onUp)
-  }, [rightPanelWidth])
 
   const [terminalLineCounts, setTerminalLineCounts] = useState<Record<string, number>>({})
   const terminalGenRef = useRef(0)
@@ -201,7 +166,7 @@ export function AgentSpace({ username }: { username?: string }) {
   const selectAgent = useCallback((id: string | null) => {
     setSelectedAgentId(id)
     setOpenInOpen(false)
-    setRightPanelView(null)
+    rightPanel.close()
     if (id) {
       setViewedComplete(prev => {
         const next = new Set(prev)
@@ -209,7 +174,7 @@ export function AgentSpace({ username }: { username?: string }) {
         return next
       })
     }
-  }, [])
+  }, [rightPanel])
 
   // --- Derived values ---
   const selectedAgent = useMemo(() => agents.find(a => a.id === selectedAgentId), [agents, selectedAgentId])
@@ -557,24 +522,7 @@ export function AgentSpace({ username }: { username?: string }) {
                   </span>
                   <OpenShellBadge />
                   <div style={{ width: 1, height: 16, background: 'var(--pf-t--global--border--color--default)', flexShrink: 0 }} />
-                  {viewMode === 'chat' && ([
-                        { key: 'context' as const, label: 'Context', icon: <InfoCircleIcon /> },
-                        { key: 'changes' as const, label: 'Changes', icon: <CodeIcon /> },
-                        { key: 'editor' as const, label: 'Editor', icon: <PencilAltIcon /> },
-                        { key: 'terminal' as const, label: 'Terminal', icon: <TerminalIcon /> },
-                      ]).map(tab => (
-                        <Tooltip key={tab.key} content={tab.label} position="bottom">
-                          <button
-                            className="header-icon-btn"
-                            data-active={rightPanelView === tab.key}
-                            onClick={() => toggleRightPanel(tab.key)}
-                            aria-label={tab.label}
-                          >
-                            {tab.icon}
-                            <span className="panel-label">{tab.label}</span>
-                          </button>
-                        </Tooltip>
-                      ))}
+                  {viewMode === 'chat' && <PanelToggleButtons panels={['context', 'changes', 'editor', 'terminal']} activePanel={rightPanel.activePanel} onToggle={rightPanel.toggle} />}
                       <div style={{ width: 1, height: 16, background: 'var(--pf-t--global--border--color--default)', flexShrink: 0 }} />
                       <div className="agent-toolbar-v2">
                         <Dropdown isOpen={openInOpen} onSelect={() => setOpenInOpen(false)} onOpenChange={setOpenInOpen} popperProps={{ position: 'right' }}
@@ -666,50 +614,9 @@ export function AgentSpace({ username }: { username?: string }) {
                 </div>
 
                 {/* Right panel with tab views */}
-                {rightPanelView !== null && (
-                  <div style={{ width: rightPanelWidth, minWidth: 300, maxWidth: 900, minHeight: 0, position: 'relative', flexShrink: 0 }}>
-                    <div
-                      onMouseDown={handleRightPanelMouseDown}
-                      style={{
-                        position: 'absolute', top: 0, left: 0, bottom: 0,
-                        width: 4, cursor: 'col-resize', zIndex: 10,
-                        borderLeft: '1px solid var(--pf-t--global--border--color--default)',
-                      }}
-                      onMouseEnter={e => (e.currentTarget.style.borderLeft = '2px solid var(--pf-t--global--color--brand--default)')}
-                      onMouseLeave={e => { if (!rightPanelDragging.current) e.currentTarget.style.borderLeft = '1px solid var(--pf-t--global--border--color--default)' }}
-                    />
-                      {rightPanelView === 'context' && selectedAgent && (() => {
-                        const ctx = MOCK_THREAD_CONTEXT[selectedAgent.id] ?? {
-                          repo: selectedProject?.repoUrl?.replace('https://github.com/', '') ?? selectedProject?.name ?? 'unknown',
-                          branch: selectedAgent.branch ?? 'main',
-                          policies: [{ label: 'Requires 2 approvals' }, { label: 'No direct push to main' }],
-                        }
-                        return (
-                          <div style={{ height: '100%', overflowY: 'auto' }}>
-                            <ThreadContextCard context={ctx} agentBranch={selectedAgent.branch} issue={selectedAgent.issue} />
-                          </div>
-                        )
-                      })()}
-                      {rightPanelView === 'changes' && <ChangesPanel />}
-                      {rightPanelView === 'editor' && <EditorPanel />}
-                      {rightPanelView === 'terminal' && (
-                        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#1e1e1e' }}>
-                          <div style={{
-                            flex: 1, overflowY: 'auto', padding: '12px 16px',
-                            fontFamily: '"SF Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
-                            fontSize: 13, lineHeight: '22px',
-                          }}>
-                            <div>
-                              <span style={{ color: '#b0b0b0' }}>~/{selectedProject?.name ?? 'workspace'}</span>
-                              <span style={{ color: '#808080' }}> $ </span>
-                              <span style={{ animation: 'blink 1s step-end infinite', color: '#cccccc' }}>&#9612;</span>
-                            </div>
-                            <style>{`@keyframes blink { 50% { opacity: 0; } }`}</style>
-                          </div>
-                        </div>
-                      )}
-                  </div>
-                )}
+                <RightPanelWrapper panel={rightPanel}>
+                  {selectedAgent && <RightPanelContent view={rightPanel.activePanel!} agent={selectedAgent} project={selectedProject} />}
+                </RightPanelWrapper>
 
 
               </div>

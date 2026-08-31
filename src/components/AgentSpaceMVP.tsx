@@ -15,13 +15,13 @@ import {
 import {
   CogIcon,
   DesktopIcon,
-  InfoCircleIcon,
   PluggedIcon,
   PlusCircleIcon,
 } from '@patternfly/react-icons'
 import type { Agent, AgentToolId, Project } from './agentSpaceTypes'
-import { AGENT_TOOLS, MOCK_AGENTS, MOCK_PROJECTS, MOCK_THREAD_CONTEXT } from './agentSpaceMockData'
-import { ThreadContextCard } from './ThreadContextCard'
+import { AGENT_TOOLS, MOCK_AGENTS, MOCK_PROJECTS } from './agentSpaceMockData'
+import { PanelToggleButtons, RightPanelContent, RightPanelWrapper } from './AgentRightPanel'
+import { useRightPanel } from './useRightPanel'
 import { AgentSidebar } from './AgentSidebar'
 import { AddProjectModal } from './AddProjectModal'
 import { BrandIcon } from './BrandIcons'
@@ -380,7 +380,7 @@ export function AgentSpaceMVP({ username }: { username?: string }) {
   const [addProjectModalOpen, setAddProjectModalOpen] = useState(false)
   const [showVSCode, setShowVSCode] = useState(false)
   const [openInOpen, setOpenInOpen] = useState(false)
-  const [showContext, setShowContext] = useState(false)
+  const rightPanel = useRightPanel()
 
   const [promptHistory, setPromptHistory] = useState<Record<string, string[]>>({})
   const [inputValue, setInputValue] = useState('')
@@ -606,6 +606,16 @@ export function AgentSpaceMVP({ username }: { username?: string }) {
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
               {/* Toolbar */}
               <style>{`
+                .header-icon-btn {
+                  display: inline-flex; align-items: center; justify-content: center;
+                  height: 28px; border: none; cursor: pointer; border-radius: 4px;
+                  background: transparent; color: var(--pf-t--global--text--color--subtle);
+                  font-size: 13px; padding: 0 8px; font-family: inherit; gap: 5px;
+                  transition: background 0.1s, color 0.1s; white-space: nowrap;
+                }
+                .header-icon-btn:hover { background: var(--pf-t--global--background--color--action--plain--hover); color: var(--pf-t--global--text--color--regular); }
+                .header-icon-btn[data-active="true"] { background: var(--pf-t--global--background--color--action--plain--clicked); color: var(--pf-t--global--text--color--regular); }
+                .header-icon-btn .panel-label { display: inline; }
                 .mvp-toolbar .pf-v6-c-menu-toggle,
                 .mvp-toolbar .pf-v6-c-button {
                   height: 28px !important; max-height: 28px !important; min-height: 28px !important;
@@ -649,23 +659,7 @@ export function AgentSpaceMVP({ username }: { username?: string }) {
                   </span>
                   <OpenShellBadge />
                   <div style={{ width: 1, height: 16, background: 'var(--pf-t--global--border--color--default)', flexShrink: 0 }} />
-                  <button
-                    onClick={() => setShowContext(prev => !prev)}
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-                      height: 28, border: 'none', cursor: 'pointer', borderRadius: 4,
-                      background: showContext ? 'var(--pf-t--global--background--color--action--plain--clicked)' : 'transparent',
-                      color: showContext ? 'var(--pf-t--global--text--color--regular)' : 'var(--pf-t--global--text--color--subtle)',
-                      fontSize: 13, padding: '0 8px', fontFamily: 'inherit',
-                      transition: 'background 0.1s, color 0.1s',
-                    }}
-                    onMouseEnter={e => { if (!showContext) e.currentTarget.style.background = 'var(--pf-t--global--background--color--action--plain--hover)' }}
-                    onMouseLeave={e => { if (!showContext) e.currentTarget.style.background = 'transparent' }}
-                    aria-label="Context"
-                  >
-                    <InfoCircleIcon style={{ fontSize: 13 }} />
-                    <span>Context</span>
-                  </button>
+                  <PanelToggleButtons panels={['context', 'changes', 'terminal']} activePanel={rightPanel.activePanel} onToggle={rightPanel.toggle} />
                   <div style={{ width: 1, height: 16, background: 'var(--pf-t--global--border--color--default)', flexShrink: 0 }} />
                   <div className="mvp-toolbar">
                     <Dropdown isOpen={openInOpen} onSelect={() => setOpenInOpen(false)} onOpenChange={setOpenInOpen} popperProps={{ position: 'right' }}
@@ -708,22 +702,9 @@ export function AgentSpaceMVP({ username }: { username?: string }) {
                     <FallbackTerminalUI agent={selectedAgent} projectName={selectedProject?.name} username={username} input={terminalInput} />
                   )}
                 </div>
-                {showContext && (
-                  <div style={{
-                    width: 340, flexShrink: 0, overflowY: 'auto',
-                    borderLeft: '1px solid var(--pf-t--global--border--color--default)',
-                  }}>
-                    <ThreadContextCard
-                      context={MOCK_THREAD_CONTEXT[selectedAgent.id] ?? {
-                        repo: selectedProject?.repoUrl?.replace('https://github.com/', '') ?? selectedProject?.name ?? 'unknown',
-                        branch: selectedAgent.branch ?? 'main',
-                        policies: [{ label: 'Requires 2 approvals' }, { label: 'No direct push to main' }],
-                      }}
-                      agentBranch={selectedAgent.branch}
-                      issue={selectedAgent.issue}
-                    />
-                  </div>
-                )}
+                <RightPanelWrapper panel={rightPanel}>
+                  <RightPanelContent view={rightPanel.activePanel!} agent={selectedAgent} project={selectedProject} />
+                </RightPanelWrapper>
               </div>
             </div>
           ) : (
