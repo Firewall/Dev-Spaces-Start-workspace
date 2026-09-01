@@ -34,7 +34,7 @@ import { CreateWorkspaceSplitTab } from './components/CreateWorkspaceSplitTab'
 import { UserPreferences } from './components/UserPreferences'
 import { WorkspaceList } from './components/WorkspaceList'
 
-type Phase = 'phase1' | 'phase2'
+type Phase = 'phase1' | 'phase2' | 'dialog'
 type ThemeMode = 'light' | 'dark' | 'auto'
 const PHASE_STORAGE_KEY = 'dev-spaces-phase'
 
@@ -71,7 +71,7 @@ export default function App() {
   const [activePage, setActivePage] = useState(getRouteFromHash)
   const [phase, setPhase] = useState<Phase>(() => {
     const saved = window.localStorage.getItem(PHASE_STORAGE_KEY)
-    return saved === 'phase1' || saved === 'phase2' ? saved : 'phase1'
+    return saved === 'phase1' || saved === 'phase2' || saved === 'dialog' ? saved : 'phase1'
   })
 
   useEffect(() => {
