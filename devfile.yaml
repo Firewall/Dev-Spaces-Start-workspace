@@ -5,15 +5,13 @@ metadata:
   language: TypeScript
   projectType: React
   provider: Red Hat
-attributes:
-  controller.devfile.io/storage-type: per-user
 components:
   - name: tools
     container:
       image: quay.io/devfile/universal-developer-image:ubi10-latest
       memoryLimit: 4Gi
       memoryRequest: 512Mi
-      cpuLimit: '2'
+      cpuLimit: 2000m
       cpuRequest: 250m
       mountSources: true
       endpoints:

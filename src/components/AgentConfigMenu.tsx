@@ -1,0 +1,356 @@
+import { useRef, useState } from 'react'
+import {
+  Flex,
+  FlexItem,
+  Menu,
+  MenuContainer,
+  MenuContent,
+  MenuItem,
+  MenuList,
+  MenuSearch,
+  MenuSearchInput,
+  MenuToggle,
+  SearchInput,
+  Switch,
+  Tooltip,
+} from '@patternfly/react-core'
+import type { AccessMode, AgentMode, AgentSettings, AgentToolId, ContextWindowSize, InferenceProviderId, ReasoningMode } from './agentSpaceTypes'
+import { AGENT_TOOLS, CONTEXT_WINDOW_OPTIONS, HARNESS_PROVIDERS, INFERENCE_MODELS, INFERENCE_PROVIDERS } from './agentSpaceMockData'
+import { BrandIcon } from './BrandIcons'
+
+export type ViewMode = 'chat' | 'terminal'
+
+interface AgentConfigMenuProps {
+  tool: AgentToolId
+  settings: AgentSettings
+  onToolChange: (tool: AgentToolId) => void
+  onSettingsChange: (settings: AgentSettings) => void
+  viewMode?: ViewMode
+  onViewModeChange?: (mode: ViewMode) => void
+}
+
+const ACCESS_OPTIONS: { id: AccessMode; label: string }[] = [
+  { id: 'full-access', label: 'Full access' },
+  { id: 'auto-accept-edits', label: 'Auto accept edits' },
+  { id: 'supervised', label: 'Supervised' },
+]
+
+export function AgentConfigMenu({
+  tool,
+  settings,
+  onToolChange,
+  onSettingsChange,
+  viewMode = 'chat',
+  onViewModeChange,
+}: AgentConfigMenuProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [modelSearch, setModelSearch] = useState('')
+  const toggleRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  const toolName = AGENT_TOOLS.find((t) => t.id === tool)?.name ?? tool
+  const inferenceName = INFERENCE_PROVIDERS.find((p) => p.id === settings.inferenceProvider)?.name ?? settings.inferenceProvider
+  const models = INFERENCE_MODELS[settings.inferenceProvider] ?? []
+  const currentModelName = models.find((m) => m.id === settings.model)?.name ?? settings.model
+  const currentCtxLabel = CONTEXT_WINDOW_OPTIONS.find((o) => o.id === settings.contextWindow)?.label ?? settings.contextWindow
+  const currentAccessLabel = ACCESS_OPTIONS.find((o) => o.id === settings.accessMode)?.label ?? settings.accessMode
+
+  const tooltipContent = (
+    <div style={{ textAlign: 'left' }}>
+      <div><strong>Harness:</strong> {toolName}</div>
+      <div><strong>Inference:</strong> {inferenceName}</div>
+      <div><strong>Model:</strong> {currentModelName}</div>
+      <div><strong>Reasoning:</strong> {settings.reasoningMode === 'standard' ? 'Standard' : 'Extended'}</div>
+      <div><strong>Context:</strong> {currentCtxLabel}</div>
+      <div><strong>Fast mode:</strong> {settings.fastMode ? 'On' : 'Off'}</div>
+      <div><strong>Mode:</strong> {settings.agentMode === 'build' ? 'Build' : 'Plan'}</div>
+      <div><strong>Access:</strong> {currentAccessLabel}</div>
+      <div><strong>View:</strong> {viewMode === 'chat' ? 'Chat' : 'Terminal'}</div>
+    </div>
+  )
+
+  const update = (patch: Partial<AgentSettings>) => {
+    onSettingsChange({ ...settings, ...patch })
+  }
+
+  const compatibleProviders = HARNESS_PROVIDERS[tool] ?? []
+  const filteredInferenceProviders = INFERENCE_PROVIDERS.filter(p => compatibleProviders.includes(p.id))
+
+  const harnessMenu = (
+    <Menu onSelect={(_e, itemId) => {
+      const newTool = itemId as AgentToolId
+      onToolChange(newTool)
+      const newCompatible = HARNESS_PROVIDERS[newTool] ?? []
+      if (!newCompatible.includes(settings.inferenceProvider)) {
+        const fallback = newCompatible[0]
+        if (fallback) {
+          const fallbackModels = INFERENCE_MODELS[fallback]
+          update({ inferenceProvider: fallback, model: fallbackModels?.[0]?.id ?? '' })
+        }
+      }
+      setIsOpen(false)
+    }}>
+      <MenuContent>
+        <MenuList>
+          {AGENT_TOOLS.map((t) => (
+            <MenuItem key={t.id} itemId={t.id} icon={<BrandIcon id={t.id} size={16} />} isSelected={t.id === tool}>
+              {t.name}
+            </MenuItem>
+          ))}
+        </MenuList>
+      </MenuContent>
+    </Menu>
+  )
+
+  const inferenceMenu = (
+    <Menu onSelect={(_e, itemId) => {
+      const newProvider = itemId as InferenceProviderId
+      const newModels = INFERENCE_MODELS[newProvider]
+      update({ inferenceProvider: newProvider, model: newModels?.[0]?.id ?? '' })
+      setIsOpen(false)
+    }}>
+      <MenuContent>
+        <MenuList>
+          {filteredInferenceProviders.map((p) => (
+            <MenuItem key={p.id} itemId={p.id} icon={<BrandIcon id={p.id} size={16} />} isSelected={p.id === settings.inferenceProvider}>
+              {p.name}
+            </MenuItem>
+          ))}
+        </MenuList>
+      </MenuContent>
+    </Menu>
+  )
+
+  const allModels = compatibleProviders.flatMap(pid => {
+    const providerName = INFERENCE_PROVIDERS.find(p => p.id === pid)?.name ?? pid
+    return (INFERENCE_MODELS[pid] ?? []).map(m => ({ ...m, providerId: pid, providerName }))
+  })
+  const filteredModels = modelSearch
+    ? allModels.filter(m => m.name.toLowerCase().includes(modelSearch.toLowerCase()) || m.providerName.toLowerCase().includes(modelSearch.toLowerCase()))
+    : models.map(m => ({ ...m, providerId: settings.inferenceProvider, providerName: inferenceName }))
+
+  const modelMenu = (
+    <Menu onSelect={(_e, itemId) => {
+      const selected = allModels.find(m => m.id === String(itemId))
+      if (selected && selected.providerId !== settings.inferenceProvider) {
+        update({ inferenceProvider: selected.providerId, model: selected.id })
+      } else {
+        update({ model: String(itemId) })
+      }
+      setModelSearch('')
+      setIsOpen(false)
+    }} style={{ minWidth: 220 }}>
+      <MenuSearch>
+        <MenuSearchInput>
+          <SearchInput
+            placeholder="Search models..."
+            value={modelSearch}
+            onChange={(_e, val) => setModelSearch(val)}
+            onClear={() => setModelSearch('')}
+            aria-label="Search models"
+          />
+        </MenuSearchInput>
+      </MenuSearch>
+      <MenuContent style={{ maxHeight: 280, overflowY: 'auto' }}>
+        <MenuList>
+          {filteredModels.length === 0 ? (
+            <MenuItem isDisabled key="no-results" itemId="no-results">No models found</MenuItem>
+          ) : (
+            filteredModels.map((m) => (
+              <MenuItem key={`${m.providerId}-${m.id}`} itemId={m.id} isSelected={m.id === settings.model && m.providerId === settings.inferenceProvider} description={modelSearch ? m.providerName : undefined}>
+                {m.name}
+              </MenuItem>
+            ))
+          )}
+        </MenuList>
+      </MenuContent>
+    </Menu>
+  )
+
+  const reasoningMenu = (
+    <Menu onSelect={(_e, itemId) => { update({ reasoningMode: String(itemId) as ReasoningMode }); setIsOpen(false) }}>
+      <MenuContent>
+        <MenuList>
+          <MenuItem itemId="standard" isSelected={settings.reasoningMode === 'standard'}>Standard</MenuItem>
+          <MenuItem itemId="extended" isSelected={settings.reasoningMode === 'extended'}>Extended</MenuItem>
+        </MenuList>
+      </MenuContent>
+    </Menu>
+  )
+
+  const contextMenu = (
+    <Menu onSelect={(_e, itemId) => { update({ contextWindow: String(itemId) as ContextWindowSize }); setIsOpen(false) }}>
+      <MenuContent>
+        <MenuList>
+          {CONTEXT_WINDOW_OPTIONS.map((opt) => (
+            <MenuItem key={opt.id} itemId={opt.id} isSelected={opt.id === settings.contextWindow}>
+              {opt.label}
+            </MenuItem>
+          ))}
+        </MenuList>
+      </MenuContent>
+    </Menu>
+  )
+
+  const modeMenu = (
+    <Menu onSelect={(_e, itemId) => { update({ agentMode: String(itemId) as AgentMode }); setIsOpen(false) }}>
+      <MenuContent>
+        <MenuList>
+          <MenuItem itemId="build" isSelected={settings.agentMode === 'build'}>Build</MenuItem>
+          <MenuItem itemId="plan" isSelected={settings.agentMode === 'plan'}>Plan</MenuItem>
+        </MenuList>
+      </MenuContent>
+    </Menu>
+  )
+
+  const viewModeMenu = (
+    <Menu onSelect={(_e, itemId) => { onViewModeChange?.(String(itemId) as ViewMode); setIsOpen(false) }}>
+      <MenuContent>
+        <MenuList>
+          <MenuItem itemId="chat" isSelected={viewMode === 'chat'}>Chat</MenuItem>
+          <MenuItem itemId="terminal" isSelected={viewMode === 'terminal'}>Terminal</MenuItem>
+        </MenuList>
+      </MenuContent>
+    </Menu>
+  )
+
+  const accessMenu = (
+    <Menu onSelect={(_e, itemId) => { update({ accessMode: String(itemId) as AccessMode }); setIsOpen(false) }}>
+      <MenuContent>
+        <MenuList>
+          {ACCESS_OPTIONS.map((opt) => (
+            <MenuItem key={opt.id} itemId={opt.id} isSelected={opt.id === settings.accessMode}>
+              {opt.label}
+            </MenuItem>
+          ))}
+        </MenuList>
+      </MenuContent>
+    </Menu>
+  )
+
+  return (
+    <>
+    <style>{`
+      .agent-provider-menu .pf-v6-c-menu__item-toggle-icon {
+        font-size: 12px;
+      }
+      .agent-provider-menu .pf-v6-c-menu {
+        white-space: nowrap;
+        width: max-content;
+        min-width: 0;
+      }
+    `}</style>
+    <MenuContainer
+      isOpen={isOpen}
+      onOpenChange={setIsOpen}
+      toggle={
+        <Tooltip content={tooltipContent} position="bottom">
+          <MenuToggle
+            ref={toggleRef}
+            onClick={() => setIsOpen((o) => !o)}
+            isExpanded={isOpen}
+            variant="plainText"
+            style={{ fontWeight: 400, fontSize: 13, padding: '4px 8px' }}
+          >
+            <Flex alignItems={{ default: 'alignItemsCenter' }} gap={{ default: 'gapSm' }}>
+              <FlexItem>
+                <BrandIcon id={tool} size={18} />
+              </FlexItem>
+              <FlexItem className="toolbar-provider-name">{currentModelName}</FlexItem>
+            </Flex>
+          </MenuToggle>
+        </Tooltip>
+      }
+      toggleRef={toggleRef}
+      menu={
+        <Menu ref={menuRef} containsFlyout className="agent-provider-menu">
+          <MenuContent>
+            <MenuList>
+              <MenuItem
+                flyoutMenu={harnessMenu}
+                description={toolName}
+                itemId="harness-group"
+              >
+                Harness
+              </MenuItem>
+              <MenuItem
+                flyoutMenu={inferenceMenu}
+                description={inferenceName}
+                itemId="inference-group"
+              >
+                Inference
+              </MenuItem>
+              <MenuItem
+                flyoutMenu={modelMenu}
+                description={currentModelName}
+                itemId="model-group"
+              >
+                Model
+              </MenuItem>
+              <MenuItem
+                flyoutMenu={reasoningMenu}
+                description={settings.reasoningMode === 'standard' ? 'Standard' : 'Extended'}
+                itemId="reasoning-group"
+              >
+                Reasoning
+              </MenuItem>
+              <MenuItem
+                flyoutMenu={contextMenu}
+                description={currentCtxLabel}
+                itemId="ctx-group"
+              >
+                Context window
+              </MenuItem>
+              <MenuItem
+                itemId="fast-mode"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  update({ fastMode: !settings.fastMode })
+                }}
+              >
+                <Flex
+                  alignItems={{ default: 'alignItemsCenter' }}
+                  justifyContent={{ default: 'justifyContentSpaceBetween' }}
+                  style={{ width: '100%' }}
+                >
+                  <FlexItem>Fast mode</FlexItem>
+                  <FlexItem>
+                    <Switch
+                      id="fast-mode-switch"
+                      isChecked={settings.fastMode}
+                      onChange={() => update({ fastMode: !settings.fastMode })}
+                      aria-label="Fast mode"
+                    />
+                  </FlexItem>
+                </Flex>
+              </MenuItem>
+              <MenuItem
+                flyoutMenu={modeMenu}
+                description={settings.agentMode === 'build' ? 'Build' : 'Plan'}
+                itemId="mode-group"
+              >
+                Mode
+              </MenuItem>
+              <MenuItem
+                flyoutMenu={accessMenu}
+                description={ACCESS_OPTIONS.find((o) => o.id === settings.accessMode)?.label}
+                itemId="access-group"
+              >
+                Access
+              </MenuItem>
+              <MenuItem
+                flyoutMenu={viewModeMenu}
+                description={viewMode === 'chat' ? 'Chat' : 'Terminal'}
+                itemId="view-group"
+              >
+                View
+              </MenuItem>
+            </MenuList>
+          </MenuContent>
+        </Menu>
+      }
+      menuRef={menuRef}
+    />
+    </>
+  )
+}
