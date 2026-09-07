@@ -18,25 +18,35 @@ import {
   PluggedIcon,
   PlusCircleIcon,
 } from '@patternfly/react-icons'
-import type { Agent, AgentToolId, Project } from './agentSpaceTypes'
-import { AGENT_TOOLS, MOCK_AGENTS, MOCK_PROJECTS } from './agentSpaceMockData'
-import { PanelToggleButtons, RightPanelContent, RightPanelWrapper } from './AgentRightPanel'
+import type { AgentToolId } from './agentSpaceTypes'
+import { AGENT_TOOLS } from './agentSpaceMockData'
+import { MOCK_MVP_AGENTS, MOCK_WORKSPACES } from './agentSpaceMvpMockData'
+import type { MvpAgent, Workspace } from './agentSpaceMvpTypes'
+import { PanelToggleButtons, RightPanelWrapper } from './AgentRightPanel'
+import { RightPanelContentMVP } from './AgentRightPanelMVP'
 import { useRightPanel } from './useRightPanel'
-import { AgentSidebar } from './AgentSidebar'
-import { AddProjectModal } from './AddProjectModal'
+import { AgentWorkspaceSidebar } from './AgentWorkspaceSidebar'
+import { AddWorkspaceModal } from './AddWorkspaceModal'
 import { BrandIcon } from './BrandIcons'
 import { hasBrandIcon } from './brandIconData'
 import { EDITORS } from './EditorDropdown'
-import { OpenShellBadge } from './OpenShellBadge'
 import { VSCodeView } from './VSCodeView'
 
-let nextProjectId = 500
+let nextWorkspaceId = 500
 let nextAgentId = 500
 
 function branchShort(branch?: string): string {
   if (!branch) return 'main'
   const parts = branch.split('/')
   return parts.length > 1 ? parts.slice(1).join('/') : branch
+}
+
+function normalizeWorkspaceName(name: string): string {
+  return name.trim().toLowerCase()
+}
+
+function normalizeRepoUrl(repoUrl: string): string {
+  return repoUrl.trim().toLowerCase().replace(/\/+$/, '')
 }
 
 const TERMINAL_FONT: React.CSSProperties = {
@@ -79,6 +89,26 @@ const MOCK_OC_MESSAGES: Record<string, OcMessage[]> = {
   ],
 }
 
+interface CompletedConversation {
+  prompt: string
+  response: string
+  details: string[]
+}
+
+function buildCompletedConversation(agent: MvpAgent): CompletedConversation {
+  const task = agent.summary.replace(/[.!?]+$/, '')
+  const taskWithLowercaseFirstLetter = task.charAt(0).toLowerCase() + task.slice(1)
+  return {
+    prompt: `Can you ${taskWithLowercaseFirstLetter}?`,
+    response: `I completed ${taskWithLowercaseFirstLetter} and verified the changes.`,
+    details: [
+      '✓ Updated the implementation',
+      '✓ Ran the relevant checks',
+      '✓ Ready for review',
+    ],
+  }
+}
+
 interface TerminalInputProps {
   inputValue: string
   onInputChange: (value: string) => void
@@ -103,10 +133,18 @@ function ScrollAnchor({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElement
   return <div ref={scrollRef} />
 }
 
-function OpenCodeUI({ agent, projectName, input }: { agent: Agent; projectName?: string; input: TerminalInputProps }) {
+function OpenCodeUI({ agent, workspaceName, input }: { agent: MvpAgent; workspaceName?: string; input: TerminalInputProps }) {
   const model = agent.model ?? 'Kimi K3'
-  const messages = MOCK_OC_MESSAGES[agent.id] ?? []
   const isComplete = agent.status === 'complete'
+  const completedConversation = isComplete ? buildCompletedConversation(agent) : undefined
+  const messages = MOCK_OC_MESSAGES[agent.id] ?? (completedConversation ? [
+    { role: 'user' as const, content: completedConversation.prompt },
+    {
+      role: 'assistant' as const,
+      content: `${completedConversation.response}\n\n${completedConversation.details.join('\n')}`,
+      meta: `Build · ${model} · complete`,
+    },
+  ] : [])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: OC_BG, ...TERMINAL_FONT, color: '#d4d4d4' }}>
@@ -212,7 +250,7 @@ function OpenCodeUI({ agent, projectName, input }: { agent: Agent; projectName?:
         fontSize: 12, color: '#666', flexShrink: 0,
         borderTop: '1px solid #333',
       }}>
-        <span>~/{projectName ?? 'workspace'}</span>
+        <span>~/{workspaceName ?? 'workspace'}</span>
         <div style={{ display: 'flex', gap: 16 }}>
           <span>$0.00</span>
           <span>ctrl+p <span style={{ color: '#888' }}>commands</span></span>
@@ -222,8 +260,9 @@ function OpenCodeUI({ agent, projectName, input }: { agent: Agent; projectName?:
   )
 }
 
-function ClaudeCodeUI({ agent, input }: { agent: Agent; projectName?: string; input: TerminalInputProps }) {
+function ClaudeCodeUI({ agent, input }: { agent: MvpAgent; input: TerminalInputProps }) {
   const model = agent.model ?? 'Sonnet 5'
+  const completedConversation = buildCompletedConversation(agent)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#1e1e1e', ...TERMINAL_FONT, color: '#d4d4d4' }}>
@@ -231,7 +270,7 @@ function ClaudeCodeUI({ agent, input }: { agent: Agent; projectName?: string; in
         {agent.status === 'running' && (
           <>
             <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
-              <span style={{ color: '#c586c0', fontWeight: 700 }}>Claude Code</span>
+              <span style={{ color: '#D97757', fontWeight: 700 }}>Claude Code</span>
               <span style={{ color: '#808080' }}>v1.0.6</span>
             </div>
             <div style={{ color: '#808080', marginBottom: 16 }}>
@@ -243,7 +282,7 @@ function ClaudeCodeUI({ agent, input }: { agent: Agent; projectName?: string; in
             </div>
 
             <div style={{ color: '#d4d4d4', marginBottom: 12 }}>
-              <span style={{ color: '#c586c0' }}>⏺</span> Found the issue. The rate limiter uses a simple counter that races under concurrent access. Replacing it with a token bucket algorithm.
+              <span style={{ color: '#D97757' }}>⏺</span> Found the issue. The rate limiter uses a simple counter that races under concurrent access. Replacing it with a token bucket algorithm.
             </div>
 
             <div style={{ paddingLeft: 16, marginBottom: 12, borderLeft: '2px solid #333' }}>
@@ -254,7 +293,7 @@ function ClaudeCodeUI({ agent, input }: { agent: Agent; projectName?: string; in
             </div>
 
             <div style={{ color: '#d4d4d4', marginBottom: 4 }}>
-              <span style={{ color: '#c586c0' }}>⏺</span> Now running the load tests to verify the fix holds under 500+ concurrent requests...
+              <span style={{ color: '#D97757' }}>⏺</span> Now running the load tests to verify the fix holds under 500+ concurrent requests...
             </div>
             <div style={{ paddingLeft: 16, borderLeft: '2px solid #333', marginBottom: 16 }}>
               <div>
@@ -270,10 +309,19 @@ function ClaudeCodeUI({ agent, input }: { agent: Agent; projectName?: string; in
         {agent.status === 'complete' && (
           <>
             <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
-              <span style={{ color: '#c586c0', fontWeight: 700 }}>Claude Code</span>
+              <span style={{ color: '#D97757', fontWeight: 700 }}>Claude Code</span>
               <span style={{ color: '#808080' }}>v1.0.6</span>
             </div>
             <div style={{ color: '#808080', marginBottom: 16 }}>Model: {model}</div>
+            <div style={{ color: '#569cd6', marginBottom: 12 }}>{'>'} {completedConversation.prompt}</div>
+            <div style={{ color: '#d4d4d4', marginBottom: 12 }}>
+              <span style={{ color: '#D97757' }}>⏺</span> {completedConversation.response}
+            </div>
+            <div style={{ paddingLeft: 16, borderLeft: '2px solid #333', marginBottom: 16 }}>
+              {completedConversation.details.map(detail => (
+                <div key={detail} style={{ color: '#808080', marginBottom: 4 }}>{detail}</div>
+              ))}
+            </div>
             <div style={{ color: '#6a9955', marginBottom: 16 }}>✓ Task completed — {agent.summary}</div>
           </>
         )}
@@ -283,7 +331,7 @@ function ClaudeCodeUI({ agent, input }: { agent: Agent; projectName?: string; in
           <div key={i} style={{ marginBottom: 16 }}>
             <div style={{ color: '#569cd6', marginBottom: 8 }}>{'>'} {prompt}</div>
             <div style={{ color: '#d4d4d4' }}>
-              <span style={{ color: '#c586c0' }}>⏺</span> Working on it...
+              <span style={{ color: '#D97757' }}>⏺</span> Working on it...
             </div>
           </div>
         ))}
@@ -321,7 +369,9 @@ function ClaudeCodeUI({ agent, input }: { agent: Agent; projectName?: string; in
   )
 }
 
-function FallbackTerminalUI({ agent, projectName, username, input }: { agent: Agent; projectName?: string; username?: string; input: TerminalInputProps }) {
+function FallbackTerminalUI({ agent, workspaceName, username, input }: { agent: MvpAgent; workspaceName?: string; username?: string; input: TerminalInputProps }) {
+  const completedConversation = buildCompletedConversation(agent)
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#1e1e1e', ...TERMINAL_FONT, color: '#d4d4d4' }}>
       <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px' }} onClick={() => input.inputRef.current?.focus()}>
@@ -329,12 +379,21 @@ function FallbackTerminalUI({ agent, projectName, username, input }: { agent: Ag
           {agent.tool === 'codex' ? 'Codex Agent v0.1' : 'Cursor Agent v0.1'}
         </div>
         {agent.status === 'complete' && (
-          <div style={{ color: '#6a9955', marginBottom: 16 }}>✓ Task completed — {agent.summary}</div>
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ color: '#569cd6', marginBottom: 8 }}>{'>'} {completedConversation.prompt}</div>
+            <div style={{ color: '#d4d4d4', marginBottom: 8 }}>
+              <span style={{ color: '#D97757' }}>⏺</span> {completedConversation.response}
+            </div>
+            {completedConversation.details.map(detail => (
+              <div key={detail} style={{ color: '#808080', marginBottom: 4 }}>{detail}</div>
+            ))}
+            <div style={{ color: '#6a9955', marginTop: 8 }}>✓ Task completed — {agent.summary}</div>
+          </div>
         )}
         <div>
           <span style={{ color: '#6a9955' }}>{username ?? 'user'}</span>
           <span style={{ color: '#808080' }}>@</span>
-          <span style={{ color: '#569cd6' }}>{projectName ?? 'workspace'}</span>
+          <span style={{ color: '#569cd6' }}>{workspaceName ?? 'workspace'}</span>
           <span style={{ color: '#808080' }}> </span>
           <span style={{ color: '#c586c0' }}>({branchShort(agent.branch)})</span>
           <span style={{ color: '#808080' }}> $ </span>
@@ -367,17 +426,17 @@ function FallbackTerminalUI({ agent, projectName, username, input }: { agent: Ag
 }
 
 export function AgentSpaceMVP({ username }: { username?: string }) {
-  const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS)
-  const [agents, setAgents] = useState<Agent[]>(
-    MOCK_AGENTS.map(a => {
+  const [workspaces, setWorkspaces] = useState<Workspace[]>(MOCK_WORKSPACES)
+  const [agents, setAgents] = useState<MvpAgent[]>(
+    MOCK_MVP_AGENTS.map(a => {
       if (a.id === 'agent-10') return { ...a, issue: undefined, tool: 'claude-code' as AgentToolId, name: 'Claude Code - Rate limiter', model: 'Sonnet 5' }
       return { ...a, issue: undefined }
     }),
   )
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(
-    () => MOCK_AGENTS[0]?.id ?? null,
+    () => MOCK_MVP_AGENTS[0]?.id ?? null,
   )
-  const [addProjectModalOpen, setAddProjectModalOpen] = useState(false)
+  const [addWorkspaceModalOpen, setAddWorkspaceModalOpen] = useState(false)
   const [showVSCode, setShowVSCode] = useState(false)
   const [openInOpen, setOpenInOpen] = useState(false)
   const rightPanel = useRightPanel()
@@ -408,7 +467,7 @@ export function AgentSpaceMVP({ username }: { username?: string }) {
   }, [])
 
   const selectedAgent = useMemo(() => agents.find(a => a.id === selectedAgentId), [agents, selectedAgentId])
-  const selectedProject = useMemo(() => projects.find(p => p.id === selectedAgent?.projectId), [projects, selectedAgent])
+  const selectedWorkspace = useMemo(() => workspaces.find(workspace => workspace.id === selectedAgent?.workspaceId), [workspaces, selectedAgent])
 
   const handleSidebarMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
@@ -432,34 +491,65 @@ export function AgentSpaceMVP({ username }: { username?: string }) {
     document.addEventListener('mouseup', onUp)
   }, [sidebarWidth])
 
-  const handleAddProject = useCallback((name: string, repoUrl: string) => {
-    setProjects(prev => [...prev, { id: `proj-${nextProjectId++}`, name, repoUrl }])
-  }, [])
+  const createAgent = useCallback((workspaceId: string, tool: AgentToolId, branch: string) => {
+    const id = `agent-${nextAgentId++}`
+    const toolName = AGENT_TOOLS.find(t => t.id === tool)?.name ?? tool
+    setAgents(prev => [...prev, {
+      id,
+      name: toolName,
+      tool,
+      status: 'running',
+      workspaceId,
+      summary: toolName,
+      lastActivity: Date.now(),
+      model: 'Kimi K3',
+      branch,
+    }])
+    selectAgent(id)
+  }, [selectAgent])
 
-  const handleDeleteProject = useCallback((projectId: string) => {
-    setProjects(prev => prev.filter(p => p.id !== projectId))
+  const handleAddWorkspace = useCallback((name: string, repoUrl: string, defaultBranch: string, firstAgentTool?: AgentToolId) => {
+    const trimmedName = name.trim()
+    const trimmedRepoUrl = repoUrl.trim()
+    const normalizedName = normalizeWorkspaceName(trimmedName)
+    const normalizedUrl = normalizeRepoUrl(trimmedRepoUrl)
+
+    if (workspaces.some(workspace => normalizeWorkspaceName(workspace.name) === normalizedName)) {
+      return 'A workspace with that name already exists.'
+    }
+    if (normalizedUrl && workspaces.some(workspace => normalizeRepoUrl(workspace.repoUrl) === normalizedUrl)) {
+      return 'A workspace already uses that repository URL.'
+    }
+
+    const workspaceId = `workspace-${nextWorkspaceId++}`
+    const branch = defaultBranch.trim() || 'main'
+    setWorkspaces(prev => [...prev, { id: workspaceId, name: trimmedName, repoUrl: trimmedRepoUrl, defaultBranch: branch }])
+    if (firstAgentTool) createAgent(workspaceId, firstAgentTool, branch)
+    return undefined
+  }, [createAgent, workspaces])
+
+  const handleDeleteWorkspace = useCallback((workspaceId: string) => {
+    setWorkspaces(prev => prev.filter(workspace => workspace.id !== workspaceId))
     setAgents(prev => {
-      const removed = prev.filter(a => a.projectId === projectId)
+      const removed = prev.filter(a => a.workspaceId === workspaceId)
       if (removed.some(a => a.id === selectedAgentId)) selectAgent(null)
-      return prev.filter(a => a.projectId !== projectId)
+      return prev.filter(a => a.workspaceId !== workspaceId)
     })
   }, [selectedAgentId, selectAgent])
 
-  const handleAddAgent = useCallback((projectId: string, tool?: AgentToolId) => {
+  const handleAddAgent = useCallback((workspaceId: string, tool?: AgentToolId) => {
     const selectedTool = tool ?? 'opencode'
-    const id = `agent-${nextAgentId++}`
-    const toolName = AGENT_TOOLS.find(t => t.id === selectedTool)?.name ?? selectedTool
-    setAgents(prev => [...prev, { id, name: toolName, tool: selectedTool, status: 'running', projectId, summary: toolName, lastActivity: Date.now(), model: 'Kimi K3', branch: 'main' }])
-    selectAgent(id)
-  }, [selectAgent])
+    const branch = workspaces.find(workspace => workspace.id === workspaceId)?.defaultBranch ?? 'main'
+    createAgent(workspaceId, selectedTool, branch)
+  }, [createAgent, workspaces])
 
   const handleDeleteAgent = useCallback((agentId: string) => {
     if (agentId === selectedAgentId) selectAgent(null)
     setAgents(prev => prev.filter(a => a.id !== agentId))
   }, [selectedAgentId, selectAgent])
 
-  const handleRenameProject = useCallback((projectId: string, newName: string) => {
-    setProjects(prev => prev.map(p => (p.id === projectId ? { ...p, name: newName } : p)))
+  const handleRenameWorkspace = useCallback((workspaceId: string, newName: string) => {
+    setWorkspaces(prev => prev.map(workspace => (workspace.id === workspaceId ? { ...workspace, name: newName } : workspace)))
   }, [])
 
   const handleSendPrompt = useCallback(() => {
@@ -472,7 +562,7 @@ export function AgentSpaceMVP({ username }: { username?: string }) {
     }))
     setAgents(prev => prev.map(a => {
       if (a.id !== selectedAgentId) return a
-      const updates: Partial<Agent> = {}
+      const updates: Partial<MvpAgent> = {}
       if (a.status === 'blocked') updates.status = 'running'
       if (isFirstPrompt) {
         const title = trimmed.length > 40 ? trimmed.slice(0, 40) + '...' : trimmed
@@ -550,26 +640,24 @@ export function AgentSpaceMVP({ username }: { username?: string }) {
               fontSize: 14, fontWeight: 600,
               color: 'var(--pf-t--global--text--color--regular)',
             }}>
-              Projects
+              Workspaces
             </span>
             <PlusCircleIcon
               style={{ fontSize: 12, flexShrink: 0, cursor: 'pointer', opacity: 0.7 }}
-              onClick={() => setAddProjectModalOpen(true)}
-              aria-label="Add project"
+              onClick={() => setAddWorkspaceModalOpen(true)}
+              aria-label="Add workspace"
             />
           </div>
-          <AgentSidebar
-            projects={projects}
+          <AgentWorkspaceSidebar
+            workspaces={workspaces}
             agents={agents}
             selectedAgentId={selectedAgentId}
-            showIssues={false}
-            showToolPicker
             viewedComplete={viewedComplete}
             onSelectAgent={selectAgent}
             onAddAgent={handleAddAgent}
             onDeleteAgent={handleDeleteAgent}
-            onDeleteProject={handleDeleteProject}
-            onRenameProject={handleRenameProject}
+            onDeleteWorkspace={handleDeleteWorkspace}
+            onRenameWorkspace={handleRenameWorkspace}
           />
           <div
             style={{
@@ -601,7 +689,7 @@ export function AgentSpaceMVP({ username }: { username?: string }) {
         {/* Main content area */}
         <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', background: 'var(--agent-content-bg)', minWidth: 0 }}>
           {showVSCode ? (
-            <VSCodeView projectName={selectedProject?.name} onBack={() => setShowVSCode(false)} />
+            <VSCodeView projectName={selectedWorkspace?.name} onBack={() => setShowVSCode(false)} />
           ) : selectedAgent ? (
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
               {/* Toolbar */}
@@ -657,9 +745,8 @@ export function AgentSpaceMVP({ username }: { username?: string }) {
                   }}>
                     {selectedAgent.summary}
                   </span>
-                  <OpenShellBadge />
                   <div style={{ width: 1, height: 16, background: 'var(--pf-t--global--border--color--default)', flexShrink: 0 }} />
-                  <PanelToggleButtons panels={['context', 'changes', 'terminal']} activePanel={rightPanel.activePanel} onToggle={rightPanel.toggle} />
+                  <PanelToggleButtons panels={['changes', 'terminal']} activePanel={rightPanel.activePanel} onToggle={rightPanel.toggle} />
                   <div style={{ width: 1, height: 16, background: 'var(--pf-t--global--border--color--default)', flexShrink: 0 }} />
                   <div className="mvp-toolbar">
                     <Dropdown isOpen={openInOpen} onSelect={() => setOpenInOpen(false)} onOpenChange={setOpenInOpen} popperProps={{ position: 'right' }}
@@ -691,19 +778,19 @@ export function AgentSpaceMVP({ username }: { username?: string }) {
                 </div>
               </div>
 
-              {/* Terminal + context */}
+              {/* Terminal + panels */}
               <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   {selectedAgent.tool === 'opencode' ? (
-                    <OpenCodeUI agent={selectedAgent} projectName={selectedProject?.name} input={terminalInput} />
+                    <OpenCodeUI agent={selectedAgent} workspaceName={selectedWorkspace?.name} input={terminalInput} />
                   ) : selectedAgent.tool === 'claude-code' ? (
-                    <ClaudeCodeUI agent={selectedAgent} projectName={selectedProject?.name} input={terminalInput} />
+                    <ClaudeCodeUI agent={selectedAgent} input={terminalInput} />
                   ) : (
-                    <FallbackTerminalUI agent={selectedAgent} projectName={selectedProject?.name} username={username} input={terminalInput} />
+                    <FallbackTerminalUI agent={selectedAgent} workspaceName={selectedWorkspace?.name} username={username} input={terminalInput} />
                   )}
                 </div>
                 <RightPanelWrapper panel={rightPanel}>
-                  <RightPanelContent view={rightPanel.activePanel!} agent={selectedAgent} project={selectedProject} />
+                  <RightPanelContentMVP view={rightPanel.activePanel!} workspace={selectedWorkspace} />
                 </RightPanelWrapper>
               </div>
             </div>
@@ -711,11 +798,11 @@ export function AgentSpaceMVP({ username }: { username?: string }) {
             <PageSection style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
               <EmptyState icon={PluggedIcon} titleText="Agent Space" headingLevel="h2">
                 <EmptyStateBody>
-                  Select an agent from the sidebar, or add a new project to get started.
+                  Select an agent from the sidebar, or add a new workspace to get started.
                 </EmptyStateBody>
                 <EmptyStateFooter>
                   <EmptyStateActions>
-                    <Button variant="primary" icon={<PlusCircleIcon />} onClick={() => setAddProjectModalOpen(true)}>Add Project</Button>
+                    <Button variant="primary" icon={<PlusCircleIcon />} onClick={() => setAddWorkspaceModalOpen(true)}>Add Workspace</Button>
                   </EmptyStateActions>
                 </EmptyStateFooter>
               </EmptyState>
@@ -724,7 +811,7 @@ export function AgentSpaceMVP({ username }: { username?: string }) {
         </div>
       </div>
 
-      <AddProjectModal isOpen={addProjectModalOpen} onClose={() => setAddProjectModalOpen(false)} onSave={handleAddProject} />
+      <AddWorkspaceModal isOpen={addWorkspaceModalOpen} onClose={() => setAddWorkspaceModalOpen(false)} onSave={handleAddWorkspace} />
     </>
   )
 }
