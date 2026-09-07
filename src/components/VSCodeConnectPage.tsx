@@ -12,7 +12,7 @@ import {
 } from '@patternfly/react-icons'
 import type { WorkspaceInfo } from './workspaceTypes'
 
-interface VSCodeMockupProps {
+interface VSCodeConnectPageProps {
   workspace: WorkspaceInfo
   onBackToWorkspaces: () => void
 }
@@ -22,7 +22,7 @@ function buildVscodeUrl(workspace: WorkspaceInfo): string {
   return `vscode://devspaces.connect?workspace=${encodeURIComponent(workspace.name)}&host=${encodeURIComponent(host)}&editor=${encodeURIComponent(workspace.editor)}`
 }
 
-export function VSCodeMockup({ workspace, onBackToWorkspaces }: VSCodeMockupProps) {
+export function VSCodeConnectPage({ workspace, onBackToWorkspaces }: VSCodeConnectPageProps) {
   const [urlExpanded, setUrlExpanded] = useState(false)
   const vscodeUrl = buildVscodeUrl(workspace)
 

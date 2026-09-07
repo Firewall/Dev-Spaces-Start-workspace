@@ -9,6 +9,8 @@ import {
   MastheadBrand,
   MastheadContent,
   MastheadMain,
+  MastheadToggle,
+  PageToggleButton,
   MenuToggle,
   Nav,
   NavGroup,
@@ -22,7 +24,9 @@ import {
   ToggleGroupItem,
 } from '@patternfly/react-core'
 import {
+  BarsIcon,
   DesktopIcon,
+  ExternalLinkAltIcon,
   MoonIcon,
   OutlinedQuestionCircleIcon,
   RunningIcon,
@@ -30,6 +34,8 @@ import {
   ThLargeIcon,
   UserIcon,
 } from '@patternfly/react-icons'
+import { AgentSpace } from './components/AgentSpacePage'
+import { AgentSpaceMVP } from './components/AgentSpaceMVP'
 import { CreateWorkspaceSplitTab } from './components/CreateWorkspaceSplitTab'
 import { UserPreferences } from './components/UserPreferences'
 import { WorkspaceList } from './components/WorkspaceList'
@@ -55,7 +61,7 @@ const DARK_THEME_CLASS = 'pf-v6-theme-dark'
 
 function getRouteFromHash(): string {
   const route = window.location.hash.replace('#/', '').replace('#', '')
-  if (route === 'workspaces' || route === 'create-workspace') return route
+  if (route === 'workspaces' || route === 'create-workspace' || route === 'agent-space' || route === 'agent-space-mvp') return route
   if (route.startsWith('user-preferences')) {
     const tab = route.split('/')[1]
     if (tab && VALID_PREF_TABS.has(tab)) return route
@@ -115,19 +121,66 @@ export default function App() {
     else document.title = 'Dev Spaces'
   }, [activePage, signedIn])
 
+  const isAgentSpace = activePage === 'agent-space'
+  const isAgentSpaceMVP = activePage === 'agent-space-mvp'
+  const isAnyAgentSpace = isAgentSpace || isAgentSpaceMVP
+
   const masthead = (
-    <Masthead>
+    <Masthead style={isAnyAgentSpace ? { background: 'var(--agent-header-bg)' } : undefined}>
       <MastheadMain>
-        <MastheadBrand>
+        {!isAnyAgentSpace && (
+          <MastheadToggle>
+            <PageToggleButton variant="plain" aria-label="Global navigation">
+              <BarsIcon />
+            </PageToggleButton>
+          </MastheadToggle>
+        )}
+        <MastheadBrand style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <img
             src={`${import.meta.env.BASE_URL}icon.png`}
-            alt="Dev Spaces"
+            alt="Red Hat Dev Spaces"
             style={{ height: 36, borderRadius: 8 }}
           />
+          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
+            <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--pf-t--global--text--color--regular)' }}>Red Hat</span>
+            <span style={{ fontSize: 14, fontWeight: 600 }}>Dev Spaces</span>
+          </div>
         </MastheadBrand>
       </MastheadMain>
       <MastheadContent>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto' }}>
+          {isAnyAgentSpace ? (
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<ExternalLinkAltIcon />}
+              iconPosition="end"
+              onClick={() => setActivePage('workspaces')}
+            >
+              Workspaces
+            </Button>
+          ) : (
+            <>
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<ExternalLinkAltIcon />}
+                iconPosition="end"
+                onClick={() => setActivePage('agent-space')}
+              >
+                Agent Space
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                icon={<ExternalLinkAltIcon />}
+                iconPosition="end"
+                onClick={() => setActivePage('agent-space-mvp')}
+              >
+                Agent Space MVP
+              </Button>
+            </>
+          )}
           <Button variant="plain" aria-label="Applications">
             <ThLargeIcon />
           </Button>
@@ -247,8 +300,20 @@ export default function App() {
     </PageSidebar>
   )
 
+  if (isAnyAgentSpace && signedIn) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--agent-content-bg)' }}>
+        {masthead}
+
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+          {isAgentSpaceMVP ? <AgentSpaceMVP username={username} /> : <AgentSpace username={username} />}
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <Page masthead={masthead} sidebar={sidebar}>
+    <Page masthead={masthead} sidebar={sidebar} isManagedSidebar>
       {signedIn ? (
         activePage.startsWith('user-preferences') ? (
           <UserPreferences

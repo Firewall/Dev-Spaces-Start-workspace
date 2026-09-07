@@ -48,7 +48,7 @@ import { EditorDropdown, EDITORS } from './EditorDropdown'
 import { EnvironmentComponentsSection } from './EnvironmentComponentsSection'
 import { AIToolsSection } from './AIToolsSection'
 import { WorkspaceProvisioning } from './WorkspaceProvisioning'
-import { VSCodeMockup } from './VSCodeMockup'
+import { VSCodeConnectPage } from './VSCodeConnectPage'
 import { nameFromRepoUrl } from './workspaceTypes'
 import type { WorkspaceInfo } from './workspaceTypes'
 
@@ -1022,7 +1022,7 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
             </FlexItem>
           </Flex>
         </PageSection>
-        <VSCodeMockup
+        <VSCodeConnectPage
           workspace={workspaceInfo}
           onBackToWorkspaces={() => setViewState('form')}
         />

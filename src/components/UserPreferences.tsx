@@ -53,10 +53,8 @@ import {
   PlusCircleIcon,
   RegistryIcon,
   RobotIcon,
-  TimesCircleIcon,
 } from '@patternfly/react-icons'
-import { BrandIcon } from './BrandIcons'
-import { hasBrandIcon } from './brandIconData'
+import { AgentProvidersSettings } from './GlobalSettingsPanel'
 import {
   Table,
   Thead,
@@ -71,20 +69,6 @@ export type PreferencesTab =
   | 'skills' | 'mcps'
   | 'agent-configurations'
 
-interface AgentConfig {
-  id: string
-  name: string
-  description: string
-  authenticated: boolean
-}
-
-const AGENT_CONFIGS: AgentConfig[] = [
-  { id: 'claude-code', name: 'Claude Code', description: 'Anthropic AI coding agent', authenticated: true },
-  { id: 'cursor-ai', name: 'Cursor Agent', description: 'AI-first code editor agent', authenticated: false },
-  { id: 'codex', name: 'Codex Agent', description: 'OpenAI autonomous coding agent', authenticated: true },
-  { id: 'opencode', name: 'OpenCode on OpenShift AI', description: 'AI coding CLI on OpenShift AI', authenticated: false },
-  { id: 'kiro', name: 'Kiro CLI', description: 'AWS AI-powered development CLI', authenticated: true },
-]
 
 interface ContainerRegistry {
   id: string
@@ -565,7 +549,7 @@ export function UserPreferences({ activeTab, onTabChange }: { activeTab: Prefere
           <Nav
             onSelect={(_event, result) => onTabChange(result.itemId as PreferencesTab)}
             aria-label="User preferences navigation"
-            style={{ minWidth: 240, flexShrink: 0 }}
+            style={{ minWidth: 240, flexShrink: 0, alignSelf: 'flex-start', position: 'sticky', top: 0 }}
           >
             <NavGroup title="General">
               <NavItem itemId="container-registries" isActive={activeTab === 'container-registries'} icon={<RegistryIcon />}>Container Registries</NavItem>
@@ -575,9 +559,9 @@ export function UserPreferences({ activeTab, onTabChange }: { activeTab: Prefere
               <NavItem itemId="ssh-keys" isActive={activeTab === 'ssh-keys'} icon={<KeyIcon />}>SSH Keys</NavItem>
             </NavGroup>
             <NavGroup title="AI">
+              <NavItem itemId="agent-configurations" isActive={activeTab === 'agent-configurations'} icon={<RobotIcon />}>Agents & Models</NavItem>
               <NavItem itemId="skills" isActive={activeTab === 'skills'} icon={<AutomationIcon />}>Skills</NavItem>
               <NavItem itemId="mcps" isActive={activeTab === 'mcps'} icon={<PluggedIcon />}>MCPs</NavItem>
-              <NavItem itemId="agent-configurations" isActive={activeTab === 'agent-configurations'} icon={<RobotIcon />}>Agent Configurations</NavItem>
             </NavGroup>
           </Nav>
 
@@ -965,42 +949,8 @@ export function UserPreferences({ activeTab, onTabChange }: { activeTab: Prefere
 
         {activeTab === 'agent-configurations' && (
           <>
-          <TabHeader title="Agent Configurations" subtitle="Define and manage AI agent configurations for your workspaces." />
-          <Table aria-label="Agent configurations" variant="compact">
-            <Thead>
-              <Tr>
-                <Th width={25}>Agent</Th>
-                <Th width={40}>Description</Th>
-                <Th width={20}>Authentication</Th>
-                <Th width={15} screenReaderText="Actions" />
-              </Tr>
-            </Thead>
-            <Tbody>
-              {AGENT_CONFIGS.map(agent => (
-                <Tr key={agent.id}>
-                  <Td dataLabel="Agent">
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                      {hasBrandIcon(agent.id) ? <BrandIcon id={agent.id} size={20} /> : <RobotIcon />}
-                      {agent.name}
-                    </span>
-                  </Td>
-                  <Td dataLabel="Description">{agent.description}</Td>
-                  <Td dataLabel="Authentication">
-                    {agent.authenticated ? (
-                      <Label color="green" icon={<CheckCircleIcon />} isCompact>Authenticated</Label>
-                    ) : (
-                      <Label color="red" icon={<TimesCircleIcon />} isCompact>Not authenticated</Label>
-                    )}
-                  </Td>
-                  <Td isActionCell>
-                    <Button variant="link" isInline>
-                      {agent.authenticated ? 'Manage' : 'Authenticate'}
-                    </Button>
-                  </Td>
-                </Tr>
-              ))}
-            </Tbody>
-          </Table>
+          <TabHeader title="Agents & Models" subtitle="Configure coding agents and inference providers available in your workspaces." />
+          <AgentProvidersSettings />
           </>
         )}
           </div>

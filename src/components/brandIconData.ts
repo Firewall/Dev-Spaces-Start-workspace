@@ -2,6 +2,9 @@ interface IconData {
   path: string
   color: string
   viewBox?: number
+  paths?: { d: string; fill: string }[]
+  src?: string
+  srcDark?: string
 }
 
 export const BRAND_ICONS: Record<string, IconData> = {
@@ -60,16 +63,26 @@ export const BRAND_ICONS: Record<string, IconData> = {
   },
   'claude-code': {
     color: '#D97757',
-    path: 'M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5Z',
+    path: '',
+    src: 'brand-icons/claude-code.svg',
   },
   'codex': {
-    color: '#10A37F',
-    path: 'M12 1L22 7V17L12 23L2 17V7Z',
+    color: '#000000',
+    path: '',
+    src: 'brand-icons/openai-light.svg',
+    srcDark: 'brand-icons/openai-dark.svg',
   },
   'opencode': {
+    color: '#17181C',
+    path: '',
+    src: 'brand-icons/opencode-light.svg',
+    srcDark: 'brand-icons/opencode-dark.svg',
+  },
+  'openshift-ai': {
     color: '#EE0000',
-    viewBox: 34,
-    path: 'M11.838 14.851l-3.895 1.417c.05.624.158 1.241.309 1.846l3.7-1.347c-.12-.625-.163-1.27-.114-1.916zM29.05 10.545c-.272-.56-.586-1.102-.95-1.612l-3.894 1.417c.453.464.833.985 1.144 1.542l3.7-1.347zM20.482 9.442c.81.378 1.512.894 2.104 1.498l3.894-1.417c-1.079-1.513-2.548-2.778-4.348-3.618-5.567-2.596-12.208-.179-14.804 5.387-.84 1.801-1.152 3.715-1.006 5.567l3.895-1.417c.065-.844.271-1.689.648-2.5 1.687-3.617 6.001-5.186 9.617-3.5zM8.494 18.026l-3.7 1.348c.34 1.349.93 2.631 1.74 3.772l3.886-1.414c-.997-1.025-1.661-2.321-1.926-3.705zM24.635 16.558c-.062.843-.275 1.689-.654 2.5-1.687 3.617-6.001 5.186-9.617 3.5-.811-.379-1.518-.89-2.108-1.496l-3.886 1.415c1.076 1.513 2.544 2.779 4.345 3.619 5.567 2.595 12.207.178 14.803-5.388.841-1.8 1.151-3.713 1.002-5.564l-3.886 1.414zM25.592 11.803l-3.7 1.347c.687 1.231 1.012 2.649.906 4.075l3.886-1.414c-.111-1.395-.483-2.756-1.092-4.008z',
+    path: '',
+    src: 'brand-icons/redhat-ai-light.svg',
+    srcDark: 'brand-icons/redhat-ai-dark.svg',
   },
   'copilot': {
     color: '#000000',
@@ -87,9 +100,50 @@ export const BRAND_ICONS: Record<string, IconData> = {
     color: '#00B4F0',
     path: 'M16.326.048a1.907 1.907 0 0 0-.842.468L12 3.86 8.516.516A1.907 1.907 0 0 0 5.82.516L.516 5.82a1.907 1.907 0 0 0 0 2.696L3.86 12 .516 15.484a1.907 1.907 0 0 0 0 2.696l5.304 5.304a1.907 1.907 0 0 0 2.696 0L12 20.14l3.484 3.344a1.907 1.907 0 0 0 2.696 0l5.304-5.304a1.907 1.907 0 0 0 0-2.696L20.14 12l3.344-3.484a1.907 1.907 0 0 0 0-2.696L18.18.516a1.907 1.907 0 0 0-1.854-.468zM12 7.2a4.8 4.8 0 1 1 0 9.6 4.8 4.8 0 0 1 0-9.6z',
   },
+  'cursor-agent': {
+    color: '#000000',
+    path: '',
+    src: 'brand-icons/cursor-light.svg',
+    srcDark: 'brand-icons/cursor-dark.svg',
+  },
+  'redhat-ai': {
+    color: '#EE0000',
+    path: '',
+    src: 'brand-icons/redhat-ai-light.svg',
+    srcDark: 'brand-icons/redhat-ai-dark.svg',
+  },
+  'claude': {
+    color: '#D97757',
+    path: '',
+    src: 'brand-icons/claude-code.svg',
+  },
+  'cursor': {
+    color: '#000000',
+    path: '',
+    src: 'brand-icons/cursor-light.svg',
+    srcDark: 'brand-icons/cursor-dark.svg',
+  },
+  'openai': {
+    color: '#000000',
+    path: '',
+    src: 'brand-icons/openai-light.svg',
+    srcDark: 'brand-icons/openai-dark.svg',
+  },
+  'google-vertex': {
+    color: '#4285F4',
+    path: '',
+    src: 'brand-icons/google-vertex.svg',
+  },
+  'aws-bedrock': {
+    color: '#6350FB',
+    path: '',
+    src: 'brand-icons/aws-bedrock.svg',
+  },
   'cursor-ai': {
     color: '#000000',
-    path: 'M11.503.131 1.891 5.678a.84.84 0 0 0-.42.726v11.188c0 .3.162.575.42.724l9.609 5.55a1 1 0 0 0 .998 0l9.61-5.55a.84.84 0 0 0 .42-.724V6.404a.84.84 0 0 0-.42-.726L12.497.131a1.01 1.01 0 0 0-.996 0M2.657 6.338h18.55c.263 0 .43.287.297.515L12.23 22.918c-.062.107-.229.064-.229-.06V12.335a.59.59 0 0 0-.295-.51l-9.11-5.257c-.109-.063-.064-.23.061-.23',
+    path: '',
+    src: 'brand-icons/cursor-light.svg',
+    srcDark: 'brand-icons/cursor-dark.svg',
   },
   'continue': {
     color: '#000000',
