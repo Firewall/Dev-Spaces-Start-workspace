@@ -3,6 +3,7 @@ export interface WorkspaceInfo {
   repoUrl: string
   branch: string
   editor: string
+  editorVersion?: string
   editorLabel: string
   templateName?: string
 }
