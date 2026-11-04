@@ -10,30 +10,9 @@ import { CogIcon, DesktopIcon } from '@patternfly/react-icons'
 import { CustomEditorModal } from './CustomEditorModal'
 import { BrandIcon } from './BrandIcons'
 import { hasBrandIcon } from './brandIconData'
+import { EDITORS, getDefaultEditorVersion } from './editorData'
 
 const JETBRAINS_IDS = new Set(['intellij', 'goland', 'pycharm', 'webstorm', 'clion', 'phpstorm', 'rider', 'rubymine', 'toolbox'])
-
-export const EDITORS = [
-  { id: 'vscode-oss', label: 'Visual Studio Code - Open Source (Web)', isDefault: true },
-  { id: 'vscode', label: 'Visual Studio Code - Desktop (SSH)' },
-  { id: 'kiro', label: 'Kiro (SSH)', isTechPreview: true },
-  { id: 'clion', label: 'CLion' },
-  { id: 'goland', label: 'GoLand' },
-  { id: 'intellij', label: 'IntelliJ IDEA Ultimate' },
-  { id: 'phpstorm', label: 'PhpStorm' },
-  { id: 'pycharm', label: 'PyCharm Professional' },
-  { id: 'rider', label: 'Rider' },
-  { id: 'rubymine', label: 'RubyMine' },
-  { id: 'terminal', label: 'Web Terminal' },
-  { id: 'webstorm', label: 'WebStorm' },
-  { id: 'toolbox', label: 'JetBrains Toolbox App', isTechPreview: true },
-  { id: 'custom', label: 'Custom Editor', isCustom: true as const },
-]
-
-interface EditorDropdownProps {
-  value: string
-  onChange: (val: string) => void
-}
 
 function EditorIcon({ id, isCustom }: { id: string; isCustom?: boolean }) {
   if (isCustom) return <CogIcon />
@@ -90,84 +69,143 @@ function getLicenseText(id: string) {
   return null
 }
 
-export function EditorDropdown({ value, onChange }: EditorDropdownProps) {
+function EditorBadges({ editor }: { editor: (typeof EDITORS)[number] }) {
+  return (
+    <>
+      {editor.isDefault && (
+        <Label isCompact style={{ marginLeft: 8 }}>
+          default
+        </Label>
+      )}
+      {editor.isTechPreview && (
+        <Label isCompact color="orange" style={{ marginLeft: 8 }}>
+          Tech Preview
+        </Label>
+      )}
+    </>
+  )
+}
+
+function VersionSelect({
+  versions,
+  value,
+  onChange,
+}: {
+  versions: string[]
+  value: string
+  onChange: (v: string) => void
+}) {
+  const [isOpen, setIsOpen] = useState(false)
+  const disabled = versions.length < 2
+  return (
+    <Select
+      isOpen={isOpen}
+      onOpenChange={setIsOpen}
+      selected={value}
+      onSelect={(_e, v) => {
+        onChange(String(v))
+        setIsOpen(false)
+      }}
+      toggle={(toggleRef) => (
+        <MenuToggle
+          ref={toggleRef}
+          onClick={() => setIsOpen((o) => !o)}
+          isExpanded={isOpen}
+          isDisabled={disabled}
+          isFullWidth
+          aria-label="Editor version"
+        >
+          {value || '—'}
+        </MenuToggle>
+      )}
+    >
+      <SelectList>
+        {versions.map((v, i) => (
+          <SelectOption key={v} value={v} isSelected={v === value}>
+            {v}
+            {i === 0 && (
+              <Label isCompact style={{ marginLeft: 8 }}>
+                default
+              </Label>
+            )}
+          </SelectOption>
+        ))}
+      </SelectList>
+    </Select>
+  )
+}
+
+interface EditorDropdownProps {
+  value: string
+  version: string
+  onChange: (id: string, version: string) => void
+}
+
+export function EditorDropdown({ value, version, onChange }: EditorDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [showCustomModal, setShowCustomModal] = useState(false)
 
   const selected = EDITORS.find((e) => e.id === value)
+  const versions = selected?.versions ?? []
 
   function handleSelect(_e: React.MouseEvent | undefined, val: string | number | undefined) {
     const id = val as string
     if (id === 'custom') {
       setShowCustomModal(true)
     } else {
-      onChange(id)
+      onChange(id, id === value ? version : getDefaultEditorVersion(id))
     }
     setIsOpen(false)
   }
 
   return (
     <>
-      <Select
-        isOpen={isOpen}
-        onOpenChange={setIsOpen}
-        onSelect={handleSelect}
-        selected={value}
-        toggle={(toggleRef) => (
-          <MenuToggle
-            ref={toggleRef}
-            onClick={() => setIsOpen((o) => !o)}
-            isExpanded={isOpen}
-            isFullWidth
-            icon={selected ? <EditorIcon id={selected.id} isCustom={selected.isCustom} /> : <DesktopIcon />}
-          >
-            {selected?.label ?? 'Select editor'}
-            {selected?.isDefault && (
-              <Label isCompact style={{ marginLeft: 8 }}>
-                default
-              </Label>
-            )}
-            {selected?.isTechPreview && (
-              <Label isCompact color="orange" style={{ marginLeft: 8 }}>
-                Tech Preview
-              </Label>
-            )}
-          </MenuToggle>
-        )}
-      >
-        <SelectList>
-          {EDITORS.map((e) => {
-            const license = getLicenseText(e.id)
-            return (
-              <SelectOption
-                key={e.id}
-                value={e.id}
-                isSelected={e.id === value}
-                icon={<EditorIcon id={e.id} isCustom={e.isCustom} />}
-                description={license}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--pf-t--global--spacer--md)' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <Select
+            isOpen={isOpen}
+            onOpenChange={setIsOpen}
+            onSelect={handleSelect}
+            selected={value}
+            toggle={(toggleRef) => (
+              <MenuToggle
+                ref={toggleRef}
+                onClick={() => setIsOpen((o) => !o)}
+                isExpanded={isOpen}
+                isFullWidth
+                icon={selected ? <EditorIcon id={selected.id} isCustom={selected.isCustom} /> : <DesktopIcon />}
               >
-                {e.label}
-                {e.isDefault && (
-                  <Label isCompact style={{ marginLeft: 8 }}>
-                    default
-                  </Label>
-                )}
-                {e.isTechPreview && (
-                  <Label isCompact color="orange" style={{ marginLeft: 8 }}>
-                    Tech Preview
-                  </Label>
-                )}
-              </SelectOption>
-            )
-          })}
-        </SelectList>
-      </Select>
+                {selected?.label ?? 'Select editor'}
+                {selected && <EditorBadges editor={selected} />}
+              </MenuToggle>
+            )}
+          >
+            <SelectList>
+              {EDITORS.map((e) => (
+                <SelectOption
+                  key={e.id}
+                  value={e.id}
+                  isSelected={e.id === value}
+                  icon={<EditorIcon id={e.id} isCustom={e.isCustom} />}
+                  description={getLicenseText(e.id)}
+                >
+                  {e.label}
+                  <EditorBadges editor={e} />
+                </SelectOption>
+              ))}
+            </SelectList>
+          </Select>
+        </div>
+        <div style={{ width: 140, flexShrink: 0 }}>
+          <VersionSelect versions={versions} value={version} onChange={(v) => onChange(value, v)} />
+        </div>
+      </div>
 
       {showCustomModal && (
         <CustomEditorModal
           onClose={() => setShowCustomModal(false)}
           onSave={(cfg) => {
-            onChange('custom')
+            onChange('custom', '')
             setShowCustomModal(false)
             console.log('Custom editor config:', cfg)
           }}

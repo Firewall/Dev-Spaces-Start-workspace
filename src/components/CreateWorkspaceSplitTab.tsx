@@ -44,7 +44,8 @@ import {
 import { DependencyBrandIcon } from './DependencyBrandIcon'
 import { getDependencyBrandIcon } from './dependencySimpleIcons'
 import { BranchDropdown } from './BranchDropdown'
-import { EditorDropdown, EDITORS } from './EditorDropdown'
+import { EditorDropdown } from './EditorDropdown'
+import { EDITORS, getDefaultEditorVersion } from './editorData'
 import { EnvironmentComponentsSection } from './EnvironmentComponentsSection'
 import { AIToolsSection } from './AIToolsSection'
 import { WorkspaceProvisioning } from './WorkspaceProvisioning'
@@ -156,6 +157,7 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
   const [repoUrl, setRepoUrl] = useState('')
   const [branch, setBranch] = useState('main')
   const [editor, setEditor] = useState('vscode-oss')
+  const [editorVersion, setEditorVersion] = useState(() => getDefaultEditorVersion('vscode-oss'))
   const [environmentComponents, setEnvironmentComponents] = useState<string[]>([])
   const [tempStorage, setTempStorage] = useState(false)
   const nameManuallyEdited = useRef(false)
@@ -266,10 +268,11 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
       repoUrl,
       branch,
       editor,
-      editorLabel: editorEntry?.label ?? editor,
+      editorVersion,
+      editorLabel: `${editorEntry?.label ?? editor}${editorVersion ? ` (${editorVersion})` : ''}`,
       templateName: selectedTemplate ? (TEMPLATES.find((t) => t.id === selectedTemplate)?.name ?? selectedTemplate) : undefined,
     }
-  }, [name, mode, repoUrl, branch, editor, selectedTemplate])
+  }, [name, mode, repoUrl, branch, editor, editorVersion, selectedTemplate])
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -405,7 +408,14 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
                     label="Select an Editor"
                     labelHelp={<FieldHelp text="Choose the IDE that will be launched in your workspace." />}
                   >
-                    <EditorDropdown value={editor} onChange={setEditor} />
+                    <EditorDropdown
+                      value={editor}
+                      version={editorVersion}
+                      onChange={(id, v) => {
+                        setEditor(id)
+                        setEditorVersion(v)
+                      }}
+                    />
                   </FormGroup>
 
                   <FormGroup
@@ -769,7 +779,14 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
                   label="Select an Editor"
                   labelHelp={<FieldHelp text="Choose the IDE that will be launched in your workspace." />}
                 >
-                  <EditorDropdown value={editor} onChange={setEditor} />
+                  <EditorDropdown
+                    value={editor}
+                    version={editorVersion}
+                    onChange={(id, v) => {
+                      setEditor(id)
+                      setEditorVersion(v)
+                    }}
+                  />
                 </FormGroup>
 
                 {isPhase2 && (
