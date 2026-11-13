@@ -473,7 +473,6 @@ function KebabVariant(props: VariantProps) {
   const { value, version } = props
   const { isOpen, setIsOpen, selected, selectEditor } = useEditorSelect(props)
   const [kebab, setKebab] = useState<{ editorId: string; anchor: HTMLElement } | null>(null)
-  const versionMenuRef = useRef<HTMLDivElement>(null)
 
   const kebabEditor = kebab ? EDITORS.find((e) => e.id === kebab.editorId) : undefined
 
@@ -537,7 +536,6 @@ function KebabVariant(props: VariantProps) {
         <Popper
           isVisible
           triggerRef={() => kebab.anchor}
-          popperRef={versionMenuRef}
           placement="right-start"
           appendTo={() => document.body}
           zIndex={10000}
@@ -551,7 +549,6 @@ function KebabVariant(props: VariantProps) {
           }}
           popper={
             <Menu
-              ref={versionMenuRef}
               onSelect={(_e, itemId) => {
                 const [id, v] = String(itemId).split('::')
                 setKebab(null)
