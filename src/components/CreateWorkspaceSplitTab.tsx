@@ -342,7 +342,7 @@ export function CreateWorkspaceSplitTab({ phase, onPhaseChange }: CreateWorkspac
             {/* LEFT COLUMN: config form */}
             <div
               style={{
-                width: 440,
+                width: 600,
                 flexShrink: 0,
                 overflowY: 'auto',
                 overflowX: 'hidden',

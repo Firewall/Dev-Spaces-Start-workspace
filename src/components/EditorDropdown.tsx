@@ -1,10 +1,14 @@
-import { useState } from 'react'
+import { Fragment, useRef, useState } from 'react'
 import {
+  Divider,
   Label,
   MenuToggle,
   Select,
   SelectList,
   SelectOption,
+  MenuSearch,
+  MenuSearchInput,
+  SearchInput,
 } from '@patternfly/react-core'
 import { CogIcon, DesktopIcon } from '@patternfly/react-icons'
 import { CustomEditorModal } from './CustomEditorModal'
@@ -144,18 +148,36 @@ interface EditorDropdownProps {
 export function EditorDropdown({ value, version, onChange }: EditorDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [showCustomModal, setShowCustomModal] = useState(false)
+  const [filter, setFilter] = useState('')
+  const searchRef = useRef<HTMLInputElement>(null)
 
   const selected = EDITORS.find((e) => e.id === value)
   const versions = selected?.versions ?? []
 
-  function handleSelect(_e: React.MouseEvent | undefined, val: string | number | undefined) {
-    const id = val as string
+  const query = filter.trim().toLowerCase()
+  const builtIn = EDITORS.filter((e) => !e.isCustom)
+  const custom = EDITORS.find((e) => e.isCustom)!
+  const matches = query
+    ? builtIn.filter((e) => e.label.toLowerCase().includes(query) || e.id.toLowerCase().includes(query))
+    : builtIn
+
+  function setOpen(open: boolean) {
+    setIsOpen(open)
+    if (open) {
+      // Wait for the menu to mount before focusing the search field.
+      requestAnimationFrame(() => searchRef.current?.focus())
+    } else {
+      setFilter('')
+    }
+  }
+
+  function choose(id: string) {
     if (id === 'custom') {
       setShowCustomModal(true)
     } else {
       onChange(id, id === value ? version : getDefaultEditorVersion(id))
     }
-    setIsOpen(false)
+    setOpen(false)
   }
 
   return (
@@ -164,13 +186,13 @@ export function EditorDropdown({ value, version, onChange }: EditorDropdownProps
         <div style={{ flex: 1, minWidth: 0 }}>
           <Select
             isOpen={isOpen}
-            onOpenChange={setIsOpen}
-            onSelect={handleSelect}
+            onOpenChange={setOpen}
+            onSelect={(_e, v) => choose(String(v))}
             selected={value}
             toggle={(toggleRef) => (
               <MenuToggle
                 ref={toggleRef}
-                onClick={() => setIsOpen((o) => !o)}
+                onClick={() => setOpen(!isOpen)}
                 isExpanded={isOpen}
                 isFullWidth
                 icon={selected ? <EditorIcon id={selected.id} isCustom={selected.isCustom} /> : <DesktopIcon />}
@@ -180,18 +202,44 @@ export function EditorDropdown({ value, version, onChange }: EditorDropdownProps
               </MenuToggle>
             )}
           >
-            <SelectList>
-              {EDITORS.map((e) => (
-                <SelectOption
-                  key={e.id}
-                  value={e.id}
-                  isSelected={e.id === value}
-                  icon={<EditorIcon id={e.id} isCustom={e.isCustom} />}
-                  description={getLicenseText(e.id)}
-                >
-                  {e.label}
-                  <EditorBadges editor={e} />
+            <MenuSearch>
+              <MenuSearchInput>
+                <SearchInput
+                  ref={searchRef}
+                  value={filter}
+                  onChange={(_e, v) => setFilter(v)}
+                  onClear={() => setFilter('')}
+                  placeholder="Search editors"
+                  aria-label="Search editors"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && matches.length > 0) {
+                      e.preventDefault()
+                      choose(matches[0].id)
+                    }
+                  }}
+                />
+              </MenuSearchInput>
+            </MenuSearch>
+            <Divider />
+            <SelectList style={{ maxHeight: 400, overflowY: 'auto' }}>
+              {matches.length === 0 && (
+                <SelectOption isAriaDisabled value="__none">
+                  No editors match "{filter.trim()}"
                 </SelectOption>
+              )}
+              {[...matches, custom].map((e) => (
+                <Fragment key={e.id}>
+                  {e.isCustom && <Divider component="li" />}
+                  <SelectOption
+                    value={e.id}
+                    isSelected={e.id === value}
+                    icon={<EditorIcon id={e.id} isCustom={e.isCustom} />}
+                    description={e.isCustom ? 'Point to your own editor definition' : getLicenseText(e.id)}
+                  >
+                    {e.label}
+                    <EditorBadges editor={e} />
+                  </SelectOption>
+                </Fragment>
               ))}
             </SelectList>
           </Select>
