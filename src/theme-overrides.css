@@ -2,3 +2,14 @@
   --pf-v6-c-nav__item--accent--color: #ee0000;
   --pf-t--global--color--brand--accent--default: #ee0000;
 }
+
+/* Search field at the top of a select menu: show focus on the field's own
+   border instead of the browser's extra inner outline. */
+.pf-v6-c-menu__search .pf-v6-c-text-input-group__text-input:focus {
+  outline: none;
+}
+.pf-v6-c-menu__search .pf-v6-c-text-input-group:focus-within {
+  outline: 2px solid var(--pf-t--global--border--color--clicked);
+  outline-offset: -2px;
+  border-radius: var(--pf-t--global--border--radius--small);
+}
